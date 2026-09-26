@@ -109,9 +109,7 @@ export async function resetCustomRoles(): Promise<void> {
   const client = new pg.Client({ connectionString: databaseUrl() });
   await client.connect();
   try {
-    await client.query(
-      'DELETE FROM identity."role" WHERE system_key IS NULL',
-    );
+    await client.query('DELETE FROM identity."role" WHERE system_key IS NULL');
   } finally {
     await client.end();
   }
