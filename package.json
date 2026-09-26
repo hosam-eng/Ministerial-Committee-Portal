@@ -1,0 +1,51 @@
+{
+  "name": "ministerial-committee-portal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Ministerial Committee Public Digital Portal — production implementation (greenfield).",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:component": "vitest run tests/component",
+    "test:architecture": "vitest run tests/architecture",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --grep @a11y",
+    "check": "npm run format:check && npm run lint && npm run test:architecture && npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "next": "16.3.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "26.6.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.5",
+    "eslint-config-prettier": "10.1.8",
+    "jsdom": "29.1.1",
+    "prettier": "3.9.8",
+    "typescript": "5.9.3",
+    "vite": "8.3.0",
+    "vitest": "5.0.2"
+  }
+}

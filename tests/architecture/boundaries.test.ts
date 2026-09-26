@@ -1,0 +1,193 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  analyzeFile,
+  checkSource,
+  listSourceFiles,
+  SRC_ROOT,
+} from "./boundaries";
+
+describe("architecture boundaries — real source tree", () => {
+  it("src/ contains no forbidden dependencies", () => {
+    const violations = listSourceFiles(SRC_ROOT).flatMap((file) =>
+      analyzeFile(file),
+    );
+    expect(violations).toEqual([]);
+  });
+});
+
+// Synthetic sources prove the checker detects representative forbidden
+// dependencies — a real violation in src/ fails the suite above in CI.
+type Case = [
+  name: string,
+  file: string,
+  source: string,
+  expectedRule: string | null,
+];
+
+const VIOLATIONS: Case[] = [
+  [
+    "domain → Prisma",
+    "modules/publishing/domain/news.ts",
+    'import { PrismaClient } from "@prisma/client";\nexport const x = 1;',
+    "layer must not depend on Prisma",
+  ],
+  [
+    "domain → next/headers",
+    "modules/publishing/domain/news.ts",
+    'import { cookies } from "next/headers";\nexport const x = 1;',
+    "layer must not depend on Next.js",
+  ],
+  [
+    "domain → react",
+    "modules/publishing/domain/news.ts",
+    'import { useState } from "react";\nexport const x = 1;',
+    "layer must not depend on React",
+  ],
+  [
+    "domain → platform database",
+    "modules/publishing/domain/news.ts",
+    'import { db } from "@/platform/database/client";\nexport const x = 1;',
+    "domain must not depend on platform infrastructure",
+  ],
+  [
+    "domain → other module public contract",
+    "modules/publishing/domain/news.ts",
+    'import { getMedia } from "@/modules/media";\nexport const x = 1;',
+    "domain must not depend on other modules",
+  ],
+  [
+    "application → own module infrastructure (alias)",
+    "modules/publishing/application/create-news.ts",
+    'import { NewsRepo } from "@/modules/publishing/infrastructure/news-repository";\nexport const x = 1;',
+    "application must not depend on infrastructure or presentation",
+  ],
+  [
+    "application → own module infrastructure (relative)",
+    "modules/publishing/application/create-news.ts",
+    'import { NewsRepo } from "../infrastructure/news-repository";\nexport const x = 1;',
+    "application must not depend on infrastructure or presentation",
+  ],
+  [
+    "application → other module internals",
+    "modules/publishing/application/create-news.ts",
+    'import { thing } from "@/modules/media/domain/media";\nexport const x = 1;',
+    "cross-module imports must use the target module's public contract",
+  ],
+  [
+    "module infrastructure → other module internals",
+    "modules/publishing/infrastructure/news-repository.ts",
+    'import { MediaRepo } from "@/modules/media/infrastructure/media-repository";\nexport const x = 1;',
+    "cross-module imports must use the target module's public contract",
+  ],
+  [
+    "app delivery → module internals",
+    "app/news/page.tsx",
+    'import { NewsRepo } from "@/modules/publishing/infrastructure/news-repository";\nexport default function P() { return null; }',
+    "app must consume modules only through their public contract (@/modules/<name>)",
+  ],
+  [
+    "platform → business module",
+    "platform/database/client.ts",
+    'import { News } from "@/modules/publishing";\nexport const x = 1;',
+    "platform must not depend on business modules",
+  ],
+  [
+    "shared → platform",
+    "shared/ui/button.tsx",
+    'import { cfg } from "@/platform/config/env";\nexport const x = 1;',
+    "shared must not depend on platform infrastructure",
+  ],
+  [
+    "shared → business module",
+    "shared/util/x.ts",
+    'import { News } from "@/modules/publishing";\nexport const x = 1;',
+    "shared must not depend on business modules",
+  ],
+  [
+    "client component → platform infrastructure",
+    "modules/publishing/presentation/news-editor.tsx",
+    '"use client";\nimport { db } from "@/platform/database/client";\nexport function C() { return null; }',
+    "client components must not import platform infrastructure",
+  ],
+  [
+    "client component → module infrastructure",
+    "modules/publishing/presentation/news-editor.tsx",
+    '"use client";\nimport { NewsRepo } from "../infrastructure/news-repository";\nexport function C() { return null; }',
+    "client components must not import module application/infrastructure code",
+  ],
+  [
+    "presentation → infrastructure",
+    "modules/publishing/presentation/news-card.tsx",
+    'import { NewsRepo } from "../infrastructure/news-repository";\nexport function C() { return null; }',
+    "presentation must not depend on infrastructure",
+  ],
+  [
+    "domain → presentation",
+    "modules/publishing/domain/news.ts",
+    'import { NewsCard } from "../presentation/news-card";\nexport const x = 1;',
+    "domain may only depend on its own domain layer",
+  ],
+];
+
+const ALLOWED: Case[] = [
+  [
+    "app → module public contract",
+    "app/news/page.tsx",
+    'import { getNews } from "@/modules/publishing";\nexport default function P() { return null; }',
+    null,
+  ],
+  [
+    "app → platform and shared",
+    "app/layout.tsx",
+    'import { config } from "@/platform/config";\nimport { ok } from "@/shared/result";\nexport default function L() { return null; }',
+    null,
+  ],
+  [
+    "domain → domain-neutral shared",
+    "modules/publishing/domain/news.ts",
+    'import { ok } from "@/shared/result";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "application → own domain (relative)",
+    "modules/publishing/application/create-news.ts",
+    'import { News } from "../domain/news";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "application → other module public contract",
+    "modules/publishing/application/create-news.ts",
+    'import { getMedia } from "@/modules/media";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "infrastructure → Prisma + platform + own domain",
+    "modules/publishing/infrastructure/news-repository.ts",
+    'import { PrismaClient } from "@prisma/client";\nimport { db } from "@/platform/database";\nimport { News } from "../domain/news";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "module index → own internals",
+    "modules/publishing/index.ts",
+    'export { News } from "./domain/news";\nexport { createNews } from "./application/create-news";',
+    null,
+  ],
+  [
+    "client component → own presentation + shared",
+    "modules/publishing/presentation/news-form.tsx",
+    '"use client";\nimport { Label } from "./field";\nimport { ok } from "@/shared/result";\nexport function C() { return null; }',
+    null,
+  ],
+];
+
+describe("architecture boundaries — detection", () => {
+  it.each(VIOLATIONS)("flags %s", (_name, file, source, expectedRule) => {
+    const violations = checkSource(file, source);
+    expect(violations.map((v) => v.rule)).toContain(expectedRule);
+  });
+
+  it.each(ALLOWED)("allows %s", (_name, file, source) => {
+    expect(checkSource(file, source)).toEqual([]);
+  });
+});

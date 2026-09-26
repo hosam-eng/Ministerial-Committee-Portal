@@ -1,0 +1,15 @@
+/* Bootstrap stylesheet for the IMP-01 technical foundation page.
+   This is intentionally minimal — the design system (B2 / Platforms Code)
+   is owned by later increments (IMP-07/IMP-08). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
