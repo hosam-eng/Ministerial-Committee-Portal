@@ -107,3 +107,55 @@ export async function submitSignIn(
   }
   throw new Error("sign-in remained rate-limited after retries");
 }
+
+/**
+ * Submit an MFA verification (TOTP or backup code) tolerating Better
+ * Auth's built-in `/two-factor/*` rule (3 requests / rolling 10 s,
+ * shared across parallel workers). The rate limiter runs before the
+ * endpoint pipeline, so a 429 never reached verification — the replay
+ * guard has not consumed the code and resubmitting it is legitimate.
+ */
+export async function submitMfaVerify(
+  page: Page,
+  labels: { code: string; submit: string },
+  code: string,
+): Promise<void> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await page.getByLabel(labels.code).fill(code);
+    const [response] = await Promise.all([
+      page.waitForResponse(
+        (res) =>
+          res.url().includes("/api/auth/two-factor/") &&
+          res.request().method() === "POST",
+      ),
+      page.getByRole("button", { name: labels.submit }).click(),
+    ]);
+    if (response.status() !== 429) return;
+    const retryAfter = Number(response.headers()["x-retry-after"] ?? "10");
+    await page.waitForTimeout((retryAfter + 1) * 1000);
+  }
+  throw new Error("mfa verification remained rate-limited after retries");
+}
+
+/** Same 429 tolerance for the `/two-factor/enable` password gate. */
+export async function submitMfaEnable(
+  page: Page,
+  labels: { password: string; submit: string },
+  password: string,
+): Promise<void> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await page.getByLabel(labels.password).fill(password);
+    const [response] = await Promise.all([
+      page.waitForResponse(
+        (res) =>
+          res.url().includes("/api/auth/two-factor/enable") &&
+          res.request().method() === "POST",
+      ),
+      page.getByRole("button", { name: labels.submit }).click(),
+    ]);
+    if (response.status() !== 429) return;
+    const retryAfter = Number(response.headers()["x-retry-after"] ?? "10");
+    await page.waitForTimeout((retryAfter + 1) * 1000);
+  }
+  throw new Error("mfa enable remained rate-limited after retries");
+}

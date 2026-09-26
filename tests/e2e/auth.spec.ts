@@ -5,8 +5,15 @@ import {
   E2E_USER,
   hasDatabase,
   seedE2eUser,
+  submitMfaVerify,
   submitSignIn,
 } from "./support/auth";
+
+const AR_MFA = {
+  totp: "رمز تطبيق المصادقة",
+  backup: "رمز النسخ الاحتياطي",
+  submit: "تحقق",
+} as const;
 
 const AR_SIGN_IN = {
   email: "البريد الإلكتروني",
@@ -99,8 +106,11 @@ test.describe("admin auth journey (ar)", () => {
 
     // 5. Enrollment activates only after a valid TOTP code.
     const code = await createOTP(secret).totp();
-    await page.getByLabel("رمز تطبيق المصادقة").fill(code);
-    await page.getByRole("button", { name: "تحقق" }).click();
+    await submitMfaVerify(
+      page,
+      { code: AR_MFA.totp, submit: AR_MFA.submit },
+      code,
+    );
     await expect(page).toHaveURL(/\/ar\/admin$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "تم تسجيل الدخول بنجاح",
@@ -127,8 +137,11 @@ test.describe("admin auth journey (ar)", () => {
     if (challengeCode === code) {
       challengeCode = await otp.hotp(Math.floor(Date.now() / 30_000) + 1);
     }
-    await page.getByLabel("رمز تطبيق المصادقة").fill(challengeCode);
-    await page.getByRole("button", { name: "تحقق" }).click();
+    await submitMfaVerify(
+      page,
+      { code: AR_MFA.totp, submit: AR_MFA.submit },
+      challengeCode,
+    );
     await expect(page).toHaveURL(/\/ar\/admin$/);
 
     // 7b. IMP-05 replay correction: an accepted TOTP is one-time
@@ -138,8 +151,11 @@ test.describe("admin auth journey (ar)", () => {
     await expect(page).toHaveURL(/\/ar\/admin\/login$/);
     await submitSignIn(page, AR_SIGN_IN, E2E_USER);
     await expect(page).toHaveURL(/\/ar\/admin\/mfa$/);
-    await page.getByLabel("رمز تطبيق المصادقة").fill(challengeCode);
-    await page.getByRole("button", { name: "تحقق" }).click();
+    await submitMfaVerify(
+      page,
+      { code: AR_MFA.totp, submit: AR_MFA.submit },
+      challengeCode,
+    );
     await expect(page.locator(".auth-error")).toHaveText(
       "الرمز غير صالح أو منتهي الصلاحية.",
     );
@@ -151,8 +167,11 @@ test.describe("admin auth journey (ar)", () => {
       await page.waitForTimeout(1_000);
       freshCode = await otp.totp();
     }
-    await page.getByLabel("رمز تطبيق المصادقة").fill(freshCode);
-    await page.getByRole("button", { name: "تحقق" }).click();
+    await submitMfaVerify(
+      page,
+      { code: AR_MFA.totp, submit: AR_MFA.submit },
+      freshCode,
+    );
     await expect(page).toHaveURL(/\/ar\/admin$/);
 
     // 8. Backup-code recovery path.
@@ -163,8 +182,11 @@ test.describe("admin auth journey (ar)", () => {
     await page
       .getByRole("button", { name: "استخدام رمز نسخ احتياطي بدلاً من ذلك" })
       .click();
-    await page.getByLabel("رمز النسخ الاحتياطي").fill(backupCodes[0]);
-    await page.getByRole("button", { name: "تحقق" }).click();
+    await submitMfaVerify(
+      page,
+      { code: AR_MFA.backup, submit: AR_MFA.submit },
+      backupCodes[0],
+    );
     await expect(page).toHaveURL(/\/ar\/admin$/);
   });
 });
