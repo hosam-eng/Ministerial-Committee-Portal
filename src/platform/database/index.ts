@@ -9,4 +9,4 @@
 export type { Database } from "./client";
 export { createDatabase } from "./client";
 export type { DatabaseConfig } from "./config";
-export { databaseConfigFromEnv } from "./config";
+export { databaseConfigFromServerConfig } from "./config";

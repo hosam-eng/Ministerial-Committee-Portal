@@ -14,6 +14,9 @@ concurrency:
 
 env:
   CI: true
+  # APP_ENV is required server config — instrumentation validates it at
+  # startup (next build/start), so CI declares it explicitly.
+  APP_ENV: test
 
 jobs:
   quality:
@@ -37,6 +40,8 @@ jobs:
         run: npm run db:generate
       - name: Typecheck
         run: npm run typecheck
+      - name: Runtime platform unit tests
+        run: npm run test:unit
       - name: Unit + component tests
         run: npm run test
 

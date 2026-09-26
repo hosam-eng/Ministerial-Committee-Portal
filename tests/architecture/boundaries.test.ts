@@ -165,6 +165,55 @@ const VIOLATIONS: Case[] = [
     'import { PrismaClient } from "@/platform/database/generated/client";\nexport function C() { return null; }',
     "presentation must not depend on platform infrastructure",
   ],
+  // IMP-03 — runtime-platform confinement.
+  [
+    "domain → pino",
+    "modules/publishing/domain/news.ts",
+    'import { pino } from "pino";\nexport const x = 1;',
+    "layer must not depend on Pino",
+  ],
+  [
+    "application → @opentelemetry/sdk-node",
+    "modules/publishing/application/create-news.ts",
+    'import { NodeSDK } from "@opentelemetry/sdk-node";\nexport const x = 1;',
+    "layer must not depend on OpenTelemetry",
+  ],
+  [
+    "infrastructure → pino",
+    "modules/publishing/infrastructure/news-repository.ts",
+    'import { pino } from "pino";\nexport const x = 1;',
+    "layer must not depend on Pino",
+  ],
+  [
+    "module root → @opentelemetry/api",
+    "modules/publishing/index.ts",
+    'import { trace } from "@opentelemetry/api";\nexport const x = 1;',
+    "layer must not depend on OpenTelemetry",
+  ],
+  [
+    "shared → pino",
+    "shared/util/x.ts",
+    'import { pino } from "pino";\nexport const x = 1;',
+    "layer must not depend on Pino",
+  ],
+  [
+    "module → process.env",
+    "modules/publishing/application/create-news.ts",
+    "export const url = process.env.DATABASE_URL;",
+    "process.env access is centralized in src/platform/config",
+  ],
+  [
+    "shared → process.env",
+    "shared/util/x.ts",
+    'const env = process["env"];\nexport const x = env;',
+    "process.env access is centralized in src/platform/config",
+  ],
+  [
+    "platform (non-config) → process.env",
+    "platform/runtime/x.ts",
+    "export const env = process.env.NODE_ENV;",
+    "process.env access is centralized in src/platform/config",
+  ],
 ];
 
 const ALLOWED: Case[] = [
@@ -226,6 +275,30 @@ const ALLOWED: Case[] = [
     "client component → own presentation + shared",
     "modules/publishing/presentation/news-form.tsx",
     '"use client";\nimport { Label } from "./field";\nimport { ok } from "@/shared/result";\nexport function C() { return null; }',
+    null,
+  ],
+  [
+    "platform config → process.env (centralized seam)",
+    "platform/config/server.ts",
+    "export const env = process.env.DATABASE_URL;",
+    null,
+  ],
+  [
+    "platform runtime → config + logging + telemetry",
+    "platform/runtime/x.ts",
+    'import { getServerConfig } from "@/platform/config";\nimport { getLogger } from "@/platform/logging";\nimport { initTelemetry } from "@/platform/telemetry";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "app route → platform abstractions",
+    "app/api/health/ready/route.ts",
+    'import { withRequestContext } from "@/platform/context";\nimport { problemResponse } from "@/platform/errors";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "platform logging → pino (implementation allowed)",
+    "platform/logging/logger.ts",
+    'import { pino } from "pino";\nexport const x = 1;',
     null,
   ],
 ];

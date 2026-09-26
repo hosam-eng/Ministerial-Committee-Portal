@@ -10,6 +10,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createDatabase, type Database } from "@/platform/database";
+import { checkDatabaseReadiness } from "@/platform/runtime";
 
 /**
  * IMP-02 data-platform integration suite.
@@ -181,6 +182,23 @@ describe("PostgreSQL 18 platform", () => {
       expect(await pgErrorCode(runtime, statement)).toBe("42501");
     }
     await runtime.end();
+  });
+
+  // IMP-03 — readiness probe against the real runtime identity.
+  it("readiness probe reports healthy via the runtime identity", async () => {
+    const runtimeDb = createDatabase({
+      connectionString: uriFor("mcp_runtime", "mcp_runtime_dev"),
+    });
+    expect(await checkDatabaseReadiness(runtimeDb)).toBe(true);
+    await runtimeDb.close();
+  });
+
+  it("readiness probe reports an unreachable database as unavailable", async () => {
+    const down = createDatabase({
+      connectionString: "postgresql://u:p@127.0.0.1:1/mcp_test",
+    });
+    expect(await checkDatabaseReadiness(down, 5_000)).toBe(false);
+    await down.close();
   });
 
   it("closes the client and pool cleanly", async () => {

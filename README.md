@@ -70,6 +70,10 @@ npm run db:migrate:deploy  # prisma migrate deploy (non-interactive)
 Database workflow (dev compose, roles, migrations, UUIDv7/UTC
 conventions): see [docs/database.md](docs/database.md).
 
+Runtime platform (typed config, error model, logging/redaction,
+correlation, OpenTelemetry, health, graceful shutdown):
+see [docs/runtime-platform.md](docs/runtime-platform.md).
+
 E2E tests build the app (`next build`) and serve it with `next start` — they never run against the dev server. Playwright browsers: `npx playwright install chromium`.
 
 ## Source structure
@@ -110,5 +114,6 @@ Cross-module access goes through a module's public contract (`@/modules/<name>`)
 
 - [x] **IMP-01** — Runtime, project structure & quality foundation
 - [x] **IMP-02** — PostgreSQL 18 + Prisma 7 data platform (no business models yet)
+- [x] **IMP-03** — Runtime platform: config, errors, observability, health
 
 Later increments (database, auth, localization, design system, CMS) are intentionally not implemented yet — see `../docs/implementation/MASTER-IMPLEMENTATION-PLAN.md`.
