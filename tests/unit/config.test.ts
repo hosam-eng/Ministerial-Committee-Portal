@@ -11,6 +11,8 @@ const VALID_ENV: Record<string, string> = {
   NODE_ENV: "test",
   APP_ENV: "test",
   DATABASE_URL: "postgresql://user:secret@localhost:5432/mcp_test",
+  BETTER_AUTH_SECRET: "config-test-auth-secret-32-chars-min",
+  BETTER_AUTH_URL: "http://127.0.0.1:3000",
 };
 
 describe("server config validation", () => {
@@ -46,12 +48,9 @@ describe("server config validation", () => {
   });
 
   it("fails fast when APP_ENV is missing or invalid", () => {
-    expect(() =>
-      validateServerConfig({
-        NODE_ENV: "test",
-        DATABASE_URL: VALID_ENV.DATABASE_URL,
-      }),
-    ).toThrow(ConfigurationError);
+    const noAppEnv = { ...VALID_ENV };
+    delete noAppEnv.APP_ENV;
+    expect(() => validateServerConfig(noAppEnv)).toThrow(ConfigurationError);
     expect(() =>
       validateServerConfig({ ...VALID_ENV, APP_ENV: "staging" }),
     ).toThrow(ConfigurationError);
@@ -62,7 +61,12 @@ describe("server config validation", () => {
   });
 
   it("requires DATABASE_URL when APP_ENV=production", () => {
-    const env = { NODE_ENV: "production", APP_ENV: "production" };
+    const env = {
+      NODE_ENV: "production",
+      APP_ENV: "production",
+      BETTER_AUTH_SECRET: "production-test-secret-32-chars-minimum!",
+      BETTER_AUTH_URL: "https://portal.example.sa",
+    };
     expect(() => validateServerConfig(env)).toThrow(ConfigurationError);
     expect(() =>
       validateServerConfig({ ...env, DATABASE_URL: VALID_ENV.DATABASE_URL }),
@@ -70,7 +74,12 @@ describe("server config validation", () => {
   });
 
   it("allows DATABASE_URL absent outside production", () => {
-    const config = validateServerConfig({ NODE_ENV: "test", APP_ENV: "test" });
+    const config = validateServerConfig({
+      NODE_ENV: "test",
+      APP_ENV: "test",
+      BETTER_AUTH_SECRET: VALID_ENV.BETTER_AUTH_SECRET,
+      BETTER_AUTH_URL: VALID_ENV.BETTER_AUTH_URL,
+    });
     expect(config.databaseUrl).toBeUndefined();
   });
 
@@ -81,6 +90,8 @@ describe("server config validation", () => {
         NODE_ENV: "test",
         APP_ENV: "test",
         DATABASE_URL: `postgresql://u:${sentinel}@localhost:5432/db`,
+        BETTER_AUTH_SECRET: VALID_ENV.BETTER_AUTH_SECRET,
+        BETTER_AUTH_URL: VALID_ENV.BETTER_AUTH_URL,
         LOG_LEVEL: "bogus",
       });
       expect.unreachable("should have thrown");

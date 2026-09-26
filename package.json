@@ -25,12 +25,15 @@
     "db:generate": "prisma generate",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
+    "auth:create-local-user": "tsx scripts/create-local-user.ts",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test --grep @a11y",
     "check": "npm run format:check && npm run lint && npm run test:architecture && npm run typecheck && npm run test",
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@better-auth/prisma-adapter": "1.7.6",
+    "@node-rs/argon2": "2.2.1",
     "@opentelemetry/api": "1.9.1",
     "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
     "@opentelemetry/resources": "2.11.0",
@@ -38,6 +41,7 @@
     "@opentelemetry/semantic-conventions": "1.43.0",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "better-auth": "1.7.6",
     "next": "16.3.5",
     "next-intl": "4.13.7",
     "pg": "8.23.0",
@@ -66,6 +70,7 @@
     "prettier": "3.9.8",
     "prisma": "7.10.0",
     "testcontainers": "12.1.0",
+    "tsx": "4.23.13",
     "typescript": "5.9.3",
     "vite": "8.3.0",
     "vitest": "5.0.2"
