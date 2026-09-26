@@ -1,9 +1,11 @@
+import type { ServerConfig } from "../config";
+
 /**
  * Database configuration seam.
  *
- * This is the *single* place where the runtime connection URL enters the
- * application. Business code must never read `process.env` directly;
- * IMP-03 will replace this with the centralized typed app configuration.
+ * The runtime connection URL enters the application exclusively through
+ * the centralized typed server configuration (src/platform/config).
+ * Business code must never read `process.env` directly.
  */
 export interface DatabaseConfig {
   /** PostgreSQL connection URL for the application runtime role. */
@@ -13,17 +15,16 @@ export interface DatabaseConfig {
 }
 
 /**
- * Resolve the runtime database configuration from the environment.
- * Fails fast rather than connecting with a wrong/empty URL.
+ * Resolve runtime database configuration from typed server config —
+ * the sanctioned runtime path since IMP-03.
  */
-export function databaseConfigFromEnv(
-  env: NodeJS.ProcessEnv = process.env,
+export function databaseConfigFromServerConfig(
+  config: ServerConfig,
 ): DatabaseConfig {
-  const connectionString = env.DATABASE_URL;
-  if (!connectionString) {
+  if (!config.databaseUrl) {
     throw new Error(
       "DATABASE_URL is not set — the runtime database connection cannot be established.",
     );
   }
-  return { connectionString };
+  return { connectionString: config.databaseUrl };
 }

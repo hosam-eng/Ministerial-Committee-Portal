@@ -37,6 +37,8 @@ jobs:
         run: npm run db:generate
       - name: Typecheck
         run: npm run typecheck
+      - name: Runtime platform unit tests
+        run: npm run test:unit
       - name: Unit + component tests
         run: npm run test
 

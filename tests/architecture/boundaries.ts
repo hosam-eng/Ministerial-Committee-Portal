@@ -183,18 +183,64 @@ const PERSISTENCE_BANS: { pattern: RegExp; rule: string }[] = [
   { pattern: /^pg$/, rule: "layer must not depend on the PostgreSQL driver" },
 ];
 
+const OBSERVABILITY_BANS: { pattern: RegExp; rule: string }[] = [
+  { pattern: /^pino(\/.*)?$/, rule: "layer must not depend on Pino" },
+  {
+    pattern: /^@opentelemetry(\/.*)?$/,
+    rule: "layer must not depend on OpenTelemetry",
+  },
+];
+
 function externalViolation(area: SourceArea, specifier: string): string | null {
-  const bans =
-    area.kind === "module" &&
-    (area.layer === "domain" || area.layer === "application")
-      ? EXTERNAL_BANS
-      : area.kind === "shared" ||
-          (area.kind === "module" &&
-            (area.layer === "presentation" || area.layer === "root"))
-        ? PERSISTENCE_BANS
-        : [];
+  let bans: { pattern: RegExp; rule: string }[] = [];
+  if (area.kind === "module") {
+    // IMP-03: no module layer may import observability implementation
+    // packages. Persistence imports stay confined per the IMP-02
+    // contract (infrastructure may use the platform persistence stack).
+    bans =
+      area.layer === "domain" || area.layer === "application"
+        ? [...EXTERNAL_BANS, ...OBSERVABILITY_BANS]
+        : area.layer === "infrastructure"
+          ? [...OBSERVABILITY_BANS]
+          : [...PERSISTENCE_BANS, ...OBSERVABILITY_BANS];
+  } else if (area.kind === "shared") {
+    bans = [...PERSISTENCE_BANS, ...OBSERVABILITY_BANS];
+  }
   const hit = bans.find((b) => b.pattern.test(specifier));
   return hit ? hit.rule : null;
+}
+
+/** True when the source reads process.env outside platform/config. */
+function hasEnvAccess(content: string, fileAbs: string): boolean {
+  const sf = ts.createSourceFile(
+    fileAbs,
+    content,
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  let found = false;
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isPropertyAccessExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "process" &&
+      node.name.text === "env"
+    ) {
+      found = true;
+    }
+    if (
+      ts.isElementAccessExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "process" &&
+      ts.isStringLiteralLike(node.argumentExpression) &&
+      node.argumentExpression.text === "env"
+    ) {
+      found = true;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return found;
 }
 
 /**
@@ -316,6 +362,19 @@ export function checkSource(
   const source = classify(importerRelPosix);
   const isClient = hasUseClientDirective(content);
   const violations: Violation[] = [];
+
+  // IMP-03: env access is centralized in src/platform/config — modules,
+  // shared, and the rest of platform must not read process.env.
+  const envAllowed =
+    importerRelPosix.startsWith("platform/config/") ||
+    importerRelPosix === "instrumentation.ts";
+  if (!envAllowed && hasEnvAccess(content, importerAbs)) {
+    violations.push({
+      file: importerRelPosix,
+      specifier: "process.env",
+      rule: "process.env access is centralized in src/platform/config",
+    });
+  }
 
   for (const edge of collectEdges(importerAbs, content)) {
     const resolved = resolveSpecifier(edge.specifier, importerAbs);

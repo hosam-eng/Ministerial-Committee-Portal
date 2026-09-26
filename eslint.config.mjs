@@ -55,6 +55,19 @@ const NO_MODULES = {
   message: "This layer must not depend on business modules.",
 };
 
+const NO_OBSERVABILITY = {
+  group: ["pino", "pino/*", "@opentelemetry/*"],
+  message:
+    "Business code must not import logging/telemetry implementation packages; use platform abstractions.",
+};
+
+const NO_PROCESS_ENV = {
+  selector:
+    "MemberExpression[object.name='process'][property.name='env'], MemberExpression[object.name='process'][property.value='env']",
+  message:
+    "This layer must not read process.env directly; use @/platform/config.",
+};
+
 const SRC_FILES = ["src/**/*.{ts,tsx,mts,cts}"];
 
 const eslintConfig = defineConfig([
@@ -95,9 +108,11 @@ const eslintConfig = defineConfig([
             NO_APP,
             NO_PLATFORM,
             NO_INFRASTRUCTURE,
+            NO_OBSERVABILITY,
           ],
         },
       ],
+      "no-restricted-syntax": ["error", NO_PROCESS_ENV],
     },
   },
   {
@@ -114,9 +129,11 @@ const eslintConfig = defineConfig([
             NO_APP,
             NO_PLATFORM,
             NO_INFRASTRUCTURE,
+            NO_OBSERVABILITY,
           ],
         },
       ],
+      "no-restricted-syntax": ["error", NO_PROCESS_ENV],
     },
   },
   {
@@ -132,9 +149,43 @@ const eslintConfig = defineConfig([
             NO_APP,
             NO_PLATFORM,
             NO_INFRASTRUCTURE,
+            NO_OBSERVABILITY,
           ],
         },
       ],
+      "no-restricted-syntax": ["error", NO_PROCESS_ENV],
+    },
+  },
+  {
+    // Infrastructure: consumes platform surfaces; observability packages
+    // stay banned (IMP-02 contract already permits the persistence stack).
+    files: ["src/modules/*/infrastructure/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [MODULE_PUBLIC_CONTRACT, NO_APP, NO_OBSERVABILITY],
+        },
+      ],
+      "no-restricted-syntax": ["error", NO_PROCESS_ENV],
+    },
+  },
+  {
+    // Module roots/public contracts.
+    files: ["src/modules/*.{ts,tsx}", "src/modules/*/index.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            MODULE_PUBLIC_CONTRACT,
+            NO_PERSISTENCE,
+            NO_APP,
+            NO_OBSERVABILITY,
+          ],
+        },
+      ],
+      "no-restricted-syntax": ["error", NO_PROCESS_ENV],
     },
   },
   {
@@ -145,6 +196,14 @@ const eslintConfig = defineConfig([
         "error",
         { patterns: [MODULE_PUBLIC_CONTRACT, NO_APP, NO_MODULES] },
       ],
+    },
+  },
+  {
+    // Platform: process.env access is centralized in src/platform/config.
+    files: ["src/platform/**"],
+    ignores: ["src/platform/config/**"],
+    rules: {
+      "no-restricted-syntax": ["error", NO_PROCESS_ENV],
     },
   },
   {
@@ -160,9 +219,11 @@ const eslintConfig = defineConfig([
             NO_MODULES,
             NO_PLATFORM,
             NO_PERSISTENCE,
+            NO_OBSERVABILITY,
           ],
         },
       ],
+      "no-restricted-syntax": ["error", NO_PROCESS_ENV],
     },
   },
 ]);

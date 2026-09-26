@@ -1,0 +1,2 @@
+# Shell scripts must keep LF — CRLF shebangs break docker-entrypoint-initdb.d.
+*.sh text eol=lf
