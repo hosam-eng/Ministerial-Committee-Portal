@@ -162,8 +162,11 @@ test.describe("admin auth journey (ar)", () => {
     await expect(page).toHaveURL(/\/ar\/admin\/mfa$/);
 
     // 7c. A fresh TOTP generated for a later time step still succeeds.
+    //     Wait until the current-step code differs from BOTH codes this
+    //     session already consumed (enrollment `code` and `challengeCode`)
+    //     — same-step timing can make totp() equal the enrollment code.
     let freshCode = challengeCode;
-    while (freshCode === challengeCode) {
+    while (freshCode === challengeCode || freshCode === code) {
       await page.waitForTimeout(1_000);
       freshCode = await otp.totp();
     }
