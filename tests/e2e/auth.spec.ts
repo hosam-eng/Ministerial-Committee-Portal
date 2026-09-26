@@ -120,8 +120,38 @@ test.describe("admin auth journey (ar)", () => {
     await expect(page).toHaveURL(/\/ar\/admin\/mfa$/);
     await expect(page.locator(".auth-error")).toHaveCount(0);
 
-    const challengeCode = await createOTP(secret).totp();
+    // A code for the current step could equal the consumed enrollment
+    // code — use the next step's code (still inside the ±1 window) if so.
+    const otp = createOTP(secret);
+    let challengeCode = await otp.totp();
+    if (challengeCode === code) {
+      challengeCode = await otp.hotp(Math.floor(Date.now() / 30_000) + 1);
+    }
     await page.getByLabel("رمز تطبيق المصادقة").fill(challengeCode);
+    await page.getByRole("button", { name: "تحقق" }).click();
+    await expect(page).toHaveURL(/\/ar\/admin$/);
+
+    // 7b. IMP-05 replay correction: an accepted TOTP is one-time
+    //     material. Re-submitting it on a fresh login inside its
+    //     validity window is rejected with the generic failure.
+    await page.getByRole("button", { name: "تسجيل الخروج" }).click();
+    await expect(page).toHaveURL(/\/ar\/admin\/login$/);
+    await submitSignIn(page, AR_SIGN_IN, E2E_USER);
+    await expect(page).toHaveURL(/\/ar\/admin\/mfa$/);
+    await page.getByLabel("رمز تطبيق المصادقة").fill(challengeCode);
+    await page.getByRole("button", { name: "تحقق" }).click();
+    await expect(page.locator(".auth-error")).toHaveText(
+      "الرمز غير صالح أو منتهي الصلاحية.",
+    );
+    await expect(page).toHaveURL(/\/ar\/admin\/mfa$/);
+
+    // 7c. A fresh TOTP generated for a later time step still succeeds.
+    let freshCode = challengeCode;
+    while (freshCode === challengeCode) {
+      await page.waitForTimeout(1_000);
+      freshCode = await otp.totp();
+    }
+    await page.getByLabel("رمز تطبيق المصادقة").fill(freshCode);
     await page.getByRole("button", { name: "تحقق" }).click();
     await expect(page).toHaveURL(/\/ar\/admin$/);
 

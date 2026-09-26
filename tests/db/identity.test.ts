@@ -58,17 +58,35 @@ function cookieHeader(responseHeaders: Headers): string {
     .join("; ");
 }
 
-async function totpForUser(userId: string): Promise<string> {
+async function totpSecretForUser(userId: string): Promise<string> {
   const row = await runtimeDatabase.prisma.twoFactor.findUniqueOrThrow({
     where: { userId },
   });
   const ctx = await auth.$context;
   const { symmetricDecrypt } = await import("better-auth/crypto");
-  const secret = await symmetricDecrypt({
+  return symmetricDecrypt({
     key: ctx.secretConfig,
     data: row.secret,
   });
-  return createOTP(secret).totp();
+}
+
+async function totpForUser(userId: string): Promise<string> {
+  return createOTP(await totpSecretForUser(userId)).totp();
+}
+
+/**
+ * A currently-valid TOTP that differs from `avoid` — the next step's
+ * code is inside the ±1 acceptance window. Used where the replay guard
+ * could legitimately reject a repeated code from an earlier step.
+ */
+async function freshTotpForUser(
+  userId: string,
+  avoid: string,
+): Promise<string> {
+  const otp = createOTP(await totpSecretForUser(userId));
+  const counter = Math.floor(Date.now() / 30_000);
+  const next = await otp.hotp(counter + 1);
+  return next !== avoid ? next : otp.hotp(counter - 1);
 }
 
 beforeAll(async () => {
@@ -148,6 +166,7 @@ describe("identity schema (IMP-05)", () => {
     expect(tables.map((t) => t.name)).toEqual([
       "account",
       "session",
+      "totp_replay_guard",
       "two_factor",
       "user",
       "verification",
@@ -335,7 +354,7 @@ describe("authentication journey (IMP-05)", () => {
       await expect(
         auth.api.verifyTOTP({
           body: {
-            code: await totpForUser(session!.user.id),
+            code: await freshTotpForUser(session!.user.id, code),
             trustDevice: true,
           },
           headers: new Headers({ cookie: pendingCookie }),
@@ -386,11 +405,193 @@ describe("authentication journey (IMP-05)", () => {
         returnHeaders: true,
       });
       const ok = await auth.api.verifyTOTP({
-        body: { code: await totpForUser(session!.user.id) },
+        body: {
+          code: await freshTotpForUser(session!.user.id, code),
+        },
         headers: new Headers({ cookie: cookieHeader(challenge4.headers) }),
         returnHeaders: true,
       });
       expect(cookieHeader(ok.headers)).toContain("mcp.session_token=");
     },
   );
+});
+
+/**
+ * IMP-05 security correction — TOTP replay protection. The consumed
+ * fingerprint lives in identity.totp_replay_guard; the unique index is
+ * the atomic consumption point.
+ */
+describe("TOTP replay protection (IMP-05 correction)", () => {
+  const REPLAY_SECRET = "replay-guard-test-secret-material";
+
+  /** Enroll a fresh user directly at the persistence layer — the TOTP
+   *  secret is test-chosen so several users can share it deliberately. */
+  async function seedEnrolledUser(
+    email: string,
+    secret: string,
+  ): Promise<{ id: string }> {
+    const ctx = await auth.$context;
+    const { symmetricEncrypt } = await import("better-auth/crypto");
+    const user = await ctx.internalAdapter.createUser(
+      { email, name: email, emailVerified: true },
+      { method: "admin" },
+    );
+    await ctx.internalAdapter.linkAccount({
+      userId: user.id,
+      providerId: "credential",
+      accountId: user.id,
+      password: await ctx.password.hash(USER_PASSWORD),
+    });
+    await runtimeDatabase.prisma.twoFactor.create({
+      data: {
+        secret: await symmetricEncrypt({
+          key: ctx.secretConfig,
+          data: secret,
+        }),
+        backupCodes: "[]",
+        userId: user.id,
+        verified: true,
+      },
+    });
+    await ctx.internalAdapter.updateUser(user.id, { twoFactorEnabled: true });
+    return user;
+  }
+
+  /** Password sign-in → returns the pending two-factor challenge cookie. */
+  async function challengeFor(email: string): Promise<string> {
+    const res = await auth.api.signInEmail({
+      body: { email, password: USER_PASSWORD },
+      returnHeaders: true,
+    });
+    expect(
+      (res.response as { twoFactorRedirect?: boolean }).twoFactorRedirect,
+    ).toBe(true);
+    return cookieHeader(res.headers);
+  }
+
+  /** A code guaranteed invalid for the secret at the current step. */
+  async function invalidCodeFor(secret: string): Promise<string> {
+    const otp = createOTP(secret);
+    const counter = Math.floor(Date.now() / 30_000);
+    const valid = new Set(
+      await Promise.all([
+        otp.hotp(counter - 1),
+        otp.hotp(counter),
+        otp.hotp(counter + 1),
+      ]),
+    );
+    for (let i = 0; i < 1_000_000; i++) {
+      const candidate = String(i).padStart(6, "0");
+      if (!valid.has(candidate)) return candidate;
+    }
+    throw new Error("unreachable");
+  }
+
+  it("rejects a replayed TOTP within its window, accepts a fresh one", async () => {
+    const email = "replay-a@example.test";
+    const user = await seedEnrolledUser(email, REPLAY_SECRET);
+    const otp = createOTP(REPLAY_SECRET);
+    const codeX = await otp.totp();
+
+    const ok = await auth.api.verifyTOTP({
+      body: { code: codeX },
+      headers: new Headers({ cookie: await challengeFor(email) }),
+      returnHeaders: true,
+    });
+    expect(cookieHeader(ok.headers)).toContain("mcp.session_token=");
+
+    // Same code on a fresh challenge while still inside the window.
+    await expect(
+      auth.api.verifyTOTP({
+        body: { code: codeX },
+        headers: new Headers({ cookie: await challengeFor(email) }),
+      }),
+    ).rejects.toMatchObject({ status: "UNAUTHORIZED" });
+
+    // A fresh code for a different step still authenticates.
+    const fresh = await freshTotpForUser(user.id, codeX);
+    const ok2 = await auth.api.verifyTOTP({
+      body: { code: fresh },
+      headers: new Headers({ cookie: await challengeFor(email) }),
+      returnHeaders: true,
+    });
+    expect(cookieHeader(ok2.headers)).toContain("mcp.session_token=");
+  });
+
+  it("allows at most one success for concurrent identical-code submissions", async () => {
+    const email = "replay-b@example.test";
+    await seedEnrolledUser(email, REPLAY_SECRET);
+    const code = await createOTP(REPLAY_SECRET).totp();
+    const [p1, p2] = await Promise.all([
+      challengeFor(email),
+      challengeFor(email),
+    ]);
+    const results = await Promise.allSettled([
+      auth.api.verifyTOTP({
+        body: { code },
+        headers: new Headers({ cookie: p1 }),
+        returnHeaders: true,
+      }),
+      auth.api.verifyTOTP({
+        body: { code },
+        headers: new Headers({ cookie: p2 }),
+        returnHeaders: true,
+      }),
+    ]);
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((r) => r.status === "rejected")).toHaveLength(1);
+  });
+
+  it("scopes consumption per user — an identical code value on another user still works", async () => {
+    // Same TOTP secret → same six-digit value is valid for both users.
+    await seedEnrolledUser("replay-c-a@example.test", REPLAY_SECRET);
+    await seedEnrolledUser("replay-c-b@example.test", REPLAY_SECRET);
+    const code = await createOTP(REPLAY_SECRET).totp();
+    await auth.api.verifyTOTP({
+      body: { code },
+      headers: new Headers({
+        cookie: await challengeFor("replay-c-a@example.test"),
+      }),
+    });
+    const okB = await auth.api.verifyTOTP({
+      body: { code },
+      headers: new Headers({
+        cookie: await challengeFor("replay-c-b@example.test"),
+      }),
+      returnHeaders: true,
+    });
+    expect(cookieHeader(okB.headers)).toContain("mcp.session_token=");
+  });
+
+  it("does not record invalid codes as consumed", async () => {
+    const email = "replay-e@example.test";
+    const user = await seedEnrolledUser(email, REPLAY_SECRET);
+    const pending = await challengeFor(email);
+    await expect(
+      auth.api.verifyTOTP({
+        body: { code: await invalidCodeFor(REPLAY_SECRET) },
+        headers: new Headers({ cookie: pending }),
+      }),
+    ).rejects.toMatchObject({ status: "UNAUTHORIZED" });
+    expect(
+      await runtimeDatabase.prisma.totpReplayGuard.count({
+        where: { userId: user.id },
+      }),
+    ).toBe(0);
+    // The same challenge still accepts a valid code.
+    const ok = await auth.api.verifyTOTP({
+      body: { code: await createOTP(REPLAY_SECRET).totp() },
+      headers: new Headers({ cookie: pending }),
+      returnHeaders: true,
+    });
+    expect(cookieHeader(ok.headers)).toContain("mcp.session_token=");
+  });
+
+  it("never persists the raw TOTP value", async () => {
+    const rows = await runtimeDatabase.prisma.$queryRawUnsafe<
+      { fingerprint: string }[]
+    >("SELECT fingerprint FROM identity.totp_replay_guard");
+    // Fingerprints are 64-char hex HMACs — never the 6-digit code itself.
+    for (const row of rows) expect(row.fingerprint).toMatch(/^[0-9a-f]{64}$/);
+  });
 });

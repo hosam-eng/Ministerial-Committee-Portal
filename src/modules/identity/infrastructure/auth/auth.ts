@@ -1,5 +1,6 @@
 import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { betterAuth } from "better-auth";
+import type { HookEndpointContext } from "@better-auth/core";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { twoFactor } from "better-auth/plugins";
 
@@ -8,13 +9,16 @@ import type { Database } from "@/platform/database";
 import { getRuntimeDatabase } from "@/platform/runtime";
 
 import { hashPassword, verifyPassword } from "./password";
+import { claimTotp, releaseFailedTotpClaim } from "./totp-replay";
+
+const VERIFY_TOTP_PATH = "/two-factor/verify-totp";
 
 /**
  * Every endpoint under /two-factor/* that accepts a `trustDevice` flag would
  * issue a signed bypass cookie honored by sign-in. Mandatory MFA cannot
  * allow that path — reject before the endpoint runs.
  */
-const ENFORCE_MANDATORY_MFA = createAuthMiddleware(async (ctx) => {
+async function enforceMandatoryMfa(ctx: HookEndpointContext): Promise<void> {
   if (ctx.path === "/two-factor/disable") {
     throw new APIError("FORBIDDEN", {
       message: "Two-factor authentication is mandatory and cannot be disabled.",
@@ -26,7 +30,7 @@ const ENFORCE_MANDATORY_MFA = createAuthMiddleware(async (ctx) => {
       message: "Trusted-device sessions are not supported.",
     });
   }
-});
+}
 
 /**
  * Better Auth server configuration — the single identity authority.
@@ -71,7 +75,19 @@ export function createAuth(database: Database) {
       database: { generateId: false },
     },
     hooks: {
-      before: ENFORCE_MANDATORY_MFA,
+      before: createAuthMiddleware(async (ctx) => {
+        await enforceMandatoryMfa(ctx);
+        // TOTP replay guard: atomically consume the submitted code's
+        // fingerprint before verification runs — a conflict rejects the
+        // request without ever reaching the session-creating path.
+        if (ctx.path === VERIFY_TOTP_PATH) await claimTotp(ctx, database);
+      }),
+      after: createAuthMiddleware(async (ctx) => {
+        // Release this request's claim only when verification failed —
+        // successfully verified codes stay consumed.
+        if (ctx.path === VERIFY_TOTP_PATH)
+          await releaseFailedTotpClaim(ctx, database);
+      }),
     },
     plugins: [
       twoFactor({
