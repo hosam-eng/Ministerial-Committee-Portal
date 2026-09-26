@@ -74,6 +74,12 @@ Runtime platform (typed config, error model, logging/redaction,
 correlation, OpenTelemetry, health, graceful shutdown):
 see [docs/runtime-platform.md](docs/runtime-platform.md).
 
+Localization: public pages live under explicit locale prefixes — `/ar`
+(Arabic, RTL, default; `/` redirects here) and `/en` (English, LTR). UI
+message catalogs live in `messages/{ar,en}.json`; business/CMS content
+will be localized in the database, not in these files. API routes
+(`/api/*`) are never localized.
+
 E2E tests build the app (`next build`) and serve it with `next start` — they never run against the dev server. Playwright browsers: `npx playwright install chromium`.
 
 ## Source structure
@@ -81,8 +87,10 @@ E2E tests build the app (`next build`) and serve it with `next start` — they n
 ```text
 src/
 ├── app/          # Next.js App Router delivery layer (thin — no business logic)
+│   └── [locale]/ # localized public routes (/ar, /en)
+├── i18n/         # localization foundation (routing, request config, navigation)
 ├── modules/      # business capabilities (domain/application/infrastructure/presentation)
-├── platform/     # technical infrastructure (database, auth, i18n, config, …)
+├── platform/     # technical infrastructure (database, config, logging, telemetry, …)
 ├── shared/       # domain-neutral reusable code only
 └── styles/
 
@@ -115,5 +123,6 @@ Cross-module access goes through a module's public contract (`@/modules/<name>`)
 - [x] **IMP-01** — Runtime, project structure & quality foundation
 - [x] **IMP-02** — PostgreSQL 18 + Prisma 7 data platform (no business models yet)
 - [x] **IMP-03** — Runtime platform: config, errors, observability, health
+- [x] **IMP-04** — Localization foundation (/ar + /en, RTL/LTR, language switch)
 
 Later increments (database, auth, localization, design system, CMS) are intentionally not implemented yet — see `../docs/implementation/MASTER-IMPLEMENTATION-PLAN.md`.

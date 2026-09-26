@@ -196,6 +196,37 @@ const VIOLATIONS: Case[] = [
     'import { pino } from "pino";\nexport const x = 1;',
     "layer must not depend on Pino",
   ],
+  // IMP-04 — localization framework confinement.
+  [
+    "domain → next-intl",
+    "modules/publishing/domain/news.ts",
+    'import { useTranslations } from "next-intl";\nexport const x = 1;',
+    "layer must not depend on the localization framework",
+  ],
+  [
+    "application → next-intl/server",
+    "modules/publishing/application/create-news.ts",
+    'import { getTranslations } from "next-intl/server";\nexport const x = 1;',
+    "layer must not depend on the localization framework",
+  ],
+  [
+    "infrastructure → use-intl",
+    "modules/publishing/infrastructure/news-repository.ts",
+    'import { useLocale } from "use-intl";\nexport const x = 1;',
+    "layer must not depend on the localization framework",
+  ],
+  [
+    "module root → next-intl/navigation",
+    "modules/publishing/index.ts",
+    'import { Link } from "next-intl/navigation";\nexport const x = 1;',
+    "layer must not depend on the localization framework",
+  ],
+  [
+    "shared → next-intl",
+    "shared/util/x.ts",
+    'import { useTranslations } from "next-intl";\nexport const x = 1;',
+    "layer must not depend on the localization framework",
+  ],
   [
     "module → process.env",
     "modules/publishing/application/create-news.ts",
@@ -299,6 +330,18 @@ const ALLOWED: Case[] = [
     "platform logging → pino (implementation allowed)",
     "platform/logging/logger.ts",
     'import { pino } from "pino";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "presentation → next-intl (localized module UI)",
+    "modules/publishing/presentation/news-card.tsx",
+    'import { useTranslations } from "next-intl";\nexport function C() { return null; }',
+    null,
+  ],
+  [
+    "app → i18n routing and localized navigation",
+    "app/[locale]/page.tsx",
+    'import { Link } from "@/i18n/navigation";\nimport { routing } from "@/i18n/routing";\nexport default function P() { return null; }',
     null,
   ],
 ];
