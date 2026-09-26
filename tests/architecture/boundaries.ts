@@ -191,20 +191,35 @@ const OBSERVABILITY_BANS: { pattern: RegExp; rule: string }[] = [
   },
 ];
 
+const LOCALIZATION_BANS: { pattern: RegExp; rule: string }[] = [
+  {
+    pattern: /^(next-intl|use-intl)(\/.*)?$/,
+    rule: "layer must not depend on the localization framework",
+  },
+];
+
 function externalViolation(area: SourceArea, specifier: string): string | null {
   let bans: { pattern: RegExp; rule: string }[] = [];
   if (area.kind === "module") {
     // IMP-03: no module layer may import observability implementation
     // packages. Persistence imports stay confined per the IMP-02
     // contract (infrastructure may use the platform persistence stack).
+    // IMP-04: the localization framework stays out of every module layer
+    // except presentation — business code is locale-framework agnostic.
     bans =
       area.layer === "domain" || area.layer === "application"
-        ? [...EXTERNAL_BANS, ...OBSERVABILITY_BANS]
+        ? [...EXTERNAL_BANS, ...OBSERVABILITY_BANS, ...LOCALIZATION_BANS]
         : area.layer === "infrastructure"
-          ? [...OBSERVABILITY_BANS]
-          : [...PERSISTENCE_BANS, ...OBSERVABILITY_BANS];
+          ? [...OBSERVABILITY_BANS, ...LOCALIZATION_BANS]
+          : area.layer === "presentation"
+            ? [...PERSISTENCE_BANS, ...OBSERVABILITY_BANS]
+            : [
+                ...PERSISTENCE_BANS,
+                ...OBSERVABILITY_BANS,
+                ...LOCALIZATION_BANS,
+              ];
   } else if (area.kind === "shared") {
-    bans = [...PERSISTENCE_BANS, ...OBSERVABILITY_BANS];
+    bans = [...PERSISTENCE_BANS, ...OBSERVABILITY_BANS, ...LOCALIZATION_BANS];
   }
   const hit = bans.find((b) => b.pattern.test(specifier));
   return hit ? hit.rule : null;

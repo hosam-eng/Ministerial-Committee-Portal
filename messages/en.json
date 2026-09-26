@@ -1,0 +1,19 @@
+{
+  "app": {
+    "name": "Ministerial Committee for Traffic Safety"
+  },
+  "home": {
+    "title": "Ministerial Committee for Traffic Safety",
+    "body": "The digital portal foundation is ready.",
+    "switchToLanguage": "العربية"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you requested could not be found."
+  },
+  "error": {
+    "title": "Something went wrong",
+    "body": "An unexpected error occurred. Please try again.",
+    "retry": "Try again"
+  }
+}

@@ -61,6 +61,12 @@ const NO_OBSERVABILITY = {
     "Business code must not import logging/telemetry implementation packages; use platform abstractions.",
 };
 
+const NO_LOCALIZATION = {
+  group: ["next-intl", "next-intl/*", "use-intl", "use-intl/*"],
+  message:
+    "This layer must not depend on the localization framework; only app/presentation code may localize.",
+};
+
 const NO_PROCESS_ENV = {
   selector:
     "MemberExpression[object.name='process'][property.name='env'], MemberExpression[object.name='process'][property.value='env']",
@@ -109,6 +115,7 @@ const eslintConfig = defineConfig([
             NO_PLATFORM,
             NO_INFRASTRUCTURE,
             NO_OBSERVABILITY,
+            NO_LOCALIZATION,
           ],
         },
       ],
@@ -130,6 +137,7 @@ const eslintConfig = defineConfig([
             NO_PLATFORM,
             NO_INFRASTRUCTURE,
             NO_OBSERVABILITY,
+            NO_LOCALIZATION,
           ],
         },
       ],
@@ -150,6 +158,7 @@ const eslintConfig = defineConfig([
             NO_PLATFORM,
             NO_INFRASTRUCTURE,
             NO_OBSERVABILITY,
+            NO_LOCALIZATION,
           ],
         },
       ],
@@ -164,7 +173,12 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": [
         "error",
         {
-          patterns: [MODULE_PUBLIC_CONTRACT, NO_APP, NO_OBSERVABILITY],
+          patterns: [
+            MODULE_PUBLIC_CONTRACT,
+            NO_APP,
+            NO_OBSERVABILITY,
+            NO_LOCALIZATION,
+          ],
         },
       ],
       "no-restricted-syntax": ["error", NO_PROCESS_ENV],
@@ -182,6 +196,7 @@ const eslintConfig = defineConfig([
             NO_PERSISTENCE,
             NO_APP,
             NO_OBSERVABILITY,
+            NO_LOCALIZATION,
           ],
         },
       ],
@@ -220,6 +235,7 @@ const eslintConfig = defineConfig([
             NO_PLATFORM,
             NO_PERSISTENCE,
             NO_OBSERVABILITY,
+            NO_LOCALIZATION,
           ],
         },
       ],
