@@ -69,6 +69,7 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "test-results/**",
     "next-env.d.ts",
+    "src/platform/database/generated/**",
   ]),
   {
     files: SRC_FILES,

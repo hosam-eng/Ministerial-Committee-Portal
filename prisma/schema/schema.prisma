@@ -1,0 +1,16 @@
+// Multi-file Prisma schema — root file.
+//
+// Bounded-context model files live beside this file (e.g. cms.prisma,
+// identity.prisma) and are added by their owning increments only. This
+// file is the single owner of the datasource and client generator —
+// no other *.prisma file may declare them.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../src/platform/database/generated"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
