@@ -67,6 +67,19 @@ const NO_LOCALIZATION = {
     "This layer must not depend on the localization framework; only app/presentation code may localize.",
 };
 
+const NO_AUTH = {
+  group: ["better-auth", "better-auth/*", "@better-auth/*", "@node-rs/*"],
+  message:
+    "Auth implementation is confined to identity infrastructure (IMP-05); identity presentation may use better-auth client APIs only.",
+};
+
+const NO_AUTH_SERVER = {
+  regex:
+    "^better-auth($|/(api|next-js|plugins)(/.*)?$)|^@better-auth/|^@node-rs/",
+  message:
+    "Better Auth server surface is confined to identity infrastructure; only client APIs (better-auth/react, better-auth/client/*) may appear here.",
+};
+
 const NO_PROCESS_ENV = {
   selector:
     "MemberExpression[object.name='process'][property.name='env'], MemberExpression[object.name='process'][property.value='env']",
@@ -116,6 +129,7 @@ const eslintConfig = defineConfig([
             NO_INFRASTRUCTURE,
             NO_OBSERVABILITY,
             NO_LOCALIZATION,
+            NO_AUTH,
           ],
         },
       ],
@@ -138,6 +152,7 @@ const eslintConfig = defineConfig([
             NO_INFRASTRUCTURE,
             NO_OBSERVABILITY,
             NO_LOCALIZATION,
+            NO_AUTH,
           ],
         },
       ],
@@ -159,6 +174,7 @@ const eslintConfig = defineConfig([
             NO_INFRASTRUCTURE,
             NO_OBSERVABILITY,
             NO_LOCALIZATION,
+            NO_AUTH,
           ],
         },
       ],
@@ -178,6 +194,7 @@ const eslintConfig = defineConfig([
             NO_APP,
             NO_OBSERVABILITY,
             NO_LOCALIZATION,
+            NO_AUTH,
           ],
         },
       ],
@@ -197,6 +214,7 @@ const eslintConfig = defineConfig([
             NO_APP,
             NO_OBSERVABILITY,
             NO_LOCALIZATION,
+            NO_AUTH,
           ],
         },
       ],
@@ -209,7 +227,9 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": [
         "error",
-        { patterns: [MODULE_PUBLIC_CONTRACT, NO_APP, NO_MODULES] },
+        {
+          patterns: [MODULE_PUBLIC_CONTRACT, NO_APP, NO_MODULES, NO_AUTH],
+        },
       ],
     },
   },
@@ -236,6 +256,47 @@ const eslintConfig = defineConfig([
             NO_PERSISTENCE,
             NO_OBSERVABILITY,
             NO_LOCALIZATION,
+            NO_AUTH,
+          ],
+        },
+      ],
+      "no-restricted-syntax": ["error", NO_PROCESS_ENV],
+    },
+  },
+  {
+    // IMP-05: identity infrastructure is the only auth implementation site.
+    files: ["src/modules/identity/infrastructure/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            MODULE_PUBLIC_CONTRACT,
+            NO_APP,
+            NO_OBSERVABILITY,
+            NO_LOCALIZATION,
+          ],
+        },
+      ],
+      "no-restricted-syntax": ["error", NO_PROCESS_ENV],
+    },
+  },
+  {
+    // IMP-05: identity presentation may use Better Auth client APIs and
+    // the localization framework (localized auth UI) only.
+    files: ["src/modules/identity/presentation/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            MODULE_PUBLIC_CONTRACT,
+            NO_PERSISTENCE,
+            NO_APP,
+            NO_PLATFORM,
+            NO_INFRASTRUCTURE,
+            NO_OBSERVABILITY,
+            NO_AUTH_SERVER,
           ],
         },
       ],

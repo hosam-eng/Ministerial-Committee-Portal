@@ -49,6 +49,10 @@ function freezeConfig(env: ServerEnv): ServerConfig {
       serviceName: env.OTEL_SERVICE_NAME,
       exporterEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT,
     }),
+    auth: Object.freeze({
+      secret: env.BETTER_AUTH_SECRET,
+      baseUrl: env.BETTER_AUTH_URL,
+    }),
   });
 }
 

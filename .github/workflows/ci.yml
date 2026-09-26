@@ -68,6 +68,27 @@ jobs:
   build-e2e:
     name: Production build, E2E smoke, accessibility
     runs-on: ubuntu-latest
+    # IMP-05: authentication E2E needs a real PostgreSQL 18 with the
+    # repository's role bootstrap — same image/init files as the dev
+    # compose setup and the Testcontainers suites.
+    services:
+      postgres:
+        image: postgres:18.6
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_dev_only
+          POSTGRES_DB: mcp_dev
+          TZ: UTC
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d mcp_dev"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+        volumes:
+          - ./docker/postgres/sql:/mcp-sql:ro
+          - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -78,9 +99,21 @@ jobs:
         run: npm ci
       - name: Production build
         run: npm run build
+      - name: Apply migrations via the migration identity
+        run: npm run db:migrate:deploy
+        env:
+          DATABASE_MIGRATION_URL: postgresql://mcp_migrate:mcp_migrate_dev@127.0.0.1:5432/mcp_dev
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
       - name: E2E smoke (production server)
         run: npm run test:e2e
+        env:
+          DATABASE_URL: postgresql://mcp_runtime:mcp_runtime_dev@127.0.0.1:5432/mcp_dev
+          BETTER_AUTH_SECRET: ci-only-better-auth-secret-not-for-prod-0123456789
+          BETTER_AUTH_URL: http://127.0.0.1:3000
       - name: Accessibility smoke (axe)
         run: npm run test:a11y
+        env:
+          DATABASE_URL: postgresql://mcp_runtime:mcp_runtime_dev@127.0.0.1:5432/mcp_dev
+          BETTER_AUTH_SECRET: ci-only-better-auth-secret-not-for-prod-0123456789
+          BETTER_AUTH_URL: http://127.0.0.1:3000

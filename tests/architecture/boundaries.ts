@@ -198,7 +198,39 @@ const LOCALIZATION_BANS: { pattern: RegExp; rule: string }[] = [
   },
 ];
 
+/**
+ * IMP-05: the auth implementation stack (Better Auth server surface,
+ * Prisma adapter, Argon2) is confined to the identity module's
+ * infrastructure layer. Identity presentation may use the Better Auth
+ * client APIs; every other area is fully banned.
+ */
+const AUTH_CLIENT_SPECIFIERS = new Set([
+  "better-auth/react",
+  "better-auth/client",
+  "better-auth/client/plugins",
+]);
+
+function isAuthSpecifier(specifier: string): boolean {
+  return (
+    /^better-auth(\/.*)?$/.test(specifier) ||
+    /^@better-auth(\/.*)?$/.test(specifier) ||
+    /^@node-rs\//.test(specifier)
+  );
+}
+
+function authViolation(area: SourceArea, specifier: string): string | null {
+  if (!isAuthSpecifier(specifier)) return null;
+  if (area.kind === "module" && area.module === "identity") {
+    if (area.layer === "infrastructure") return null;
+    if (area.layer === "presentation" && AUTH_CLIENT_SPECIFIERS.has(specifier))
+      return null;
+  }
+  return "auth implementation is confined to identity infrastructure (client APIs allowed in identity presentation)";
+}
+
 function externalViolation(area: SourceArea, specifier: string): string | null {
+  const authRule = authViolation(area, specifier);
+  if (authRule) return authRule;
   let bans: { pattern: RegExp; rule: string }[] = [];
   if (area.kind === "module") {
     // IMP-03: no module layer may import observability implementation

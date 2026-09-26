@@ -62,7 +62,11 @@ describe("server config validation", () => {
   });
 
   it("requires DATABASE_URL when APP_ENV=production", () => {
-    const env = { NODE_ENV: "production", APP_ENV: "production" };
+    const env = {
+      NODE_ENV: "production",
+      APP_ENV: "production",
+      BETTER_AUTH_SECRET: "production-test-secret-32-chars-minimum!",
+    };
     expect(() => validateServerConfig(env)).toThrow(ConfigurationError);
     expect(() =>
       validateServerConfig({ ...env, DATABASE_URL: VALID_ENV.DATABASE_URL }),

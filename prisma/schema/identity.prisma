@@ -1,0 +1,94 @@
+// Identity bounded context — Better Auth persistence (IMP-05).
+//
+// Owned by the identity module. Field names match the Better Auth
+// Prisma adapter contract exactly; column names follow the repository's
+// snake_case convention via @map. Entity IDs are PostgreSQL-native
+// UUIDv7 defaults; the session `token` is the opaque credential and is
+// intentionally NOT the entity id.
+
+model User {
+  id               String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  name             String
+  email            String
+  emailVerified    Boolean  @default(false) @map("email_verified")
+  image            String?
+  twoFactorEnabled Boolean  @default(false) @map("two_factor_enabled")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  accounts   Account[]
+  sessions   Session[]
+  twoFactors TwoFactor[]
+
+  @@unique([email])
+  @@map("user")
+  @@schema("identity")
+}
+
+model Session {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  token     String
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+  @@schema("identity")
+}
+
+model Account {
+  id                    String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id") @db.Uuid
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamptz(6)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz(6)
+  scope                 String?
+  idToken               String?   @map("id_token")
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+  @@schema("identity")
+}
+
+model Verification {
+  id         String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("verification")
+  @@schema("identity")
+}
+
+model TwoFactor {
+  id                     String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  secret                 String
+  backupCodes            String    @map("backup_codes")
+  userId                 String    @map("user_id") @db.Uuid
+  verified               Boolean   @default(true)
+  failedVerificationCount Int      @default(0) @map("failed_verification_count")
+  lockedUntil            DateTime? @map("locked_until") @db.Timestamptz(6)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@map("two_factor")
+  @@schema("identity")
+}

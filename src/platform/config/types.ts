@@ -27,6 +27,20 @@ export interface ServerConfig {
     /** OTLP HTTP endpoint; absent = no exporter (local dev default). */
     readonly exporterEndpoint?: string;
   };
+  readonly auth: {
+    /**
+     * Better Auth signing/encryption secret. Server-only — must never
+     * reach client output, logs, or error messages. Required in
+     * production; optional in development/test where Better Auth
+     * resolves its own local default.
+     */
+    readonly secret?: string;
+    /**
+     * Absolute base URL for the auth server. Required https in
+     * production; optional locally (Better Auth derives the origin).
+     */
+    readonly baseUrl?: string;
+  };
 }
 
 /**

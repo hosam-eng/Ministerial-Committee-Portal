@@ -155,7 +155,11 @@ describe("PostgreSQL 18 platform", () => {
           timeout: 150_000,
         },
       );
-      expect(stdout).toContain("No pending migrations to apply");
+      // Either the migration applied now or it was already applied —
+      // both prove the migration identity can drive prisma migrate.
+      expect(stdout).toMatch(
+        /No pending migrations to apply|successfully applied/,
+      );
     },
   );
 

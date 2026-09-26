@@ -15,5 +15,47 @@
     "title": "Something went wrong",
     "body": "An unexpected error occurred. Please try again.",
     "retry": "Try again"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to the admin console",
+      "email": "Email address",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "invalidCredentials": "Invalid credentials."
+    },
+    "mfa": {
+      "title": "Two-factor verification",
+      "instructions": "Enter the code from your authenticator app, or use one of your backup codes.",
+      "totpLabel": "Authenticator app code",
+      "backupLabel": "Backup code",
+      "verify": "Verify",
+      "verifying": "Verifying…",
+      "invalidCode": "The code is invalid or has expired.",
+      "useBackupCode": "Use a backup code instead",
+      "useTotp": "Use the authenticator app instead"
+    },
+    "setup": {
+      "title": "Set up two-factor authentication (required)",
+      "intro": "Every admin account requires two-factor authentication via an authenticator app. Enter your password to continue.",
+      "submit": "Continue",
+      "submitting": "Setting up…",
+      "enableFailed": "Could not start setup. Check your password and try again.",
+      "authenticatorTitle": "Authenticator app",
+      "authenticatorInstructions": "Add the following URI to your authenticator (TOTP) app:",
+      "backupCodesTitle": "Backup codes",
+      "backupCodesWarning": "Store these codes somewhere safe. They are shown once and each code can be used only once."
+    },
+    "admin": {
+      "title": "Signed in successfully",
+      "signedInAs": "Email: {email}",
+      "authorizationLater": "Authorization and backoffice capabilities will be added in IMP-06.",
+      "logout": "Sign out",
+      "loggingOut": "Signing out…"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again."
+    }
   }
 }

@@ -227,6 +227,49 @@ const VIOLATIONS: Case[] = [
     'import { useTranslations } from "next-intl";\nexport const x = 1;',
     "layer must not depend on the localization framework",
   ],
+  // IMP-05 — auth implementation confinement.
+  [
+    "domain → better-auth",
+    "modules/publishing/domain/news.ts",
+    'import { betterAuth } from "better-auth";\nexport const x = 1;',
+    "auth implementation is confined to identity infrastructure (client APIs allowed in identity presentation)",
+  ],
+  [
+    "application → @node-rs/argon2",
+    "modules/publishing/application/create-news.ts",
+    'import { hash } from "@node-rs/argon2";\nexport const x = 1;',
+    "auth implementation is confined to identity infrastructure (client APIs allowed in identity presentation)",
+  ],
+  [
+    "infrastructure (non-identity) → prisma adapter",
+    "modules/publishing/infrastructure/news-repository.ts",
+    'import { prismaAdapter } from "@better-auth/prisma-adapter";\nexport const x = 1;',
+    "auth implementation is confined to identity infrastructure (client APIs allowed in identity presentation)",
+  ],
+  [
+    "identity presentation → better-auth server surface",
+    "modules/identity/presentation/login-form.tsx",
+    'import { betterAuth } from "better-auth";\nexport function C() { return null; }',
+    "auth implementation is confined to identity infrastructure (client APIs allowed in identity presentation)",
+  ],
+  [
+    "presentation (non-identity) → better-auth client",
+    "modules/publishing/presentation/news-card.tsx",
+    'import { createAuthClient } from "better-auth/react";\nexport function C() { return null; }',
+    "auth implementation is confined to identity infrastructure (client APIs allowed in identity presentation)",
+  ],
+  [
+    "app → better-auth/next-js",
+    "app/api/auth/route.ts",
+    'import { toNextJsHandler } from "better-auth/next-js";\nexport const GET = 1;',
+    "auth implementation is confined to identity infrastructure (client APIs allowed in identity presentation)",
+  ],
+  [
+    "shared → better-auth",
+    "shared/util/x.ts",
+    'import { betterAuth } from "better-auth";\nexport const x = 1;',
+    "auth implementation is confined to identity infrastructure (client APIs allowed in identity presentation)",
+  ],
   [
     "module → process.env",
     "modules/publishing/application/create-news.ts",
@@ -276,6 +319,25 @@ const ALLOWED: Case[] = [
     "application → other module public contract",
     "modules/publishing/application/create-news.ts",
     'import { getMedia } from "@/modules/media";\nexport const x = 1;',
+    null,
+  ],
+  // IMP-05 — identity module is the auth implementation site.
+  [
+    "identity infrastructure → better-auth server + adapter + argon2",
+    "modules/identity/infrastructure/auth/auth.ts",
+    'import { betterAuth } from "better-auth";\nimport { APIError } from "better-auth/api";\nimport { twoFactor } from "better-auth/plugins";\nimport { toNextJsHandler } from "better-auth/next-js";\nimport { prismaAdapter } from "@better-auth/prisma-adapter";\nimport { hash } from "@node-rs/argon2";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "identity presentation → better-auth client APIs + next-intl",
+    "modules/identity/presentation/login-form.tsx",
+    '"use client";\nimport { createAuthClient } from "better-auth/react";\nimport { twoFactorClient } from "better-auth/client/plugins";\nimport { useTranslations } from "next-intl";\nexport function C() { return null; }',
+    null,
+  ],
+  [
+    "identity presentation → own client (relative)",
+    "modules/identity/presentation/login-form.tsx",
+    '"use client";\nimport { authClient } from "./auth-client";\nexport function C() { return null; }',
     null,
   ],
   [

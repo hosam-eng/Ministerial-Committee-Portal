@@ -23,3 +23,58 @@ body {
   padding-block: 2rem;
   text-align: start;
 }
+
+/* IMP-05 authentication pages: logical properties only — safe in both
+   rtl (ar) and ltr (en). Styling is intentionally minimal; the design
+   system arrives in a later increment. */
+.auth-page {
+  max-inline-size: 44ch;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  padding-block: 2rem;
+  text-align: start;
+}
+
+.auth-page label {
+  display: block;
+  margin-block-end: 0.25rem;
+}
+
+.auth-page input {
+  display: block;
+  inline-size: 100%;
+  padding-block: 0.5rem;
+  padding-inline: 0.5rem;
+  margin-block-end: 1rem;
+}
+
+.auth-page button {
+  padding-block: 0.5rem;
+  padding-inline: 1rem;
+}
+
+.auth-error {
+  color: #b3261e;
+}
+
+.auth-secret {
+  display: block;
+  word-break: break-all;
+  padding-block: 0.5rem;
+  padding-inline: 0.5rem;
+  background: #f2f2f2;
+}
+
+.auth-backup-codes {
+  columns: 2;
+  padding-inline-start: 1rem;
+}
+
+.auth-link {
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+  color: inherit;
+}
