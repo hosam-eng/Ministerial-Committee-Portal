@@ -15,5 +15,8 @@ export default defineConfig({
     setupFiles: ["./tests/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
     exclude: ["node_modules/**", "tests/e2e/**"],
+    // tests/db starts a real PostgreSQL container; allow generous budgets.
+    testTimeout: 60_000,
+    hookTimeout: 300_000,
   },
 });

@@ -6,6 +6,9 @@
 /out/
 next-env.d.ts
 
+# Generated Prisma client (regenerate with `npm run db:generate`)
+/src/platform/database/generated/
+
 # Production build output
 /build/
 /dist/

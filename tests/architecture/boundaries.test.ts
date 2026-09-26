@@ -128,6 +128,43 @@ const VIOLATIONS: Case[] = [
     'import { NewsCard } from "../presentation/news-card";\nexport const x = 1;',
     "domain may only depend on its own domain layer",
   ],
+  // IMP-02 — persistence stack confinement.
+  [
+    "application → @prisma/adapter-pg",
+    "modules/publishing/application/create-news.ts",
+    'import { PrismaPg } from "@prisma/adapter-pg";\nexport const x = 1;',
+    "layer must not depend on Prisma",
+  ],
+  [
+    "presentation → @prisma/client",
+    "modules/publishing/presentation/news-card.tsx",
+    'import { PrismaClient } from "@prisma/client";\nexport function C() { return null; }',
+    "layer must not depend on Prisma",
+  ],
+  [
+    "shared → pg driver",
+    "shared/util/x.ts",
+    'import pg from "pg";\nexport const x = 1;',
+    "layer must not depend on the PostgreSQL driver",
+  ],
+  [
+    "shared → generated Prisma client (alias)",
+    "shared/util/x.ts",
+    'import { PrismaClient } from "@/platform/database/generated/client";\nexport const x = 1;',
+    "shared must not depend on platform infrastructure",
+  ],
+  [
+    "domain → generated Prisma client (relative)",
+    "modules/publishing/domain/news.ts",
+    'import { PrismaClient } from "../../../platform/database/generated/client";\nexport const x = 1;',
+    "domain must not depend on platform infrastructure",
+  ],
+  [
+    "presentation → generated Prisma client",
+    "modules/media/presentation/card.tsx",
+    'import { PrismaClient } from "@/platform/database/generated/client";\nexport function C() { return null; }',
+    "presentation must not depend on platform infrastructure",
+  ],
 ];
 
 const ALLOWED: Case[] = [
@@ -165,6 +202,18 @@ const ALLOWED: Case[] = [
     "infrastructure → Prisma + platform + own domain",
     "modules/publishing/infrastructure/news-repository.ts",
     'import { PrismaClient } from "@prisma/client";\nimport { db } from "@/platform/database";\nimport { News } from "../domain/news";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "module infrastructure → adapter-pg + generated client",
+    "modules/publishing/infrastructure/db.ts",
+    'import { PrismaPg } from "@prisma/adapter-pg";\nimport { PrismaClient } from "@/platform/database/generated/client";\nexport const x = 1;',
+    null,
+  ],
+  [
+    "platform database → pg + adapter + generated client",
+    "platform/database/client.ts",
+    'import pg from "pg";\nimport { PrismaPg } from "@prisma/adapter-pg";\nimport { PrismaClient } from "./generated/client";\nexport const x = 1;',
     null,
   ],
   [

@@ -1,0 +1,34 @@
+name: mcp-dev
+
+# Developer-only PostgreSQL 18. Not a production topology — no proxy,
+# no TLS, no HA, no backups. Credentials are local and disposable.
+
+services:
+  postgres:
+    image: postgres:18.6
+    container_name: mcp-postgres-dev
+    restart: "no"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_dev_only
+      POSTGRES_DB: mcp_dev
+      PGDATA: /var/lib/postgresql/data
+      TZ: UTC
+    # Storage/clock semantics pinned to the production contract.
+    command:
+      ["postgres", "-c", "timezone=Etc/UTC", "-c", "log_timezone=Etc/UTC"]
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - mcp-postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/sql:/mcp-sql:ro
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+volumes:
+  mcp-postgres-data:

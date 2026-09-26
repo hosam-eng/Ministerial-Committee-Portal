@@ -33,10 +33,32 @@ jobs:
         run: npm run lint
       - name: Architecture boundary tests
         run: npm run test:architecture
+      - name: Prisma client generation
+        run: npm run db:generate
       - name: Typecheck
         run: npm run typecheck
       - name: Unit + component tests
         run: npm run test
+
+  database:
+    name: Prisma format/validate/generate, Testcontainers PostgreSQL 18
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install (frozen lockfile)
+        run: npm ci
+      - name: Prisma schema format (fail if it would rewrite)
+        run: npm run db:format && git diff --exit-code -- prisma/
+      - name: Prisma schema validation
+        run: npm run db:validate
+      - name: Prisma client generation
+        run: npm run db:generate
+      - name: Testcontainers PostgreSQL 18 integration
+        run: npm run test:db
 
   build-e2e:
     name: Production build, E2E smoke, accessibility

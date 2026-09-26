@@ -19,12 +19,22 @@
     "test:unit": "vitest run tests/unit",
     "test:component": "vitest run tests/component",
     "test:architecture": "vitest run tests/architecture",
+    "test:db": "vitest run tests/db",
+    "db:format": "prisma format",
+    "db:validate": "prisma validate",
+    "db:generate": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test --grep @a11y",
-    "check": "npm run format:check && npm run lint && npm run test:architecture && npm run typecheck && npm run test"
+    "check": "npm run format:check && npm run lint && npm run test:architecture && npm run typecheck && npm run test",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "next": "16.3.5",
+    "pg": "8.23.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1"
@@ -32,10 +42,12 @@
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.63.0",
+    "@testcontainers/postgresql": "12.1.0",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "@types/node": "24.19.0",
+    "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
@@ -44,8 +56,14 @@
     "eslint-config-prettier": "10.1.8",
     "jsdom": "29.1.1",
     "prettier": "3.9.8",
+    "prisma": "7.10.0",
+    "testcontainers": "12.1.0",
     "typescript": "5.9.3",
     "vite": "8.3.0",
     "vitest": "5.0.2"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2",
+    "mysql2": "3.24.4"
   }
 }
