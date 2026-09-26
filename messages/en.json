@@ -50,12 +50,75 @@
     "admin": {
       "title": "Signed in successfully",
       "signedInAs": "Email: {email}",
-      "authorizationLater": "Authorization and backoffice capabilities will be added in IMP-06.",
       "logout": "Sign out",
       "loggingOut": "Signing out…"
     },
     "errors": {
       "generic": "Something went wrong. Please try again."
+    }
+  },
+  "access": {
+    "links": {
+      "roles": "Manage roles",
+      "users": "Manage users"
+    },
+    "denied": {
+      "title": "Access denied",
+      "body": "You do not have the required permission to view this page.",
+      "backToAdmin": "Back to the admin console"
+    },
+    "roles": {
+      "title": "Roles",
+      "name": "Role name",
+      "description": "Description",
+      "status": "Status",
+      "permissions": "Permissions",
+      "actions": "Actions",
+      "system": "System role",
+      "custom": "Custom role",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noDescription": "—",
+      "noPermissions": "No permissions",
+      "create": "Create role",
+      "createTitle": "New custom role",
+      "save": "Save",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "readOnlyNotice": "This system role is read-only and cannot be modified."
+    },
+    "users": {
+      "title": "Users",
+      "email": "Email address",
+      "roles": "Roles",
+      "actions": "Actions",
+      "noRoles": "No roles",
+      "assign": "Assign",
+      "assignRole": "Assign role",
+      "remove": "Remove"
+    },
+    "permissions": {
+      "backoffice": {
+        "access": "Access the admin console"
+      },
+      "identity": {
+        "users": {
+          "read": "View users"
+        },
+        "user_roles": {
+          "manage": "Manage user role assignments"
+        },
+        "roles": {
+          "read": "View roles",
+          "manage": "Manage roles"
+        }
+      }
+    },
+    "errors": {
+      "denied": "You do not have the required permission for this action.",
+      "invalid": "Invalid input. Check the fields and try again.",
+      "nameTaken": "That role name is already in use.",
+      "lastAdmin": "The final Administrator membership cannot be removed."
     }
   }
 }

@@ -1,8 +1,10 @@
 import { AxeBuilder } from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import {
+  A11Y_DENIED_USER,
   A11Y_USER,
+  completeMfaEnrollment,
   hasDatabase,
   seedE2eUser,
   submitMfaEnable,
@@ -86,4 +88,87 @@ test("@a11y /en/admin/mfa/setup and /en/admin have no serious or critical axe vi
       (v) => v.impact === "serious" || v.impact === "critical",
     ),
   ).toEqual([]);
+});
+
+async function expectNoSeriousViolations(page: Page): Promise<void> {
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(
+    results.violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical",
+    ),
+  ).toEqual([]);
+}
+
+/**
+ * IMP-06: the new backoffice pages (admin landing, roles, users) for a
+ * fully authenticated Administrator, plus the localized access-denied
+ * page for a zero-role user. English only — markup is shared.
+ */
+test("@a11y /en/admin access pages have no serious or critical axe violations", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  test.skip(!hasDatabase(), "rbac a11y requires DATABASE_URL");
+  await seedE2eUser(A11Y_USER); // Administrator membership
+
+  await page.goto("/en/admin/login");
+  await submitSignIn(
+    page,
+    { email: "Email address", password: "Password", submit: "Sign in" },
+    A11Y_USER,
+  );
+  await expect(page).toHaveURL(/\/en\/admin\/mfa\/setup$/);
+  await completeMfaEnrollment(
+    page,
+    {
+      password: "Password",
+      continue: "Continue",
+      code: "Authenticator app code",
+      submit: "Verify",
+    },
+    A11Y_USER.password,
+  );
+  await expect(page).toHaveURL(/\/en\/admin$/);
+  await expect(page).toHaveTitle(/.+/);
+  await expectNoSeriousViolations(page);
+
+  await page.goto("/en/admin/access/roles");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+
+  await page.goto("/en/admin/access/users");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test("@a11y /en/admin access-denied has no serious or critical axe violations", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  test.skip(!hasDatabase(), "rbac a11y requires DATABASE_URL");
+  await seedE2eUser(A11Y_DENIED_USER, { admin: false });
+
+  await page.goto("/en/admin/login");
+  await submitSignIn(
+    page,
+    { email: "Email address", password: "Password", submit: "Sign in" },
+    A11Y_DENIED_USER,
+  );
+  await expect(page).toHaveURL(/\/en\/admin\/mfa\/setup$/);
+  await completeMfaEnrollment(
+    page,
+    {
+      password: "Password",
+      continue: "Continue",
+      code: "Authenticator app code",
+      submit: "Verify",
+    },
+    A11Y_DENIED_USER.password,
+  );
+  // Zero roles → /en/admin renders the denied experience, not a crash.
+  await expect(page).toHaveURL(/\/en\/admin$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Access denied" }),
+  ).toBeVisible();
+  await expectNoSeriousViolations(page);
 });

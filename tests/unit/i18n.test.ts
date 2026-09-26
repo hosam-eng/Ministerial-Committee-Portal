@@ -64,26 +64,28 @@ describe("request configuration", () => {
 });
 
 describe("message catalog alignment", () => {
-  const keyPaths = (value: unknown, prefix = ""): string[] =>
+  // Segment arrays — JSON keys may legitimately contain "." (e.g. the
+  // access.permissions map keyed by dotted permission identifiers).
+  const keyPaths = (value: unknown, prefix: string[] = []): string[][] =>
     Object.entries(value as Record<string, unknown>).flatMap(([key, v]) =>
       v !== null && typeof v === "object"
-        ? keyPaths(v, `${prefix}${key}.`)
-        : [`${prefix}${key}`],
+        ? keyPaths(v, [...prefix, key])
+        : [[...prefix, key]],
     );
 
   it("ar and en catalogs expose identical key structure", () => {
-    expect(keyPaths(ar).sort()).toEqual(keyPaths(en).sort());
+    const printable = (paths: string[][]) =>
+      paths.map((p) => p.join(" ")).sort();
+    expect(printable(keyPaths(ar))).toEqual(printable(keyPaths(en)));
   });
 
   it("every catalog value is a non-empty string", () => {
     for (const catalog of [ar, en]) {
       for (const path of keyPaths(catalog)) {
-        const value = path
-          .split(".")
-          .reduce<unknown>(
-            (node, segment) => (node as Record<string, unknown>)[segment],
-            catalog,
-          );
+        const value = path.reduce<unknown>(
+          (node, segment) => (node as Record<string, unknown>)[segment],
+          catalog,
+        );
         expect(typeof value).toBe("string");
         expect((value as string).trim().length).toBeGreaterThan(0);
       }
