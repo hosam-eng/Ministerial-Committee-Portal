@@ -26,8 +26,8 @@ import en from "../../messages/en.json";
 describe("localized bootstrap home", () => {
   it("renders English content with a link to /ar", () => {
     render(
-      <NextIntlClientProvider locale="en" messages={en}>
-        <BootstrapHome />
+      <NextIntlClientProvider locale="en-SA" messages={en}>
+        <BootstrapHome locale="en" />
       </NextIntlClientProvider>,
     );
 
@@ -42,8 +42,8 @@ describe("localized bootstrap home", () => {
 
   it("renders Arabic content with a link to /en", () => {
     render(
-      <NextIntlClientProvider locale="ar" messages={ar}>
-        <BootstrapHome />
+      <NextIntlClientProvider locale="ar-SA" messages={ar}>
+        <BootstrapHome locale="ar" />
       </NextIntlClientProvider>,
     );
 

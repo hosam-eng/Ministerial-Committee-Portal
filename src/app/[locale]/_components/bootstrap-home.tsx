@@ -1,4 +1,4 @@
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
@@ -6,10 +6,11 @@ import { routing, type Locale } from "@/i18n/routing";
 /**
  * Minimal localized bootstrap content. Single semantic structure shared by
  * both locales — direction comes from <html dir>, not duplicated trees.
+ * `locale` is the public route locale ("ar"/"en"), passed down from the
+ * page params — the source of truth for routing.
  */
-export default function BootstrapHome() {
+export default function BootstrapHome({ locale }: { locale: Locale }) {
   const t = useTranslations("home");
-  const locale = useLocale();
   const otherLocale = routing.locales.find(
     (candidate) => candidate !== locale,
   ) as Locale;

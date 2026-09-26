@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import ar from "../../messages/ar.json";
 import en from "../../messages/en.json";
-import { resolveRequestConfig } from "@/i18n/config";
+import { getFormattingLocale, resolveRequestConfig } from "@/i18n/config";
 import { getDirection, routing } from "@/i18n/routing";
 
 describe("localization routing config", () => {
@@ -27,25 +27,38 @@ describe("localization routing config", () => {
     expect(getDirection("ar")).toBe("rtl");
     expect(getDirection("en")).toBe("ltr");
   });
+
+  it("maps route locales to Saudi formatting locales", () => {
+    expect(getFormattingLocale("ar")).toBe("ar-SA");
+    expect(getFormattingLocale("en")).toBe("en-SA");
+    // Formatting locales are never public route locales.
+    for (const formatting of [
+      getFormattingLocale("ar"),
+      getFormattingLocale("en"),
+    ]) {
+      expect(hasLocale(routing.locales, formatting)).toBe(false);
+    }
+  });
 });
 
 describe("request configuration", () => {
-  it("loads Arabic messages and Asia/Riyadh timezone for ar", async () => {
+  it("ar → ar-SA formatting locale, Asia/Riyadh, Arabic catalog", async () => {
     const config = await resolveRequestConfig("ar");
-    expect(config.locale).toBe("ar");
+    expect(config.locale).toBe("ar-SA");
     expect(config.timeZone).toBe("Asia/Riyadh");
     expect(config.messages?.home?.title).toBe(ar.home.title);
   });
 
-  it("loads English messages for en", async () => {
+  it("en → en-SA formatting locale, Asia/Riyadh, English catalog", async () => {
     const config = await resolveRequestConfig("en");
-    expect(config.locale).toBe("en");
+    expect(config.locale).toBe("en-SA");
+    expect(config.timeZone).toBe("Asia/Riyadh");
     expect(config.messages?.home?.title).toBe(en.home.title);
   });
 
   it("rejects an unsupported locale to the default at config level", async () => {
     const config = await resolveRequestConfig("fr");
-    expect(config.locale).toBe("ar");
+    expect(config.locale).toBe("ar-SA");
     expect(config.messages?.home?.title).toBe(ar.home.title);
   });
 });

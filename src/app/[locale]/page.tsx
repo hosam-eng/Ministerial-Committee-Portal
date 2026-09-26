@@ -1,5 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 
+import type { Locale } from "@/i18n/routing";
+
 import BootstrapHome from "./_components/bootstrap-home";
 
 /**
@@ -15,5 +17,7 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <BootstrapHome />;
+  // `locale` was validated by the layout (`hasLocale` → notFound) before
+  // this page renders.
+  return <BootstrapHome locale={locale as Locale} />;
 }
