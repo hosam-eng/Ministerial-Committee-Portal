@@ -1,3 +1,4 @@
+import { createOTP } from "@better-auth/utils/otp";
 import type { Page } from "@playwright/test";
 import pg from "pg";
 
@@ -35,6 +36,13 @@ export const A11Y_USER = {
   password: "e2e-a11y-password-1234",
 } as const;
 
+/** Fully authenticated user with ZERO roles — exercises access denied. */
+export const A11Y_DENIED_USER = {
+  email: "e2e.a11y.denied@example.test",
+  name: "E2E A11y Denied",
+  password: "e2e-a11y-denied-1234",
+} as const;
+
 function databaseUrl(): string {
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -45,10 +53,17 @@ function databaseUrl(): string {
   return url;
 }
 
-/** Delete + recreate the fixture user so runs are idempotent. */
+/**
+ * Delete + recreate the fixture user so runs are idempotent. By default
+ * the user also receives the built-in Administrator membership — the
+ * backoffice requires `backoffice.access`, which only roles can grant.
+ * Pass `{ admin: false }` for zero-role authorization fixtures.
+ */
 export async function seedE2eUser(
   user: { email: string; name: string; password: string } = E2E_USER,
+  options: { admin?: boolean } = {},
 ): Promise<void> {
+  const { admin = true } = options;
   const client = new pg.Client({ connectionString: databaseUrl() });
   await client.connect();
   try {
@@ -69,6 +84,13 @@ export async function seedE2eUser(
        VALUES ($1, 'credential', $2, $3)`,
       [userId, userId, await hashPassword(user.password)],
     );
+    if (admin) {
+      await client.query(
+        `INSERT INTO identity.user_role (user_id, role_id)
+         SELECT $1, id FROM identity."role" WHERE system_key = 'administrator'`,
+        [userId],
+      );
+    }
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
@@ -76,6 +98,76 @@ export async function seedE2eUser(
   } finally {
     await client.end();
   }
+}
+
+/**
+ * Remove every custom (non-system) role so RBAC specs are idempotent —
+ * cascades clear role_permission and user_role rows, system roles are
+ * untouched.
+ */
+export async function resetCustomRoles(): Promise<void> {
+  const client = new pg.Client({ connectionString: databaseUrl() });
+  await client.connect();
+  try {
+    await client.query('DELETE FROM identity."role" WHERE system_key IS NULL');
+  } finally {
+    await client.end();
+  }
+}
+
+/**
+ * The enrollment URI carries a base32-encoded secret while
+ * `createOTP`/`verify` operate on the raw secret string — decode back
+ * to raw bytes before generating codes. Minimal RFC 4648 decoder
+ * (unpadded, as emitted by the enrollment URI).
+ */
+export function decodeTotpSecret(encoded: string): string {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  const bits = encoded
+    .toUpperCase()
+    .replace(/[^A-Z2-7]/g, "")
+    .split("")
+    .map((c) => alphabet.indexOf(c).toString(2).padStart(5, "0"))
+    .join("");
+  const bytes: number[] = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(parseInt(bits.slice(i, i + 8), 2));
+  }
+  return String.fromCharCode(...bytes);
+}
+
+/**
+ * Drive the mandatory MFA enrollment flow after password sign-in:
+ * password gate → enrollment URI → first TOTP verification. Returns the
+ * raw TOTP secret so callers can mint further codes. Rate-limit
+ * tolerant via the shared submit helpers.
+ */
+export async function completeMfaEnrollment(
+  page: Page,
+  labels: {
+    password: string;
+    continue: string;
+    code: string;
+    submit: string;
+  },
+  password: string,
+): Promise<string> {
+  await submitMfaEnable(
+    page,
+    { password: labels.password, submit: labels.continue },
+    password,
+  );
+  const uri = await page.locator(".auth-secret").innerText();
+  const encodedSecret = new URL(uri).searchParams.get("secret");
+  if (!encodedSecret) throw new Error("enrollment URI missing secret");
+  const secret = decodeTotpSecret(encodedSecret);
+  const code = await createOTP(secret).totp();
+  await submitMfaVerify(
+    page,
+    { code: labels.code, submit: labels.submit },
+    code,
+  );
+  return secret;
 }
 
 /**

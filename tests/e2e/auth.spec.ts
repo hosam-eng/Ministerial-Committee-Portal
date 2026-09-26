@@ -5,6 +5,7 @@ import {
   E2E_USER,
   hasDatabase,
   seedE2eUser,
+  submitMfaEnable,
   submitMfaVerify,
   submitSignIn,
 } from "./support/auth";
@@ -93,8 +94,11 @@ test.describe("admin auth journey (ar)", () => {
 
     // 4. Enrollment requires the password, then shows the TOTP URI
     //    and single-use backup codes exactly once.
-    await page.getByLabel("كلمة المرور").fill(E2E_USER.password);
-    await page.getByRole("button", { name: "متابعة" }).click();
+    await submitMfaEnable(
+      page,
+      { password: "كلمة المرور", submit: "متابعة" },
+      E2E_USER.password,
+    );
     const uri = await page.locator(".auth-secret").innerText();
     const encodedSecret = new URL(uri).searchParams.get("secret");
     expect(encodedSecret).toBeTruthy();

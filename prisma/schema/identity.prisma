@@ -20,6 +20,7 @@ model User {
   sessions         Session[]
   twoFactors       TwoFactor[]
   totpReplayGuards TotpReplayGuard[]
+  userRoles        UserRole[]
 
   @@unique([email])
   @@map("user")
@@ -112,5 +113,64 @@ model TotpReplayGuard {
 
   @@unique([fingerprint])
   @@map("totp_replay_guard")
+  @@schema("identity")
+}
+
+// Dynamic RBAC (IMP-06). Permissions are system-defined rows seeded by
+// migration; roles are database-managed. Users hold permissions only
+// through active roles — no direct User↔Permission relation exists.
+model Role {
+  id          String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  name        String
+  description String?
+  systemKey   String?  @map("system_key")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  permissions RolePermission[]
+  users       UserRole[]
+
+  @@unique([name])
+  @@unique([systemKey])
+  @@map("role")
+  @@schema("identity")
+}
+
+model Permission {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  key       String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  roles RolePermission[]
+
+  @@unique([key])
+  @@map("permission")
+  @@schema("identity")
+}
+
+model RolePermission {
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permission")
+  @@schema("identity")
+}
+
+model UserRole {
+  userId     String   @map("user_id") @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_role")
   @@schema("identity")
 }

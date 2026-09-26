@@ -1,15 +1,15 @@
-import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 
 import type { Locale } from "@/i18n/routing";
-import { AdminPlaceholder, getAdminAuthState } from "@/modules/identity";
+import { AccessDenied, AdminHome, requireBackoffice } from "@/modules/identity";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Authenticated admin proof page. The gate is fully server-side: no
- * session → login; session without enrolled MFA → mandatory setup;
- * pending MFA challenge → challenge page.
+ * Backoffice landing — IMP-05 authentication state machine first
+ * (login / MFA setup / MFA challenge redirects inside the gate), then
+ * RBAC: fully authenticated users without `backoffice.access` get the
+ * localized access-denied experience.
  */
 export default async function AdminPage({
   params,
@@ -19,18 +19,16 @@ export default async function AdminPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const state = await getAdminAuthState();
-  if (state.status === "unauthenticated") {
-    redirect(`/${locale}/admin/login`);
-  }
-  if (state.status === "mfa-challenge-pending") {
-    redirect(`/${locale}/admin/mfa`);
-  }
-  if (state.status === "mfa-enrollment-required") {
-    redirect(`/${locale}/admin/mfa/setup`);
+  const gate = await requireBackoffice(locale);
+  if (gate.status === "denied") {
+    return <AccessDenied locale={locale as Locale} />;
   }
 
   return (
-    <AdminPlaceholder email={state.user.email} locale={locale as Locale} />
+    <AdminHome
+      email={gate.user.email}
+      locale={locale as Locale}
+      permissions={gate.permissions}
+    />
   );
 }

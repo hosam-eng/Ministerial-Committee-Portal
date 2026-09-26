@@ -165,10 +165,14 @@ describe("identity schema (IMP-05)", () => {
     );
     expect(tables.map((t) => t.name)).toEqual([
       "account",
+      "permission",
+      "role",
+      "role_permission",
       "session",
       "totp_replay_guard",
       "two_factor",
       "user",
+      "user_role",
       "verification",
     ]);
   });
