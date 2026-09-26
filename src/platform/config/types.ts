@@ -30,9 +30,8 @@ export interface ServerConfig {
 }
 
 /**
- * Public configuration safe for browser exposure. Currently empty by
- * design — only NEXT_PUBLIC_* values intentionally added here may ship.
+ * Public configuration safe for browser exposure. Empty by design until
+ * a genuine NEXT_PUBLIC_* value is required — server-only settings must
+ * never leak onto this contract.
  */
-export interface PublicConfig {
-  readonly appEnv: AppEnv;
-}
+export type PublicConfig = Record<string, never>;

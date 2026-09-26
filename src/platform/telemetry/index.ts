@@ -1,5 +1,6 @@
 export {
   currentTraceIds,
+  getTelemetryState,
   initTelemetry,
   isTelemetryInitialized,
   shutdownTelemetry,

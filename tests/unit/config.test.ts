@@ -45,6 +45,22 @@ describe("server config validation", () => {
     ).toThrow(ConfigurationError);
   });
 
+  it("fails fast when APP_ENV is missing or invalid", () => {
+    expect(() =>
+      validateServerConfig({
+        NODE_ENV: "test",
+        DATABASE_URL: VALID_ENV.DATABASE_URL,
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateServerConfig({ ...VALID_ENV, APP_ENV: "staging" }),
+    ).toThrow(ConfigurationError);
+    // Never silently assumed — no implicit development fallback.
+    expect(() => validateServerConfig({ NODE_ENV: "test" })).toThrow(
+      ConfigurationError,
+    );
+  });
+
   it("requires DATABASE_URL when APP_ENV=production", () => {
     const env = { NODE_ENV: "production", APP_ENV: "production" };
     expect(() => validateServerConfig(env)).toThrow(ConfigurationError);
@@ -97,13 +113,10 @@ describe("public config separation", () => {
   });
 
   it("public config carries no server values", () => {
-    const config = getPublicConfig({
-      ...VALID_ENV,
-      DATABASE_URL: "postgresql://u:p@h/db",
-      NEXT_PUBLIC_APP_NAME: "portal",
-    });
-    expect(config.appEnv).toBe("test");
-    expect(Object.keys(config)).not.toContain("databaseUrl");
-    expect(JSON.stringify(config)).not.toContain("postgresql://");
+    // No browser-visible configuration exists yet — the contract is empty
+    // and can never be populated from server-only settings.
+    const config = getPublicConfig();
+    expect(Object.keys(config)).toHaveLength(0);
+    expect(Object.isFrozen(config)).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 import { serverEnvSchema, type ServerEnv } from "./schema";
-import type { AppEnv, ServerConfig } from "./types";
+import type { ServerConfig } from "./types";
 
 /**
  * Format a Zod failure into operator-facing lines. Only the setting path
@@ -40,7 +40,7 @@ export function validateServerConfig(
 function freezeConfig(env: ServerEnv): ServerConfig {
   return Object.freeze({
     nodeEnv: env.NODE_ENV,
-    appEnv: env.APP_ENV as AppEnv,
+    appEnv: env.APP_ENV,
     isProduction: env.APP_ENV === "production",
     logLevel: env.LOG_LEVEL,
     databaseUrl: env.DATABASE_URL,

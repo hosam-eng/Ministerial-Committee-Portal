@@ -1,4 +1,4 @@
-import type { AppEnv, PublicConfig } from "./types";
+import type { PublicConfig } from "./types";
 
 const PUBLIC_PREFIX = "NEXT_PUBLIC_";
 
@@ -19,13 +19,11 @@ export function collectPublicEnv(
 }
 
 /**
- * Public configuration for client-safe consumption. Intentionally minimal:
- * it carries the deployment environment and nothing else until a genuine
- * public value is required.
+ * Public configuration for client-safe consumption. No browser-visible
+ * configuration is currently required, so the contract is empty — a
+ * public value may only ever come from an explicit NEXT_PUBLIC_* key,
+ * never from a server-only setting.
  */
-export function getPublicConfig(
-  env: Record<string, string | undefined> = process.env,
-): PublicConfig {
-  const appEnv = (env.APP_ENV ?? "development") as AppEnv;
-  return Object.freeze({ appEnv });
+export function getPublicConfig(): PublicConfig {
+  return Object.freeze({});
 }

@@ -16,14 +16,16 @@ architecture suite (`tests/architecture/`).
   especially secrets, are never included in errors or logs).
 - `getServerConfig()` — memoized process-wide `ServerConfig`, frozen.
 - `getPublicConfig()` / `collectPublicEnv()` — public surface; only
-  `NEXT_PUBLIC_*` keys can ever reach the browser.
+  `NEXT_PUBLIC_*` keys can ever reach the browser. `getPublicConfig()`
+  currently returns an empty object — no browser-visible configuration
+  is required yet, and server-only values never cross this boundary.
 
 Variables (see `.env.example`):
 
 | Variable                      | Required | Notes                                                            |
 | ----------------------------- | -------- | ---------------------------------------------------------------- |
 | `NODE_ENV`                    | yes      | `development`/`test`/`production`                                |
-| `APP_ENV`                     | no       | defaults `development`                                           |
+| `APP_ENV`                     | yes      | `development`/`test`/`production` — required, never defaulted    |
 | `LOG_LEVEL`                   | no       | defaults `info` (Pino levels)                                    |
 | `DATABASE_URL`                | prod     | runtime role (`mcp_runtime`); required when `APP_ENV=production` |
 | `DATABASE_MIGRATION_URL`      | no       | migration role — tooling only                                    |
@@ -72,6 +74,12 @@ active OpenTelemetry span for log correlation.
 `initTelemetry()` (`src/platform/telemetry`) starts `NodeSDK` once per
 process. No vendor/backend is selected: an OTLP HTTP trace exporter is
 attached **only** when `OTEL_EXPORTER_OTLP_ENDPOINT` is configured.
+Without an endpoint, `spanProcessors`/`logRecordProcessors`/
+`metricReaders` are explicitly empty — the SDK would otherwise
+auto-configure default OTLP exporters, so the empty arrays are what
+guarantee _no exporter, no outbound export attempt, no collector
+required_. `getTelemetryState()` exposes whether an exporter was
+configured.
 
 ## Health
 

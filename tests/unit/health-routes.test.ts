@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { GET as liveGET } from "@/app/api/health/live/route";
 import { GET as readyGET } from "@/app/api/health/ready/route";
@@ -12,6 +12,12 @@ import { closeRuntimeDatabase } from "@/platform/runtime";
  */
 
 const savedDatabaseUrl = process.env.DATABASE_URL;
+const savedAppEnv = process.env.APP_ENV;
+
+// APP_ENV is required config — the 503 path logs via the real logger.
+beforeEach(() => {
+  process.env.APP_ENV = "test";
+});
 
 afterEach(async () => {
   await closeRuntimeDatabase();
@@ -20,6 +26,11 @@ afterEach(async () => {
     delete process.env.DATABASE_URL;
   } else {
     process.env.DATABASE_URL = savedDatabaseUrl;
+  }
+  if (savedAppEnv === undefined) {
+    delete process.env.APP_ENV;
+  } else {
+    process.env.APP_ENV = savedAppEnv;
   }
 });
 

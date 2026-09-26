@@ -14,6 +14,9 @@ concurrency:
 
 env:
   CI: true
+  # APP_ENV is required server config — instrumentation validates it at
+  # startup (next build/start), so CI declares it explicitly.
+  APP_ENV: test
 
 jobs:
   quality:

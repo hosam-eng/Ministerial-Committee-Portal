@@ -30,7 +30,8 @@ const optionalUrl = z
 export const serverEnvSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]),
-    APP_ENV: z.enum(APP_ENVS).default("development"),
+    // Required — a deployment environment must never be silently assumed.
+    APP_ENV: z.enum(APP_ENVS),
     LOG_LEVEL: z.enum(LOG_LEVELS).default("info"),
     DATABASE_URL: optionalPostgresUrl,
     DATABASE_MIGRATION_URL: optionalPostgresUrl,
