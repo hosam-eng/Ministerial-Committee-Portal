@@ -62,6 +62,10 @@ test("@a11y /en/admin/mfa/setup and /en/admin have no serious or critical axe vi
     A11Y_USER,
   );
   await expect(page).toHaveURL(/\/en\/admin\/mfa\/setup$/);
+  // Client-side navigation: wait until the streamed head/title and the
+  // page content have landed before analyzing.
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page).toHaveTitle(/.+/);
 
   let results = await new AxeBuilder({ page }).analyze();
   expect(
@@ -75,6 +79,7 @@ test("@a11y /en/admin/mfa/setup and /en/admin have no serious or critical axe vi
     { password: "Password", submit: "Continue" },
     A11Y_USER.password,
   );
+  await expect(page.locator(".auth-secret")).toBeVisible();
   results = await new AxeBuilder({ page }).analyze();
   expect(
     results.violations.filter(
