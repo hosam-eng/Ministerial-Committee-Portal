@@ -9,6 +9,7 @@ const env = process.env as Record<string, string | undefined>;
 env.APP_ENV ??= "test";
 env.NODE_ENV ??= "test";
 env.BETTER_AUTH_SECRET ??= "test-only-better-auth-secret-32chars-min";
+env.BETTER_AUTH_URL ??= "http://127.0.0.1:3000";
 
 afterEach(() => {
   cleanup();

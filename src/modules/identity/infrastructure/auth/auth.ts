@@ -60,9 +60,11 @@ export function createAuth(database: Database) {
         verify: verifyPassword,
       },
     },
+    // Fixed 8-hour backoffice session — active use must not extend it,
+    // so the sliding expiry refresh is disabled entirely.
     session: {
       expiresIn: 60 * 60 * 8,
-      updateAge: 60 * 60,
+      disableSessionRefresh: true,
     },
     advanced: {
       cookiePrefix: "mcp",

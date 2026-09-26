@@ -29,17 +29,17 @@ export interface ServerConfig {
   };
   readonly auth: {
     /**
-     * Better Auth signing/encryption secret. Server-only — must never
-     * reach client output, logs, or error messages. Required in
-     * production; optional in development/test where Better Auth
-     * resolves its own local default.
+     * Better Auth signing/encryption secret (min 32 chars). Server-only
+     * — must never reach client output, logs, or error messages.
+     * Required in every environment; no implicit fallback exists.
      */
-    readonly secret?: string;
+    readonly secret: string;
     /**
-     * Absolute base URL for the auth server. Required https in
-     * production; optional locally (Better Auth derives the origin).
+     * Absolute base URL for the auth server — always explicit so Better
+     * Auth never infers its origin from request headers. https required
+     * in production; http allowed in development/test.
      */
-    readonly baseUrl?: string;
+    readonly baseUrl: string;
   };
 }
 
