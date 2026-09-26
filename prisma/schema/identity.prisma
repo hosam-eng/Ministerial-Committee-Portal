@@ -16,9 +16,10 @@ model User {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  accounts   Account[]
-  sessions   Session[]
-  twoFactors TwoFactor[]
+  accounts         Account[]
+  sessions         Session[]
+  twoFactors       TwoFactor[]
+  totpReplayGuards TotpReplayGuard[]
 
   @@unique([email])
   @@map("user")
@@ -90,5 +91,26 @@ model TwoFactor {
 
   @@unique([userId])
   @@map("two_factor")
+  @@schema("identity")
+}
+
+// TOTP replay guard (IMP-05 security correction). One row per consumed
+// TOTP fingerprint — the raw six-digit code is never persisted; only an
+// HMAC derived from it and scoped to the user. The unique constraint on
+// `fingerprint` is the atomic consumption mechanism: a concurrent or
+// repeated claim fails with a unique violation. Rows self-expire
+// (expires_at) so a coincidental future TOTP value is never permanently
+// blocked; expiry is cleaned lazily on write, no scheduler needed.
+model TotpReplayGuard {
+  id          String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  fingerprint String
+  userId      String   @map("user_id") @db.Uuid
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([fingerprint])
+  @@map("totp_replay_guard")
   @@schema("identity")
 }
