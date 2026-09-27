@@ -462,7 +462,16 @@ export async function getEditorialNews(
   );
   return database.prisma.news.findUnique({
     where: { id: newsId },
-    include: { activeRevision: { include: snapshot } },
+    include: {
+      activeRevision: { include: snapshot },
+      liveRevision: { include: snapshot },
+      revisions: {
+        orderBy: { revisionNumber: "desc" },
+        include: { translations: true },
+      },
+      workflowEvents: { orderBy: { createdAt: "desc" } },
+      publicationEvents: { orderBy: { createdAt: "desc" } },
+    },
   });
 }
 
@@ -474,7 +483,15 @@ export async function listEditorialNews(
     authorize(tx, actorId, PERMISSIONS.NEWS_READ),
   );
   return database.prisma.news.findMany({
-    include: { activeRevision: { include: snapshot } },
+    include: {
+      activeRevision: { include: snapshot },
+      liveRevision: { include: snapshot },
+      revisions: {
+        take: 1,
+        orderBy: { revisionNumber: "desc" },
+        include: { translations: true },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 }

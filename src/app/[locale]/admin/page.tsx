@@ -56,6 +56,9 @@ export default async function AdminPage({
   }
 
   const navItems: AdminNavItem[] = [
+    ...(gate.permissions.has(PERMISSIONS.NEWS_READ)
+      ? [{ href: `/${locale}/admin/content/news`, label: t("news.title") }]
+      : []),
     ...(gate.permissions.has(PERMISSIONS.ROLES_READ)
       ? [
           {

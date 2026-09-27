@@ -19,3 +19,9 @@ export {
   getPublishedNews,
   getPublishedNewsBySlug,
 } from "./news-service";
+export {
+  NewsEditor,
+  type NewsEditorAction,
+  type NewsEditorState,
+  type NewsWorkflowAction,
+} from "./presentation/news-editor";
