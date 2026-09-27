@@ -124,6 +124,15 @@
           "read": "View roles",
           "manage": "Manage roles"
         }
+      },
+      "publishing": {
+        "news": {
+          "read": "View News in the admin console",
+          "create": "Create News",
+          "edit": "Edit and submit News",
+          "review": "Review and approve News",
+          "publish": "Publish and unpublish News"
+        }
       }
     },
     "errors": {

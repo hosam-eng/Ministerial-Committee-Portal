@@ -50,7 +50,10 @@ export function RolesAdmin({
     const node = key
       .split(".")
       .reduce<unknown>(
-        (n, segment) => (n as Record<string, unknown>)[segment],
+        (n, segment) =>
+          n !== null && typeof n === "object" && !Array.isArray(n)
+            ? (n as Record<string, unknown>)[segment]
+            : undefined,
         labels,
       );
     return typeof node === "string" ? node : key;
