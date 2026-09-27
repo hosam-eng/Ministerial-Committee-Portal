@@ -34,7 +34,7 @@ export function UsersAdmin({
   const t = useTranslations("access");
 
   return (
-    <main className="auth-page access-page">
+    <div className="access-page">
       <h1>{t("users.title")}</h1>
       {errorKey ? (
         <p role="alert" className="auth-error">
@@ -96,6 +96,6 @@ export function UsersAdmin({
           ) : null}
         </section>
       ))}
-    </main>
+    </div>
   );
 }

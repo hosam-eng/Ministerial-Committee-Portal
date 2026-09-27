@@ -5,6 +5,9 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { getDirection, routing } from "@/i18n/routing";
 
+// DGA Platforms Code tokens/reset — imported once at the root via the
+// shared/ui vendor boundary (IMP-08). Must precede portal styles.
+import "@/shared/ui/dga/core.css";
 import "@/styles/globals.css";
 
 export function generateStaticParams() {

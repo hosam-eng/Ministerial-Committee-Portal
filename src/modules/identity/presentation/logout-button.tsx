@@ -25,8 +25,13 @@ export function LogoutButton({ locale }: { locale: Locale }) {
   }
 
   return (
-    <button type="button" onClick={onLogout} disabled={pending}>
-      {pending ? t("admin.loggingOut") : t("admin.logout")}
-    </button>
+    <dga-button-v2
+      label={pending ? t("admin.loggingOut") : t("admin.logout")}
+      variant="neutral"
+      size="sm"
+      type="button"
+      disabled={pending}
+      onClick={() => void onLogout()}
+    />
   );
 }

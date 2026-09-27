@@ -24,7 +24,7 @@ test.describe("locale routing", () => {
       "اللجنة الوزارية للسلامة المرورية",
     );
     await expect(
-      page.getByText("تم إعداد الأساس التقني للبوابة الرقمية."),
+      page.getByText("البوابة الرقمية للجنة الوزارية للسلامة المرورية."),
     ).toBeVisible();
   });
 
@@ -39,7 +39,9 @@ test.describe("locale routing", () => {
       "Ministerial Committee for Traffic Safety",
     );
     await expect(
-      page.getByText("The digital portal foundation is ready."),
+      page.getByText(
+        "The digital portal of the Ministerial Committee for Traffic Safety.",
+      ),
     ).toBeVisible();
   });
 
@@ -57,6 +59,12 @@ test.describe("locale routing", () => {
 
   test("language switch is keyboard reachable", async ({ page }) => {
     await page.goto("/ar");
+    // Focus order: skip link → identity → language switch (IMP-08 shell).
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("link", { name: "التخطي إلى المحتوى الرئيسي" }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "English" })).toBeFocused();
   });
