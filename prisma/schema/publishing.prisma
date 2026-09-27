@@ -71,11 +71,11 @@ model NewsRevision {
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  news              News                    @relation("NewsRevisions", fields: [newsId], references: [id])
-  basedOn           NewsRevision?           @relation("NewsRevisionLineage", fields: [basedOnRevisionId], references: [id])
-  derivedRevisions  NewsRevision[]          @relation("NewsRevisionLineage")
-  liveFor           News[]                  @relation("NewsLiveRevision")
-  activeFor         News[]                  @relation("NewsActiveRevision")
+  news              News                      @relation("NewsRevisions", fields: [newsId], references: [id])
+  basedOn           NewsRevision?             @relation("NewsRevisionLineage", fields: [basedOnRevisionId], references: [id])
+  derivedRevisions  NewsRevision[]            @relation("NewsRevisionLineage")
+  liveFor           News[]                    @relation("NewsLiveRevision")
+  activeFor         News[]                    @relation("NewsActiveRevision")
   translations      NewsRevisionTranslation[]
   categories        NewsRevisionCategory[]
   workflowEvents    NewsWorkflowEvent[]
@@ -122,8 +122,8 @@ model NewsCategory {
 }
 
 model NewsRevisionCategory {
-  revisionId String @map("revision_id") @db.Uuid
-  categoryId String @map("category_id") @db.Uuid
+  revisionId String   @map("revision_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   revision NewsRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
@@ -149,15 +149,15 @@ model NewsSlugRedirect {
 }
 
 model NewsWorkflowEvent {
-  id         String              @id @default(dbgenerated("uuidv7()")) @db.Uuid
-  newsId     String              @map("news_id") @db.Uuid
-  revisionId String              @map("revision_id") @db.Uuid
+  id         String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  newsId     String             @map("news_id") @db.Uuid
+  revisionId String             @map("revision_id") @db.Uuid
   action     NewsWorkflowAction
-  fromStatus NewsWorkflowStatus  @map("from_status")
-  toStatus   NewsWorkflowStatus  @map("to_status")
+  fromStatus NewsWorkflowStatus @map("from_status")
+  toStatus   NewsWorkflowStatus @map("to_status")
   comment    String?
-  actorId    String?             @map("actor_id") @db.Uuid
-  createdAt  DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  actorId    String?            @map("actor_id") @db.Uuid
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
 
   news     News         @relation(fields: [newsId], references: [id])
   revision NewsRevision @relation(fields: [revisionId], references: [id])
@@ -168,13 +168,13 @@ model NewsWorkflowEvent {
 }
 
 model NewsPublicationEvent {
-  id         String                 @id @default(dbgenerated("uuidv7()")) @db.Uuid
-  newsId     String                 @map("news_id") @db.Uuid
-  revisionId String                 @map("revision_id") @db.Uuid
+  id         String                @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  newsId     String                @map("news_id") @db.Uuid
+  revisionId String                @map("revision_id") @db.Uuid
   action     NewsPublicationAction
   reason     String?
-  actorId    String?                @map("actor_id") @db.Uuid
-  createdAt  DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  actorId    String?               @map("actor_id") @db.Uuid
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
 
   news     News         @relation(fields: [newsId], references: [id])
   revision NewsRevision @relation(fields: [revisionId], references: [id])

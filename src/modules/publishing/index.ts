@@ -1,4 +1,9 @@
-export { NewsError, type NewsDraftInput, type NewsLocale, type NewsTranslationInput } from "./news-rules";
+export {
+  NewsError,
+  type NewsDraftInput,
+  type NewsLocale,
+  type NewsTranslationInput,
+} from "./news-rules";
 export {
   createNewsDraft,
   saveNewsDraft,

@@ -29,8 +29,14 @@ export function normalizeSlug(value: string): string {
   return slug;
 }
 
-export function validateDraft(input: NewsDraftInput, complete = false): NewsDraftInput {
-  if (!Array.isArray(input.categoryIds) || input.categoryIds.some((id) => typeof id !== "string")) {
+export function validateDraft(
+  input: NewsDraftInput,
+  complete = false,
+): NewsDraftInput {
+  if (
+    !Array.isArray(input.categoryIds) ||
+    input.categoryIds.some((id) => typeof id !== "string")
+  ) {
     throw new NewsError("INVALID_REFERENCE");
   }
   const translations: NewsDraftInput["translations"] = {};
@@ -40,21 +46,35 @@ export function validateDraft(input: NewsDraftInput, complete = false): NewsDraf
       if (complete) throw new NewsError("TRANSLATION_INCOMPLETE");
       continue;
     }
-    if (typeof row.title !== "string" || typeof row.slug !== "string" ||
-        (row.summary != null && typeof row.summary !== "string") ||
-        (row.seoTitle != null && typeof row.seoTitle !== "string") ||
-        (row.seoDescription != null && typeof row.seoDescription !== "string")) {
+    if (
+      typeof row.title !== "string" ||
+      typeof row.slug !== "string" ||
+      (row.summary != null && typeof row.summary !== "string") ||
+      (row.seoTitle != null && typeof row.seoTitle !== "string") ||
+      (row.seoDescription != null && typeof row.seoDescription !== "string")
+    ) {
       throw new NewsError("TRANSLATION_INCOMPLETE");
     }
-    if (row.body != null && (typeof row.body !== "object" || Array.isArray(row.body) ||
-        /<\/?[a-z][^>]*>|(?:"(?:html|css|script|iframe)"\s*:)/iu.test(JSON.stringify(row.body)))) {
+    if (
+      row.body != null &&
+      (typeof row.body !== "object" ||
+        Array.isArray(row.body) ||
+        /<\/?[a-z][^>]*>|(?:"(?:html|css|script|iframe)"\s*:)/iu.test(
+          JSON.stringify(row.body),
+        ))
+    ) {
       throw new NewsError("INVALID_BODY");
     }
     if (complete && (!row.title.trim() || !row.summary?.trim() || !row.body)) {
       throw new NewsError("TRANSLATION_INCOMPLETE");
     }
-    translations[locale] = { ...row, title: row.title.trim(), slug: row.slug ? normalizeSlug(row.slug) : "" };
-    if (complete && !translations[locale]?.slug) throw new NewsError("TRANSLATION_INCOMPLETE");
+    translations[locale] = {
+      ...row,
+      title: row.title.trim(),
+      slug: row.slug ? normalizeSlug(row.slug) : "",
+    };
+    if (complete && !translations[locale]?.slug)
+      throw new NewsError("TRANSLATION_INCOMPLETE");
   }
   return { translations, categoryIds: [...new Set(input.categoryIds)] };
 }
