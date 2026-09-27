@@ -23,7 +23,9 @@ export default async function NewsDetailPage({
   const gate = await requireBackoffice(locale, PERMISSIONS.NEWS_READ);
   if (gate.status === "denied")
     return <AccessDenied locale={locale as Locale} />;
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  )
     notFound();
   const [news, t, query] = await Promise.all([
     getEditorialNews(gate.user.id, id),
