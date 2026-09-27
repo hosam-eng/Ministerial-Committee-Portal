@@ -4,13 +4,48 @@
    semantic aliases are defined here, no competing token system. */
 
 :root {
-  --portal-content-width: var(--width-xl);
+  /* Semantic portal container (~1280px). DGA --width-* tokens are card-
+     scale widths; --width-3xl is deliberately chosen, not default. */
+  --portal-content-width: var(--width-3xl);
   --portal-header-bg: var(--colors-base-white);
   --portal-header-border: var(--colors-neutral-200);
   --portal-footer-bg: var(--colors-neutral-50);
   --portal-identity: var(--colors-primary-sa-flag-600-primary);
   --portal-text: var(--colors-neutral-800);
   --portal-text-secondary: var(--colors-neutral-600);
+}
+
+/* core.css ships a global reset (headings collapse to body size,
+   body line-height: 1). Restore a restrained portal type hierarchy —
+   values follow the DGA type scale (display-sm/xs, text-md/sm). */
+body {
+  line-height: 1.6;
+  color: var(--portal-text);
+}
+
+h1 {
+  font-size: 1.875rem;
+  line-height: 1.3;
+  font-weight: 700;
+  margin-block-end: var(--spacing-5);
+}
+
+h2 {
+  font-size: 1.375rem;
+  line-height: 1.4;
+  font-weight: 600;
+  margin-block-end: var(--spacing-3);
+}
+
+h3 {
+  font-size: 1.125rem;
+  line-height: 1.45;
+  font-weight: 600;
+  margin-block-end: var(--spacing-2);
+}
+
+.shell-main :where(p, ul:not(.shell-nav-list)) {
+  margin-block-end: var(--spacing-3);
 }
 
 /* IMP-08 shells — semantic landmarks, logical properties only so the
@@ -50,7 +85,7 @@
 
 .shell-identity {
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   color: var(--portal-identity);
   text-decoration: none;
 }
@@ -98,10 +133,19 @@
 }
 
 .shell-main {
+  inline-size: 100%;
   max-inline-size: var(--portal-content-width);
   margin-inline: auto;
   padding-inline: var(--spacing-4);
-  padding-block: var(--spacing-8);
+  padding-block: var(--spacing-8) var(--spacing-12);
+}
+
+@media (min-width: 768px) {
+  .shell-main,
+  .shell-header-inner,
+  .shell-footer-inner {
+    padding-inline: var(--spacing-6);
+  }
 }
 
 .shell-footer {
@@ -182,16 +226,13 @@
   color: inherit;
 }
 
-/* IMP-06 access management pages — still intentionally minimal
-   (IMP-08 owns the final shell). Logical properties only. */
-.access-page {
-  max-inline-size: 72ch;
-}
-
+/* IMP-06/08 access management pages — content spans the AdminShell
+   container; the earlier 72ch prototype cap is removed. Logical
+   properties only. */
 .access-card {
-  border-block-start: 1px solid #ddd;
-  padding-block: 1rem;
-  margin-block-end: 1rem;
+  border-block-start: 1px solid var(--portal-header-border);
+  padding-block: var(--spacing-5);
+  margin-block-end: var(--spacing-5);
 }
 
 .access-badge {
@@ -199,24 +240,53 @@
   font-weight: normal;
   padding-block: 0.125rem;
   padding-inline: 0.5rem;
-  border: 1px solid #999;
+  border: 1px solid var(--colors-neutral-400, #999);
   border-radius: 0.25rem;
 }
 
 .access-form div {
-  margin-block-end: 0.5rem;
+  margin-block-end: var(--spacing-4);
+}
+
+.access-form label:not(.access-checkbox) {
+  display: block;
+  margin-block-end: var(--spacing-1);
+}
+
+.access-form
+  :is(input:not([type]), input[type="text"], input[type="email"], select) {
+  inline-size: 100%;
+  max-inline-size: 30rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid var(--colors-neutral-400, #999);
+  border-radius: 0.25rem;
+}
+
+.access-card form button:not(.auth-link) {
+  padding-block: 0.5rem;
+  padding-inline: var(--spacing-5);
+  font-size: 1rem;
+  cursor: pointer;
 }
 
 .access-form fieldset {
-  margin-block-end: 1rem;
-  padding-inline: 0.5rem;
+  margin-block-end: var(--spacing-4);
+  padding-block: var(--spacing-3);
+  padding-inline: var(--spacing-4);
+}
+
+.access-form legend {
+  font-weight: 600;
+  padding-inline: var(--spacing-1);
 }
 
 .access-checkbox {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-block-end: 0.25rem;
+  gap: var(--spacing-2);
+  margin-block-end: var(--spacing-2);
 }
 
 .access-checkbox input {
@@ -226,7 +296,8 @@
 }
 
 .access-permissions {
-  padding-inline-start: 1.25rem;
+  padding-inline-start: 1.5rem;
+  list-style: disc;
 }
 
 .access-inline {
@@ -235,5 +306,6 @@
 }
 
 .auth-nav ul {
-  padding-inline-start: 1.25rem;
+  padding-inline-start: 1.5rem;
+  list-style: disc;
 }
