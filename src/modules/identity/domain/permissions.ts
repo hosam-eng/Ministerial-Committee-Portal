@@ -10,6 +10,11 @@ export const PERMISSIONS = {
   USER_ROLES_MANAGE: "identity.user_roles.manage",
   ROLES_READ: "identity.roles.read",
   ROLES_MANAGE: "identity.roles.manage",
+  NEWS_READ: "publishing.news.read",
+  NEWS_CREATE: "publishing.news.create",
+  NEWS_EDIT: "publishing.news.edit",
+  NEWS_REVIEW: "publishing.news.review",
+  NEWS_PUBLISH: "publishing.news.publish",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

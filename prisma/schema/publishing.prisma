@@ -1,0 +1,185 @@
+enum NewsPublicationStatus {
+  NEVER_PUBLISHED
+  PUBLISHED
+  UNPUBLISHED
+
+  @@schema("publishing")
+}
+
+enum NewsWorkflowStatus {
+  EDITING
+  PENDING_REVIEW
+  APPROVED
+  READY
+  RETURNED
+  ABANDONED
+
+  @@schema("publishing")
+}
+
+enum NewsWorkflowAction {
+  SUBMIT
+  RETURN
+  APPROVE
+  MARK_READY
+  ABANDON
+
+  @@schema("publishing")
+}
+
+enum NewsPublicationAction {
+  PUBLISH
+  UNPUBLISH
+
+  @@schema("publishing")
+}
+
+model News {
+  id                String                @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  publicationStatus NewsPublicationStatus @default(NEVER_PUBLISHED) @map("publication_status")
+  liveRevisionId    String?               @map("live_revision_id") @db.Uuid
+  activeRevisionId  String?               @unique @map("active_revision_id") @db.Uuid
+  publishedAt       DateTime?             @map("published_at") @db.Timestamptz(6)
+  unpublishedAt     DateTime?             @map("unpublished_at") @db.Timestamptz(6)
+  createdById       String?               @map("created_by_id") @db.Uuid
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  liveRevision      NewsRevision?          @relation("NewsLiveRevision", fields: [liveRevisionId], references: [id])
+  activeRevision    NewsRevision?          @relation("NewsActiveRevision", fields: [activeRevisionId], references: [id])
+  revisions         NewsRevision[]         @relation("NewsRevisions")
+  workflowEvents    NewsWorkflowEvent[]
+  publicationEvents NewsPublicationEvent[]
+  slugRedirects     NewsSlugRedirect[]
+
+  @@map("news")
+  @@schema("publishing")
+}
+
+model NewsRevision {
+  id                String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  newsId            String             @map("news_id") @db.Uuid
+  revisionNumber    Int                @map("revision_number")
+  workflowStatus    NewsWorkflowStatus @default(EDITING) @map("workflow_status")
+  editVersion       Int                @default(0) @map("edit_version")
+  basedOnRevisionId String?            @map("based_on_revision_id") @db.Uuid
+  createdById       String?            @map("created_by_id") @db.Uuid
+  submittedById     String?            @map("submitted_by_id") @db.Uuid
+  reviewedById      String?            @map("reviewed_by_id") @db.Uuid
+  submittedAt       DateTime?          @map("submitted_at") @db.Timestamptz(6)
+  reviewedAt        DateTime?          @map("reviewed_at") @db.Timestamptz(6)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  news              News                      @relation("NewsRevisions", fields: [newsId], references: [id])
+  basedOn           NewsRevision?             @relation("NewsRevisionLineage", fields: [basedOnRevisionId], references: [id])
+  derivedRevisions  NewsRevision[]            @relation("NewsRevisionLineage")
+  liveFor           News[]                    @relation("NewsLiveRevision")
+  activeFor         News[]                    @relation("NewsActiveRevision")
+  translations      NewsRevisionTranslation[]
+  categories        NewsRevisionCategory[]
+  workflowEvents    NewsWorkflowEvent[]
+  publicationEvents NewsPublicationEvent[]
+
+  @@unique([newsId, revisionNumber])
+  @@index([newsId])
+  @@map("news_revision")
+  @@schema("publishing")
+}
+
+model NewsRevisionTranslation {
+  id             String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  revisionId     String   @map("revision_id") @db.Uuid
+  locale         String
+  title          String
+  slug           String
+  summary        String?
+  body           Json?
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  revision NewsRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+
+  @@unique([revisionId, locale])
+  @@index([locale, slug])
+  @@map("news_revision_translation")
+  @@schema("publishing")
+}
+
+model NewsCategory {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  nameAr    String   @map("name_ar")
+  nameEn    String   @map("name_en")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  revisions NewsRevisionCategory[]
+
+  @@map("news_category")
+  @@schema("publishing")
+}
+
+model NewsRevisionCategory {
+  revisionId String   @map("revision_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  revision NewsRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  category NewsCategory @relation(fields: [categoryId], references: [id])
+
+  @@id([revisionId, categoryId])
+  @@map("news_revision_category")
+  @@schema("publishing")
+}
+
+model NewsSlugRedirect {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  newsId    String   @map("news_id") @db.Uuid
+  locale    String
+  slug      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  news News @relation(fields: [newsId], references: [id])
+
+  @@unique([locale, slug])
+  @@map("news_slug_redirect")
+  @@schema("publishing")
+}
+
+model NewsWorkflowEvent {
+  id         String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  newsId     String             @map("news_id") @db.Uuid
+  revisionId String             @map("revision_id") @db.Uuid
+  action     NewsWorkflowAction
+  fromStatus NewsWorkflowStatus @map("from_status")
+  toStatus   NewsWorkflowStatus @map("to_status")
+  comment    String?
+  actorId    String?            @map("actor_id") @db.Uuid
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  news     News         @relation(fields: [newsId], references: [id])
+  revision NewsRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([newsId])
+  @@map("news_workflow_event")
+  @@schema("publishing")
+}
+
+model NewsPublicationEvent {
+  id         String                @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  newsId     String                @map("news_id") @db.Uuid
+  revisionId String                @map("revision_id") @db.Uuid
+  action     NewsPublicationAction
+  reason     String?
+  actorId    String?               @map("actor_id") @db.Uuid
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  news     News         @relation(fields: [newsId], references: [id])
+  revision NewsRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([newsId])
+  @@map("news_publication_event")
+  @@schema("publishing")
+}
