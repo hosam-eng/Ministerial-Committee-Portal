@@ -49,6 +49,7 @@ export {
 } from "./infrastructure/rbac/service";
 export { AccessDenied } from "./presentation/access-denied";
 export { AdminHome } from "./presentation/admin-home";
+export { LogoutButton } from "./presentation/logout-button";
 export { LoginForm } from "./presentation/login-form";
 export { MfaChallengeForm } from "./presentation/mfa-challenge-form";
 export { MfaSetupForm } from "./presentation/mfa-setup-form";

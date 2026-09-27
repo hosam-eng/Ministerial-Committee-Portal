@@ -55,9 +55,18 @@ export function RolesAdmin({
       );
     return typeof node === "string" ? node : key;
   };
+  // IMP-08: system-role descriptions are localized catalog text, not the
+  // stored (English) DB description. Custom-role descriptions stay as
+  // entered — they are user data, not catalog text.
+  const systemDescriptions = t.raw("roles.systemDescriptions") as Record<
+    string,
+    string
+  >;
+  const systemDescription = (systemKey: string) =>
+    systemDescriptions[systemKey];
 
   return (
-    <main className="auth-page access-page">
+    <div className="access-page">
       <h1>{t("roles.title")}</h1>
       {errorKey ? (
         <p role="alert" className="auth-error">
@@ -83,7 +92,9 @@ export function RolesAdmin({
                 <p>{t("roles.readOnlyNotice")}</p>
                 <p>
                   {t("roles.description")}:{" "}
-                  {role.description ?? t("roles.noDescription")}
+                  {systemDescription(role.systemKey) ??
+                    role.description ??
+                    t("roles.noDescription")}
                 </p>
                 <ul className="access-permissions">
                   {role.permissionKeys.map((key) => (
@@ -197,6 +208,6 @@ export function RolesAdmin({
           </form>
         </section>
       ) : null}
-    </main>
+    </div>
   );
 }

@@ -1,0 +1,6 @@
+/**
+ * DGA Platforms Code design tokens/reset — the single vendor CSS import
+ * lives inside the shared/ui boundary (IMP-08). App code imports this
+ * module, never the vendor package directly.
+ */
+@import "@platformscode/core/dist/core/core.css";

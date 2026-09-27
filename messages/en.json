@@ -2,9 +2,17 @@
   "app": {
     "name": "Ministerial Committee for Traffic Safety"
   },
+  "shell": {
+    "skipToContent": "Skip to main content",
+    "languageSwitch": "Language",
+    "language": "العربية",
+    "adminTitle": "Admin console",
+    "adminNav": "Admin console sections",
+    "copyright": "© {year} Ministerial Committee for Traffic Safety. All rights reserved."
+  },
   "home": {
     "title": "Ministerial Committee for Traffic Safety",
-    "body": "The digital portal foundation is ready.",
+    "body": "The digital portal of the Ministerial Committee for Traffic Safety.",
     "switchToLanguage": "العربية"
   },
   "notFound": {
@@ -59,6 +67,7 @@
   },
   "access": {
     "links": {
+      "home": "Admin console",
       "roles": "Manage roles",
       "users": "Manage users"
     },
@@ -85,7 +94,10 @@
       "save": "Save",
       "activate": "Activate",
       "deactivate": "Deactivate",
-      "readOnlyNotice": "This system role is read-only and cannot be modified."
+      "readOnlyNotice": "This system role is read-only and cannot be modified.",
+      "systemDescriptions": {
+        "administrator": "System role granting the full administrative permission catalog."
+      }
     },
     "users": {
       "title": "Users",

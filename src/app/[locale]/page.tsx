@@ -1,13 +1,11 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import type { Locale } from "@/i18n/routing";
-
-import BootstrapHome from "./_components/bootstrap-home";
+import { routing, type Locale } from "@/i18n/routing";
+import { PublicShell } from "@/shared/ui/public-shell";
 
 /**
- * Localized bootstrap home page for IMP-04 — a technical placeholder
- * proving /ar + /en, RTL/LTR, and the language switch. Not the final
- * homepage (real content, header, footer, and design system come later).
+ * Localized public landing — IMP-08 renders it inside PublicShell.
+ * Content stays intentionally minimal; IMP-17 owns the real homepage.
  */
 export default async function HomePage({
   params,
@@ -17,7 +15,26 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // `locale` was validated by the layout (`hasLocale` → notFound) before
-  // this page renders.
-  return <BootstrapHome locale={locale as Locale} />;
+  const t = await getTranslations({ locale });
+  const otherLocale = routing.locales.find(
+    (candidate) => candidate !== locale,
+  ) as Locale;
+
+  return (
+    <PublicShell
+      locale={locale}
+      identity={t("app.name")}
+      switchTo={{
+        href: `/${otherLocale}`,
+        lang: otherLocale,
+        label: t("shell.language"),
+        ariaLabel: t("shell.languageSwitch"),
+      }}
+      skipLabel={t("shell.skipToContent")}
+      footerText={t("shell.copyright", { year: new Date().getFullYear() })}
+    >
+      <h1>{t("home.title")}</h1>
+      <p>{t("home.body")}</p>
+    </PublicShell>
+  );
 }
