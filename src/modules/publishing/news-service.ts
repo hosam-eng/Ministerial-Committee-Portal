@@ -12,6 +12,7 @@ import {
 
 import {
   NewsError,
+  newsBodyText,
   readNewsBody,
   validateDraft,
   type NewsDraftInput,
@@ -521,31 +522,153 @@ export async function listEditorialNews(
   });
 }
 
-export async function getPublishedNews(
-  database: Database = getRuntimeDatabase(),
-) {
-  return database.prisma.news.findMany({
-    where: { publicationStatus: "PUBLISHED", liveRevisionId: { not: null } },
-    include: { liveRevision: { include: snapshot } },
-    orderBy: { publishedAt: "desc" },
-  });
+export interface PublicNews {
+  newsId: string;
+  revisionId: string;
+  locale: NewsLocale;
+  title: string;
+  summary: string;
+  bodyText: string;
+  slug: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  publishedAt: Date;
+  counterpartSlug: string | null;
 }
 
-export async function getPublishedNewsBySlug(
+const publicNewsSelection = {
+  id: true,
+  publishedAt: true,
+  liveRevision: {
+    select: {
+      id: true,
+      translations: {
+        select: {
+          locale: true,
+          title: true,
+          summary: true,
+          body: true,
+          slug: true,
+          seoTitle: true,
+          seoDescription: true,
+        },
+      },
+    },
+  },
+} as const;
+
+type PublicNewsRow = Prisma.NewsGetPayload<{
+  select: typeof publicNewsSelection;
+}>;
+type PublicTranslation = NonNullable<
+  PublicNewsRow["liveRevision"]
+>["translations"][number];
+
+function publicTranslation(translation: PublicTranslation | undefined) {
+  const summary = translation?.summary;
+  if (!translation?.title.trim() || !translation.slug || !summary?.trim())
+    return null;
+  try {
+    const bodyText = newsBodyText(translation.body);
+    return bodyText.trim() ? { ...translation, summary, bodyText } : null;
+  } catch (error) {
+    if (error instanceof NewsError && error.code === "INVALID_BODY")
+      return null;
+    throw error;
+  }
+}
+
+function toPublicNews(
+  row: PublicNewsRow,
   locale: NewsLocale,
-  slug: string,
+): PublicNews | null {
+  const revision = row.liveRevision;
+  if (!revision || !row.publishedAt) return null;
+  const translation = publicTranslation(
+    revision.translations.find((item) => item.locale === locale),
+  );
+  if (!translation) return null;
+  const counterpart = publicTranslation(
+    revision.translations.find(
+      (item) => item.locale === (locale === "ar" ? "en" : "ar"),
+    ),
+  );
+  return {
+    newsId: row.id,
+    revisionId: revision.id,
+    locale,
+    title: translation.title,
+    summary: translation.summary,
+    bodyText: translation.bodyText,
+    slug: translation.slug,
+    seoTitle: translation.seoTitle,
+    seoDescription: translation.seoDescription,
+    publishedAt: row.publishedAt,
+    counterpartSlug: counterpart?.slug ?? null,
+  };
+}
+
+export async function listPublishedNews(
+  locale: NewsLocale,
   database: Database = getRuntimeDatabase(),
-) {
-  const normalized = validateDraft({
-    translations: { [locale]: { title: "", slug } },
-    categoryIds: [],
-  }).translations[locale]!.slug;
-  return database.prisma.news.findFirst({
+): Promise<PublicNews[]> {
+  const rows = await database.prisma.news.findMany({
     where: {
       publicationStatus: "PUBLISHED",
       liveRevisionId: { not: null },
-      liveRevision: { translations: { some: { locale, slug: normalized } } },
+      liveRevision: { translations: { some: { locale } } },
     },
-    include: { liveRevision: { include: snapshot } },
+    select: publicNewsSelection,
+    orderBy: { publishedAt: "desc" },
   });
+  return rows.flatMap((row) => {
+    const item = toPublicNews(row, locale);
+    return item ? [item] : [];
+  });
+}
+
+export type PublishedNewsResolution =
+  { kind: "news"; news: PublicNews } | { kind: "redirect"; slug: string };
+
+export async function resolvePublishedNewsBySlug(
+  locale: NewsLocale,
+  slug: string,
+  database: Database = getRuntimeDatabase(),
+): Promise<PublishedNewsResolution | null> {
+  const current = await database.prisma.news.findFirst({
+    where: {
+      publicationStatus: "PUBLISHED",
+      liveRevisionId: { not: null },
+      liveRevision: { translations: { some: { locale, slug } } },
+    },
+    select: publicNewsSelection,
+  });
+  if (current) {
+    const news = toPublicNews(current, locale);
+    return news ? { kind: "news", news } : null;
+  }
+
+  const historical = await database.prisma.newsSlugRedirect.findUnique({
+    where: { locale_slug: { locale, slug } },
+    select: {
+      news: {
+        select: {
+          ...publicNewsSelection,
+          publicationStatus: true,
+          liveRevisionId: true,
+        },
+      },
+    },
+  });
+  const target = historical?.news;
+  if (
+    !target ||
+    target.publicationStatus !== "PUBLISHED" ||
+    !target.liveRevisionId
+  )
+    return null;
+  const news = toPublicNews(target, locale);
+  return news && news.slug !== slug
+    ? { kind: "redirect", slug: news.slug }
+    : null;
 }

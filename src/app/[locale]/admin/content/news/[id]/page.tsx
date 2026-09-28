@@ -190,8 +190,12 @@ export default async function NewsDetailPage({
       )}
       {editorial?.workflowStatus === "APPROVED" && (
         <section className="news-step">
-          <h2>{t("approvedTitle")}</h2>
-          <p>{t("approvedNotPublished")}</p>
+          <h2>
+            {news.publicationStatus === "PUBLISHED"
+              ? t("approvedPendingTitle")
+              : t("approvedTitle")}
+          </h2>
+          <p>{t(`approvedState.${news.publicationStatus}`)}</p>
           {canPublish && (
             <form action={newsWorkflowAction}>
               <input type="hidden" name="locale" value={locale} />

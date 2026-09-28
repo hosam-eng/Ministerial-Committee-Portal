@@ -20,8 +20,10 @@ export {
   unpublishNews,
   getEditorialNews,
   listEditorialNews,
-  getPublishedNews,
-  getPublishedNewsBySlug,
+  listPublishedNews,
+  resolvePublishedNewsBySlug,
+  type PublicNews,
+  type PublishedNewsResolution,
 } from "./news-service";
 export {
   NewsEditor,
