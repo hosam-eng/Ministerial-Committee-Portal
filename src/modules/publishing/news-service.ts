@@ -12,6 +12,7 @@ import {
 
 import {
   NewsError,
+  readNewsBody,
   validateDraft,
   type NewsDraftInput,
   type NewsLocale,
@@ -81,7 +82,7 @@ function contentOf(revision: {
           title: t.title,
           slug: t.slug,
           summary: t.summary,
-          body: t.body,
+          body: readNewsBody(t.body),
           seoTitle: t.seoTitle,
           seoDescription: t.seoDescription,
         },
@@ -316,6 +317,30 @@ export async function returnNews(
   });
 }
 
+export async function restoreApprovedNews(
+  actorId: string,
+  newsId: string,
+  database: Database = getRuntimeDatabase(),
+) {
+  return database.prisma.$transaction(async (tx) => {
+    await authorize(tx, actorId, PERMISSIONS.NEWS_EDIT);
+    const { revision } = await active(tx, newsId);
+    requireState(revision.workflowStatus, "APPROVED");
+    const draft = await clone(tx, newsId, revision, actorId);
+    await tx.newsWorkflowEvent.create({
+      data: {
+        newsId,
+        revisionId: draft.id,
+        action: "RESTORE",
+        fromStatus: "APPROVED",
+        toStatus: "EDITING",
+        actorId,
+      },
+    });
+    return draft;
+  });
+}
+
 export async function startEditingNews(
   actorId: string,
   newsId: string,
@@ -462,7 +487,16 @@ export async function getEditorialNews(
   );
   return database.prisma.news.findUnique({
     where: { id: newsId },
-    include: { activeRevision: { include: snapshot } },
+    include: {
+      activeRevision: { include: snapshot },
+      liveRevision: { include: snapshot },
+      revisions: {
+        orderBy: { revisionNumber: "desc" },
+        include: { translations: true },
+      },
+      workflowEvents: { orderBy: { createdAt: "desc" } },
+      publicationEvents: { orderBy: { createdAt: "desc" } },
+    },
   });
 }
 
@@ -474,7 +508,15 @@ export async function listEditorialNews(
     authorize(tx, actorId, PERMISSIONS.NEWS_READ),
   );
   return database.prisma.news.findMany({
-    include: { activeRevision: { include: snapshot } },
+    include: {
+      activeRevision: { include: snapshot },
+      liveRevision: { include: snapshot },
+      revisions: {
+        take: 1,
+        orderBy: { revisionNumber: "desc" },
+        include: { translations: true },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 }

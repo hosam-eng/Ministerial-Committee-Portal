@@ -21,6 +21,7 @@ enum NewsWorkflowAction {
   SUBMIT
   RETURN
   APPROVE
+  RESTORE
   MARK_READY
   ABANDON
 
