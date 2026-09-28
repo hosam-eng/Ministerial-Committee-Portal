@@ -106,7 +106,12 @@
     "reviewTitle": "Review requested",
     "selfApproval": "You cannot approve a revision you submitted. Another reviewer must approve it.",
     "approvedTitle": "Approved for publication",
-    "approvedNotPublished": "Approved, but not yet published. The live revision has not changed.",
+    "approvedPendingTitle": "Approved revision awaiting publication",
+    "approvedState": {
+      "PUBLISHED": "This editorial revision is approved and ready to publish. The currently published revision remains visible to the public until this revision is published.",
+      "NEVER_PUBLISHED": "This revision is approved and ready to publish. The News item has not been published yet.",
+      "UNPUBLISHED": "This revision is approved and ready to publish. The News item is currently unpublished."
+    },
     "restoreIntro": "Need to correct this approved revision? Restore its content into a new editable draft, then submit it for review again.",
     "editPublishedTitle": "Start a new editorial revision",
     "editPublishedIntro": "The existing published revision will remain live while this new draft is edited.",
