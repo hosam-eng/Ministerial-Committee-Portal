@@ -1,5 +1,8 @@
 export {
   NewsError,
+  newsBodyFromText,
+  newsBodyText,
+  type NewsBodyV1,
   type NewsDraftInput,
   type NewsLocale,
   type NewsTranslationInput,
@@ -10,6 +13,7 @@ export {
   submitNews,
   approveNews,
   returnNews,
+  restoreApprovedNews,
   startEditingNews,
   abandonNewsDraft,
   publishNews,
@@ -23,5 +27,5 @@ export {
   NewsEditor,
   type NewsEditorAction,
   type NewsEditorState,
-  type NewsWorkflowAction,
+  type NewsSubmitAction,
 } from "./presentation/news-editor";

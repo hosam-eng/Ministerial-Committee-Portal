@@ -7,9 +7,17 @@ import {
   PERMISSIONS,
   requireBackoffice,
 } from "@/modules/identity";
-import { getEditorialNews, NewsEditor } from "@/modules/publishing";
+import {
+  getEditorialNews,
+  newsBodyText,
+  NewsEditor,
+} from "@/modules/publishing";
 
-import { newsWorkflowAction, saveNewsAction } from "../actions";
+import {
+  newsWorkflowAction,
+  saveNewsAction,
+  submitNewsAction,
+} from "../actions";
 
 export default async function NewsDetailPage({
   params,
@@ -125,8 +133,7 @@ export default async function NewsDetailPage({
                   title: row.title,
                   summary: row.summary ?? "",
                   slug: row.slug,
-                  body:
-                    row.body == null ? "" : JSON.stringify(row.body, null, 2),
+                  body: newsBodyText(row.body),
                   seoTitle: row.seoTitle ?? "",
                   seoDescription: row.seoDescription ?? "",
                 },
@@ -134,7 +141,7 @@ export default async function NewsDetailPage({
             ),
           }}
           saveAction={saveNewsAction}
-          workflowAction={newsWorkflowAction}
+          submitAction={submitNewsAction}
         />
       ) : null}
       {editorial?.workflowStatus === "EDITING" && !canEdit && (
@@ -195,6 +202,16 @@ export default async function NewsDetailPage({
                 value="publish"
               >
                 {t("actions.publish")}
+              </button>
+            </form>
+          )}
+          {canEdit && (
+            <form action={newsWorkflowAction}>
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="newsId" value={id} />
+              <p>{t("restoreIntro")}</p>
+              <button className="news-button" name="operation" value="restore">
+                {t("actions.restore")}
               </button>
             </form>
           )}

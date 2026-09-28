@@ -10,10 +10,12 @@ import {
 } from "@/modules/identity";
 import {
   NewsError,
+  newsBodyFromText,
   createNewsDraft,
   saveNewsDraft,
   submitNews,
   returnNews,
+  restoreApprovedNews,
   approveNews,
   publishNews,
   unpublishNews,
@@ -28,6 +30,8 @@ export type SaveState = {
   saved: boolean;
   editVersion: number;
 };
+
+export type SubmitState = { error: string | null; attemptedVersion: number };
 
 function details(formData: FormData) {
   const locale = formData.get("locale") === "en" ? "en" : "ar";
@@ -60,21 +64,13 @@ function field(formData: FormData, key: string) {
 function draft(formData: FormData): NewsDraftInput {
   const translations: NewsDraftInput["translations"] = {};
   for (const locale of ["ar", "en"] as NewsLocale[]) {
-    const bodyText = field(formData, `body_${locale}`).trim();
-    let body: unknown;
-    if (bodyText) {
-      try {
-        body = JSON.parse(bodyText);
-      } catch {
-        throw new NewsError("INVALID_BODY");
-      }
-    }
+    const body = newsBodyFromText(field(formData, `body_${locale}`));
     const title = field(formData, `title_${locale}`);
     const slug = field(formData, `slug_${locale}`);
     const summary = field(formData, `summary_${locale}`);
     const seoTitle = field(formData, `seoTitle_${locale}`);
     const seoDescription = field(formData, `seoDescription_${locale}`);
-    if (title || slug || summary || bodyText || seoTitle || seoDescription) {
+    if (title || slug || summary || body || seoTitle || seoDescription) {
       translations[locale] = {
         title,
         slug,
@@ -134,6 +130,21 @@ export async function saveNewsAction(
   }
 }
 
+export async function submitNewsAction(
+  _previous: SubmitState,
+  formData: FormData,
+): Promise<SubmitState> {
+  const { locale, id, path } = details(formData);
+  const attemptedVersion = expected(formData);
+  try {
+    const userId = await actor(locale, PERMISSIONS.NEWS_EDIT);
+    await submitNews(userId, id, attemptedVersion);
+  } catch (error) {
+    return { error: errorCode(error), attemptedVersion };
+  }
+  redirect(`${path}?status=submit`);
+}
+
 export async function newsWorkflowAction(formData: FormData) {
   const { locale, id, path } = details(formData);
   const operation = field(formData, "operation");
@@ -146,9 +157,6 @@ export async function newsWorkflowAction(formData: FormData) {
   try {
     const userId = await actor(locale, permission);
     switch (operation) {
-      case "submit":
-        await submitNews(userId, id, expected(formData));
-        break;
       case "return":
         await returnNews(userId, id, field(formData, "comment"));
         break;
@@ -163,6 +171,9 @@ export async function newsWorkflowAction(formData: FormData) {
         break;
       case "edit":
         await startEditingNews(userId, id);
+        break;
+      case "restore":
+        await restoreApprovedNews(userId, id);
         break;
       case "abandon":
         await abandonNewsDraft(userId, id);

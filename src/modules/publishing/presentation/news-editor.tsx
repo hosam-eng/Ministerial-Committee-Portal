@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ChangeEvent } from "react";
 import { useTranslations } from "next-intl";
 
 export interface NewsEditorState {
@@ -12,14 +12,17 @@ export type NewsEditorAction = (
   state: NewsEditorState,
   formData: FormData,
 ) => Promise<NewsEditorState>;
-export type NewsWorkflowAction = (formData: FormData) => Promise<void>;
+export type NewsSubmitAction = (
+  state: { error: string | null; attemptedVersion: number },
+  formData: FormData,
+) => Promise<{ error: string | null; attemptedVersion: number }>;
 
 export function NewsEditor({
   locale,
   newsId,
   revision,
   saveAction,
-  workflowAction,
+  submitAction,
 }: {
   locale: string;
   newsId: string;
@@ -39,7 +42,7 @@ export function NewsEditor({
     >;
   };
   saveAction: NewsEditorAction;
-  workflowAction: NewsWorkflowAction;
+  submitAction: NewsSubmitAction;
 }) {
   const t = useTranslations("news");
   const [state, action, pending] = useActionState(saveAction, {
@@ -47,7 +50,31 @@ export function NewsEditor({
     saved: false,
     editVersion: revision.editVersion,
   });
+  const [submitState, submit, submitting] = useActionState(submitAction, {
+    error: null,
+    attemptedVersion: revision.editVersion,
+  });
   const [dirtyVersion, setDirtyVersion] = useState<number | null>(null);
+  const [formValues, setFormValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      Object.entries(revision.translations).flatMap(([language, fields]) =>
+        Object.entries(fields).map(([name, value]) => [
+          `${name}_${language}`,
+          value,
+        ]),
+      ),
+    ),
+  );
+  const fieldValue = (name: string, language: string) => ({
+    value: formValues[`${name}_${language}`] ?? "",
+    onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFormValues((current) => ({
+        ...current,
+        [event.target.name]: event.target.value,
+      }));
+      setDirtyVersion(state.editVersion);
+    },
+  });
   const dirty = dirtyVersion === state.editVersion;
   const safeError =
     state.error && t.has(`errors.${state.error}`)
@@ -67,11 +94,7 @@ export function NewsEditor({
           {t("saved")}
         </p>
       )}
-      <form
-        action={action}
-        className="news-form"
-        onChange={() => setDirtyVersion(state.editVersion)}
-      >
+      <form action={action} className="news-form">
         <input type="hidden" name="locale" value={locale} />
         <input type="hidden" name="newsId" value={newsId} />
         <input type="hidden" name="editVersion" value={state.editVersion} />
@@ -80,7 +103,6 @@ export function NewsEditor({
         ))}
         <div className="news-language-grid">
           {(["ar", "en"] as const).map((language) => {
-            const values = revision.translations[language];
             return (
               <fieldset
                 key={language}
@@ -93,7 +115,7 @@ export function NewsEditor({
                 <input
                   id={`title_${language}`}
                   name={`title_${language}`}
-                  defaultValue={values?.title ?? ""}
+                  {...fieldValue("title", language)}
                 />
                 <label htmlFor={`summary_${language}`}>
                   {t("fields.summary")}
@@ -102,7 +124,7 @@ export function NewsEditor({
                   id={`summary_${language}`}
                   name={`summary_${language}`}
                   rows={3}
-                  defaultValue={values?.summary ?? ""}
+                  {...fieldValue("summary", language)}
                 />
                 <label htmlFor={`body_${language}`}>{t("fields.body")}</label>
                 <p className="news-hint" id={`body_hint_${language}`}>
@@ -112,17 +134,15 @@ export function NewsEditor({
                   id={`body_${language}`}
                   name={`body_${language}`}
                   rows={9}
-                  spellCheck={false}
                   aria-describedby={`body_hint_${language}`}
-                  dir="ltr"
-                  defaultValue={values?.body ?? ""}
+                  {...fieldValue("body", language)}
                 />
                 <label htmlFor={`slug_${language}`}>{t("fields.slug")}</label>
                 <input
                   id={`slug_${language}`}
                   name={`slug_${language}`}
                   dir="auto"
-                  defaultValue={values?.slug ?? ""}
+                  {...fieldValue("slug", language)}
                 />
                 <label htmlFor={`seoTitle_${language}`}>
                   {t("fields.seoTitle")}
@@ -130,7 +150,7 @@ export function NewsEditor({
                 <input
                   id={`seoTitle_${language}`}
                   name={`seoTitle_${language}`}
-                  defaultValue={values?.seoTitle ?? ""}
+                  {...fieldValue("seoTitle", language)}
                 />
                 <label htmlFor={`seoDescription_${language}`}>
                   {t("fields.seoDescription")}
@@ -139,7 +159,7 @@ export function NewsEditor({
                   id={`seoDescription_${language}`}
                   name={`seoDescription_${language}`}
                   rows={2}
-                  defaultValue={values?.seoDescription ?? ""}
+                  {...fieldValue("seoDescription", language)}
                 />
               </fieldset>
             );
@@ -158,19 +178,25 @@ export function NewsEditor({
           {t("unsaved")}
         </p>
       )}
-      <form action={workflowAction} className="news-actions">
+      <form action={submit} className="news-actions">
         <input type="hidden" name="locale" value={locale} />
         <input type="hidden" name="newsId" value={newsId} />
         <input type="hidden" name="editVersion" value={state.editVersion} />
         <button
           className="news-button"
-          name="operation"
-          value="submit"
           type="submit"
-          disabled={dirty || pending}
+          disabled={dirty || pending || submitting}
         >
           {t("actions.submit")}
         </button>
+        {submitState.error &&
+          submitState.attemptedVersion === state.editVersion && (
+            <p className="news-alert" role="alert">
+              {t.has(`errors.${submitState.error}`)
+                ? t(`errors.${submitState.error}`)
+                : t("errors.generic")}
+            </p>
+          )}
       </form>
     </section>
   );
