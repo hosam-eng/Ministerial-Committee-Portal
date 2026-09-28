@@ -26,7 +26,7 @@ export function PublicShell({
 }: {
   locale: string;
   identity: string;
-  switchTo: LocaleSwitch;
+  switchTo?: LocaleSwitch | null;
   skipLabel: string;
   footerText: string;
   children: ReactNode;
@@ -41,16 +41,18 @@ export function PublicShell({
           <a className="shell-identity" href={`/${locale}`}>
             {identity}
           </a>
-          <nav className="shell-header-nav" aria-label={switchTo.ariaLabel}>
-            <a
-              className="shell-lang"
-              href={switchTo.href}
-              hrefLang={switchTo.lang}
-              lang={switchTo.lang}
-            >
-              {switchTo.label}
-            </a>
-          </nav>
+          {switchTo ? (
+            <nav className="shell-header-nav" aria-label={switchTo.ariaLabel}>
+              <a
+                className="shell-lang"
+                href={switchTo.href}
+                hrefLang={switchTo.lang}
+                lang={switchTo.lang}
+              >
+                {switchTo.label}
+              </a>
+            </nav>
+          ) : null}
         </div>
       </header>
       <main id="main-content" className="shell-main">

@@ -15,6 +15,14 @@
     "body": "The digital portal of the Ministerial Committee for Traffic Safety.",
     "switchToLanguage": "العربية"
   },
+  "publicNews": {
+    "title": "News",
+    "description": "Latest published news from the Ministerial Committee for Traffic Safety.",
+    "empty": "There are no published news items at this time.",
+    "publishedOn": "Published",
+    "back": "Back to News",
+    "breadcrumb": "Breadcrumb"
+  },
   "notFound": {
     "title": "Page not found",
     "body": "The page you requested could not be found."
