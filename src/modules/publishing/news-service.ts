@@ -4,11 +4,7 @@ import {
   type NewsRevision,
 } from "@/platform/database/generated/client";
 import { getRuntimeDatabase } from "@/platform/runtime";
-import {
-  AccessDeniedError,
-  PERMISSIONS,
-  type PermissionKey,
-} from "@/modules/identity";
+import { PERMISSIONS, requireActorPermission } from "@/modules/identity";
 
 import {
   NewsError,
@@ -21,30 +17,6 @@ import {
 
 const snapshot = { translations: true, categories: true } as const;
 type Transaction = Prisma.TransactionClient;
-
-async function authorize(
-  tx: Transaction,
-  actorId: string,
-  permission: PermissionKey,
-) {
-  const roles = await tx.userRole.findMany({
-    where: { userId: actorId, role: { isActive: true } },
-    select: {
-      role: {
-        select: {
-          permissions: { select: { permission: { select: { key: true } } } },
-        },
-      },
-    },
-  });
-  if (
-    !roles.some(({ role }) =>
-      role.permissions.some(({ permission: item }) => item.key === permission),
-    )
-  ) {
-    throw new AccessDeniedError(permission);
-  }
-}
 
 async function lockedNews(tx: Transaction, id: string) {
   await tx.$queryRaw`SELECT id FROM "publishing"."news" WHERE id = ${id}::uuid FOR UPDATE`;
@@ -159,8 +131,8 @@ export async function createNewsDraft(
   actorId: string,
   database: Database = getRuntimeDatabase(),
 ) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_CREATE);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_CREATE);
     const news = await tx.news.create({ data: { createdById: actorId } });
     const revision = await tx.newsRevision.create({
       data: { newsId: news.id, revisionNumber: 1, createdById: actorId },
@@ -185,8 +157,8 @@ export async function saveNewsDraft(
   database: Database = getRuntimeDatabase(),
 ) {
   const draft = validateDraft(input);
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_EDIT);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_EDIT);
     const { revision } = await active(tx, newsId);
     requireState(revision.workflowStatus, "EDITING");
     if (revision.editVersion !== expectedVersion)
@@ -266,8 +238,8 @@ export async function submitNews(
   expectedVersion: number,
   database: Database = getRuntimeDatabase(),
 ) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_EDIT);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_EDIT);
     const { revision } = await active(tx, newsId);
     requireState(revision.workflowStatus, "EDITING");
     if (revision.editVersion !== expectedVersion)
@@ -283,8 +255,8 @@ export async function approveNews(
   newsId: string,
   database: Database = getRuntimeDatabase(),
 ) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_REVIEW);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_REVIEW);
     const { revision } = await active(tx, newsId);
     requireState(revision.workflowStatus, "PENDING_REVIEW");
     if (revision.submittedById === actorId)
@@ -302,8 +274,8 @@ export async function returnNews(
   database: Database = getRuntimeDatabase(),
 ) {
   if (!comment?.trim()) throw new NewsError("RETURN_COMMENT_REQUIRED");
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_REVIEW);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_REVIEW);
     const { revision } = await active(tx, newsId);
     requireState(revision.workflowStatus, "PENDING_REVIEW");
     await transition(
@@ -323,8 +295,8 @@ export async function restoreApprovedNews(
   newsId: string,
   database: Database = getRuntimeDatabase(),
 ) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_EDIT);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_EDIT);
     const { revision } = await active(tx, newsId);
     requireState(revision.workflowStatus, "APPROVED");
     const draft = await clone(tx, newsId, revision, actorId);
@@ -347,8 +319,8 @@ export async function startEditingNews(
   newsId: string,
   database: Database = getRuntimeDatabase(),
 ) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_EDIT);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_EDIT);
     const news = await lockedNews(tx, newsId);
     if (news.activeRevisionId) throw new NewsError("ACTIVE_REVISION_EXISTS");
     const source = news.liveRevisionId
@@ -368,8 +340,8 @@ export async function abandonNewsDraft(
   newsId: string,
   database: Database = getRuntimeDatabase(),
 ) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_EDIT);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_EDIT);
     const { revision } = await active(tx, newsId);
     requireState(revision.workflowStatus, "EDITING");
     await transition(tx, revision, actorId, "ABANDONED", "ABANDON");
@@ -385,8 +357,8 @@ export async function publishNews(
   newsId: string,
   database: Database = getRuntimeDatabase(),
 ) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_PUBLISH);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_PUBLISH);
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(90909)::text`;
     const { news, revision } = await active(tx, newsId);
     requireState(revision.workflowStatus, "APPROVED");
@@ -453,8 +425,8 @@ export async function unpublishNews(
   database: Database = getRuntimeDatabase(),
 ) {
   if (!reason?.trim()) throw new NewsError("UNPUBLISH_REASON_REQUIRED");
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_PUBLISH);
   return database.prisma.$transaction(async (tx) => {
-    await authorize(tx, actorId, PERMISSIONS.NEWS_PUBLISH);
     const news = await lockedNews(tx, newsId);
     if (news.publicationStatus !== "PUBLISHED" || !news.liveRevisionId)
       throw new NewsError("NOT_PUBLISHED");
@@ -483,9 +455,7 @@ export async function getEditorialNews(
   newsId: string,
   database: Database = getRuntimeDatabase(),
 ) {
-  await database.prisma.$transaction((tx) =>
-    authorize(tx, actorId, PERMISSIONS.NEWS_READ),
-  );
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_READ);
   return database.prisma.news.findUnique({
     where: { id: newsId },
     include: {
@@ -505,9 +475,7 @@ export async function listEditorialNews(
   actorId: string,
   database: Database = getRuntimeDatabase(),
 ) {
-  await database.prisma.$transaction((tx) =>
-    authorize(tx, actorId, PERMISSIONS.NEWS_READ),
-  );
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_READ);
   return database.prisma.news.findMany({
     include: {
       activeRevision: { include: snapshot },
