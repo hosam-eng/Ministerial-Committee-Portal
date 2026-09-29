@@ -24,14 +24,16 @@ export function LogoutButton({ locale }: { locale: Locale }) {
     }
   }
 
+  const label = pending ? t("admin.loggingOut") : t("admin.logout");
+
   return (
-    <dga-button-v2
-      label={pending ? t("admin.loggingOut") : t("admin.logout")}
-      variant="neutral"
-      size="sm"
+    <button
       type="button"
+      className="ui-button ui-button-secondary ui-button-compact admin-logout-button"
       disabled={pending}
       onClick={() => void onLogout()}
-    />
+    >
+      {label}
+    </button>
   );
 }

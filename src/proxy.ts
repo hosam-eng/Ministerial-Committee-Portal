@@ -7,6 +7,11 @@ import {
   REQUEST_ID_HEADER,
 } from "@/platform/context";
 import { routing } from "@/i18n/routing";
+import {
+  isPreviewPath,
+  PREVIEW_CACHE_CONTROL,
+  PREVIEW_ROBOTS_TAG,
+} from "@/shared/preview/safety";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -38,7 +43,12 @@ export function proxy(request: NextRequest): NextResponse {
     return response;
   }
 
-  return intlMiddleware(request);
+  const response = intlMiddleware(request);
+  if (isPreviewPath(request.nextUrl.pathname)) {
+    response.headers.set("Cache-Control", PREVIEW_CACHE_CONTROL);
+    response.headers.set("X-Robots-Tag", PREVIEW_ROBOTS_TAG);
+  }
+  return response;
 }
 
 export const config = {

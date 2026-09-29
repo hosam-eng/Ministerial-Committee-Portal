@@ -12,6 +12,16 @@ import {
   newsBodyText,
   NewsEditor,
 } from "@/modules/publishing";
+import { AdminPageHeader } from "@/shared/ui/admin-page-header";
+import {
+  AdminEventItem,
+  AdminEventList,
+  AdminHistory,
+  AdminHistorySubsection,
+  AdminRevisionItem,
+  AdminRevisionList,
+} from "@/shared/ui/admin-history";
+import { AdminWorkflowStack } from "@/shared/ui/admin-workflow-stack";
 
 import {
   newsWorkflowAction,
@@ -77,15 +87,15 @@ export default async function NewsDetailPage({
       ? t(`results.${query.status}`)
       : null;
   return (
-    <article className="news-workspace">
-      <a href={currentPath}>{t("back")}</a>
-      <div className="news-heading">
-        <div>
-          <p className="news-eyebrow">{t("section")}</p>
-          <h1>{title}</h1>
-          <p>{t("detailIntro")}</p>
-        </div>
-      </div>
+    <article className="admin-editor-page">
+      <a className="admin-editor-back" href={currentPath}>
+        {t("back")}
+      </a>
+      <AdminPageHeader
+        eyebrow={t("section")}
+        title={title}
+        description={t("detailIntro")}
+      />
       {error && (
         <p role="alert" className="news-alert">
           {error}
@@ -96,29 +106,31 @@ export default async function NewsDetailPage({
           {status}
         </p>
       )}
-      <section className="news-summary" aria-label={t("statusTitle")}>
-        <div>
-          <span>{t("publicationLabel")}</span>
-          <strong>{t(`publication.${news.publicationStatus}`)}</strong>
+      <section className="admin-status-grid" aria-label={t("statusTitle")}>
+        <div className="admin-status-item">
+          <p className="admin-status-label">{t("publicationLabel")}</p>
+          <span className="ui-badge ui-badge-brand">
+            {t(`publication.${news.publicationStatus}`)}
+          </span>
         </div>
-        <div>
-          <span>{t("editorialLabel")}</span>
-          <strong>
+        <div className="admin-status-item">
+          <p className="admin-status-label">{t("editorialLabel")}</p>
+          <span className="ui-badge ui-badge-neutral">
             {editorial
               ? t(`workflow.${editorial.workflowStatus}`)
               : t("noActive")}
-          </strong>
+          </span>
         </div>
-        <div>
-          <span>{t("liveRevision")}</span>
+        <div className="admin-status-item">
+          <p className="admin-status-label">{t("liveRevision")}</p>
           <strong>
             {live
               ? t("revisionNumber", { number: live.revisionNumber })
               : t("notLive")}
           </strong>
         </div>
-        <div>
-          <span>{t("editorialRevision")}</span>
+        <div className="admin-status-item">
+          <p className="admin-status-label">{t("editorialRevision")}</p>
           <strong>
             {editorial
               ? t("revisionNumber", { number: editorial.revisionNumber })
@@ -127,215 +139,256 @@ export default async function NewsDetailPage({
         </div>
       </section>
       {live && editorial && <p className="news-notice">{t("liveUnchanged")}</p>}
-      {editorial?.workflowStatus === "EDITING" && canEdit ? (
-        <NewsEditor
-          key={editorial.id}
-          locale={locale}
-          newsId={id}
-          revision={{
-            editVersion: editorial.editVersion,
-            categoryIds: editorial.categories.map((row) => row.categoryId),
-            translations: Object.fromEntries(
-              editorial.translations.map((row) => [
-                row.locale,
-                {
-                  title: row.title,
-                  summary: row.summary ?? "",
-                  slug: row.slug,
-                  body: newsBodyText(row.body),
-                  seoTitle: row.seoTitle ?? "",
-                  seoDescription: row.seoDescription ?? "",
-                },
-              ]),
-            ),
-          }}
-          messages={{
-            editorTitle: t("editorTitle"),
-            editorIntro: t("editorIntro"),
-            saved: t("saved"),
-            saving: t("saving"),
-            save: t("save"),
-            unsaved: t("unsaved"),
-            submit: t("actions.submit"),
-            languages: { ar: t("languages.ar"), en: t("languages.en") },
-            fields: {
-              title: t("fields.title"),
-              summary: t("fields.summary"),
-              body: t("fields.body"),
-              bodyHint: t("fields.bodyHint"),
-              slug: t("fields.slug"),
-              seoTitle: t("fields.seoTitle"),
-              seoDescription: t("fields.seoDescription"),
-            },
-            errors: {
-              ...stringMessages(t.raw("errors")),
-              generic: t("errors.generic"),
-            },
-          }}
-          saveAction={saveNewsAction}
-          submitAction={submitNewsAction}
-        />
-      ) : null}
-      {editorial?.workflowStatus === "EDITING" && !canEdit && (
-        <p className="news-muted">{t("readOnly")}</p>
-      )}
-      {editorial?.workflowStatus === "PENDING_REVIEW" && (
-        <section className="news-step">
-          <h2>{t("reviewTitle")}</h2>
-          {canReview && editorial.submittedById === gate.user.id && (
-            <p className="news-notice">{t("selfApproval")}</p>
-          )}
-          {canReview && (
-            <div className="news-actions">
-              {editorial.submittedById !== gate.user.id && (
-                <form action={newsWorkflowAction}>
+      <AdminWorkflowStack>
+        {editorial?.workflowStatus === "EDITING" && canEdit ? (
+          <NewsEditor
+            key={editorial.id}
+            locale={locale}
+            newsId={id}
+            revision={{
+              editVersion: editorial.editVersion,
+              categoryIds: editorial.categories.map((row) => row.categoryId),
+              translations: Object.fromEntries(
+                editorial.translations.map((row) => [
+                  row.locale,
+                  {
+                    title: row.title,
+                    summary: row.summary ?? "",
+                    slug: row.slug,
+                    body: newsBodyText(row.body),
+                    seoTitle: row.seoTitle ?? "",
+                    seoDescription: row.seoDescription ?? "",
+                  },
+                ]),
+              ),
+            }}
+            messages={{
+              editorTitle: t("editorTitle"),
+              editorIntro: t("editorIntro"),
+              saved: t("saved"),
+              saving: t("saving"),
+              save: t("save"),
+              unsaved: t("unsaved"),
+              submit: t("actions.submit"),
+              sections: {
+                content: t("editorSections.content"),
+                metadata: t("editorSections.metadata"),
+              },
+              languages: { ar: t("languages.ar"), en: t("languages.en") },
+              fields: {
+                title: t("fields.title"),
+                summary: t("fields.summary"),
+                body: t("fields.body"),
+                bodyHint: t("fields.bodyHint"),
+                slug: t("fields.slug"),
+                seoTitle: t("fields.seoTitle"),
+                seoDescription: t("fields.seoDescription"),
+              },
+              errors: {
+                ...stringMessages(t.raw("errors")),
+                generic: t("errors.generic"),
+              },
+            }}
+            saveAction={saveNewsAction}
+            submitAction={submitNewsAction}
+          />
+        ) : null}
+        {editorial?.workflowStatus === "EDITING" && !canEdit && (
+          <p className="news-muted">{t("readOnly")}</p>
+        )}
+        {editorial?.workflowStatus === "PENDING_REVIEW" && (
+          <section className="admin-workflow-panel">
+            <h2>{t("reviewTitle")}</h2>
+            {canReview && editorial.submittedById === gate.user.id && (
+              <p className="news-notice">{t("selfApproval")}</p>
+            )}
+            {canReview && (
+              <div className="ui-action-group">
+                {editorial.submittedById !== gate.user.id && (
+                  <form action={newsWorkflowAction}>
+                    <input type="hidden" name="locale" value={locale} />
+                    <input type="hidden" name="newsId" value={id} />
+                    <button
+                      className="ui-button ui-button-primary"
+                      name="operation"
+                      value="approve"
+                    >
+                      {t("actions.approve")}
+                    </button>
+                  </form>
+                )}
+                <form action={newsWorkflowAction} className="news-inline-form">
                   <input type="hidden" name="locale" value={locale} />
                   <input type="hidden" name="newsId" value={id} />
+                  <div className="admin-inline-field">
+                    <label htmlFor="return-comment">
+                      {t("fields.returnComment")}
+                    </label>
+                    <textarea
+                      id="return-comment"
+                      className="ui-input"
+                      name="comment"
+                      rows={2}
+                      required
+                    />
+                  </div>
                   <button
-                    className="news-button news-primary"
+                    className="ui-button ui-button-secondary"
                     name="operation"
-                    value="approve"
+                    value="return"
                   >
-                    {t("actions.approve")}
+                    {t("actions.return")}
                   </button>
                 </form>
-              )}
-              <form action={newsWorkflowAction} className="news-inline-form">
+              </div>
+            )}
+          </section>
+        )}
+        {editorial?.workflowStatus === "APPROVED" && (
+          <section className="admin-workflow-panel">
+            <h2>
+              {news.publicationStatus === "PUBLISHED"
+                ? t("approvedPendingTitle")
+                : t("approvedTitle")}
+            </h2>
+            <p>{t(`approvedState.${news.publicationStatus}`)}</p>
+            {canPublish && (
+              <form action={newsWorkflowAction}>
                 <input type="hidden" name="locale" value={locale} />
                 <input type="hidden" name="newsId" value={id} />
-                <label htmlFor="return-comment">
-                  {t("fields.returnComment")}
-                </label>
-                <textarea
-                  id="return-comment"
-                  name="comment"
-                  rows={2}
-                  required
-                />
-                <button className="news-button" name="operation" value="return">
-                  {t("actions.return")}
+                <button
+                  className="ui-button ui-button-primary"
+                  name="operation"
+                  value="publish"
+                >
+                  {t("actions.publish")}
                 </button>
               </form>
-            </div>
-          )}
-        </section>
-      )}
-      {editorial?.workflowStatus === "APPROVED" && (
-        <section className="news-step">
-          <h2>
-            {news.publicationStatus === "PUBLISHED"
-              ? t("approvedPendingTitle")
-              : t("approvedTitle")}
-          </h2>
-          <p>{t(`approvedState.${news.publicationStatus}`)}</p>
-          {canPublish && (
+            )}
+            {canEdit && (
+              <form action={newsWorkflowAction}>
+                <input type="hidden" name="locale" value={locale} />
+                <input type="hidden" name="newsId" value={id} />
+                <p>{t("restoreIntro")}</p>
+                <button
+                  className="ui-button ui-button-secondary"
+                  name="operation"
+                  value="restore"
+                >
+                  {t("actions.restore")}
+                </button>
+              </form>
+            )}
+          </section>
+        )}
+        {!editorial && canEdit && news.revisions.length > 0 && (
+          <section className="admin-workflow-panel">
+            <h2>{t("editPublishedTitle")}</h2>
+            <p>{t("editPublishedIntro")}</p>
             <form action={newsWorkflowAction}>
               <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="newsId" value={id} />
               <button
-                className="news-button news-primary"
+                className="ui-button ui-button-secondary"
                 name="operation"
-                value="publish"
+                value="edit"
               >
-                {t("actions.publish")}
+                {t("actions.edit")}
               </button>
             </form>
-          )}
-          {canEdit && (
-            <form action={newsWorkflowAction}>
+          </section>
+        )}
+        {news.publicationStatus === "PUBLISHED" && canPublish && (
+          <section className="admin-workflow-panel">
+            <h2>{t("unpublishTitle")}</h2>
+            <form action={newsWorkflowAction} className="news-inline-form">
               <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="newsId" value={id} />
-              <p>{t("restoreIntro")}</p>
-              <button className="news-button" name="operation" value="restore">
-                {t("actions.restore")}
+              <div className="admin-inline-field">
+                <label htmlFor="unpublish-reason">
+                  {t("fields.unpublishReason")}
+                </label>
+                <textarea
+                  id="unpublish-reason"
+                  className="ui-input"
+                  name="reason"
+                  rows={2}
+                  required
+                />
+              </div>
+              <button
+                className="ui-button ui-button-danger"
+                name="operation"
+                value="unpublish"
+              >
+                {t("actions.unpublish")}
               </button>
             </form>
+          </section>
+        )}
+      </AdminWorkflowStack>
+      <AdminHistory title={t("history.title")}>
+        <AdminHistorySubsection title={t("history.revisions")}>
+          <AdminRevisionList>
+            {news.revisions.map((revision) => (
+              <AdminRevisionItem
+                key={revision.id}
+                revisionLabel={t("revisionNumber", {
+                  number: revision.revisionNumber,
+                })}
+                statusBadge={
+                  <span className="ui-badge ui-badge-neutral">
+                    {t(`workflow.${revision.workflowStatus}`)}
+                  </span>
+                }
+                liveBadge={
+                  revision.id === news.liveRevisionId ? (
+                    <span className="ui-badge ui-badge-brand">
+                      {t("liveRevision")}
+                    </span>
+                  ) : undefined
+                }
+                dateTime={revision.createdAt.toISOString()}
+                dateLabel={date(revision.createdAt)}
+              />
+            ))}
+          </AdminRevisionList>
+        </AdminHistorySubsection>
+        <AdminHistorySubsection title={t("history.workflow")}>
+          {news.workflowEvents.length ? (
+            <AdminEventList>
+              {news.workflowEvents.map((event) => (
+                <AdminEventItem
+                  key={event.id}
+                  title={t(`events.${event.action}`)}
+                  dateTime={event.createdAt.toISOString()}
+                  dateLabel={date(event.createdAt)}
+                  detail={event.comment ? <p>{event.comment}</p> : undefined}
+                />
+              ))}
+            </AdminEventList>
+          ) : (
+            <p className="admin-history-empty">{t("history.none")}</p>
           )}
-        </section>
-      )}
-      {!editorial && canEdit && news.revisions.length > 0 && (
-        <section className="news-step">
-          <h2>{t("editPublishedTitle")}</h2>
-          <p>{t("editPublishedIntro")}</p>
-          <form action={newsWorkflowAction}>
-            <input type="hidden" name="locale" value={locale} />
-            <input type="hidden" name="newsId" value={id} />
-            <button className="news-button" name="operation" value="edit">
-              {t("actions.edit")}
-            </button>
-          </form>
-        </section>
-      )}
-      {news.publicationStatus === "PUBLISHED" && canPublish && (
-        <section className="news-step">
-          <h2>{t("unpublishTitle")}</h2>
-          <form action={newsWorkflowAction} className="news-inline-form">
-            <input type="hidden" name="locale" value={locale} />
-            <input type="hidden" name="newsId" value={id} />
-            <label htmlFor="unpublish-reason">
-              {t("fields.unpublishReason")}
-            </label>
-            <textarea id="unpublish-reason" name="reason" rows={2} required />
-            <button
-              className="news-button news-danger"
-              name="operation"
-              value="unpublish"
-            >
-              {t("actions.unpublish")}
-            </button>
-          </form>
-        </section>
-      )}
-      <section className="news-history">
-        <h2>{t("history.title")}</h2>
-        <h3>{t("history.revisions")}</h3>
-        <ol>
-          {news.revisions.map((revision) => (
-            <li key={revision.id}>
-              <strong>
-                {t("revisionNumber", { number: revision.revisionNumber })}
-              </strong>{" "}
-              — {t(`workflow.${revision.workflowStatus}`)} ·{" "}
-              <time dateTime={revision.createdAt.toISOString()}>
-                {date(revision.createdAt)}
-              </time>
-              {revision.id === news.liveRevisionId && ` · ${t("liveRevision")}`}
-            </li>
-          ))}
-        </ol>
-        <h3>{t("history.workflow")}</h3>
-        {news.workflowEvents.length ? (
-          <ol>
-            {news.workflowEvents.map((event) => (
-              <li key={event.id}>
-                {t(`events.${event.action}`)} ·{" "}
-                <time dateTime={event.createdAt.toISOString()}>
-                  {date(event.createdAt)}
-                </time>
-                {event.comment && <p>{event.comment}</p>}
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p>{t("history.none")}</p>
-        )}
-        <h3>{t("history.publication")}</h3>
-        {news.publicationEvents.length ? (
-          <ol>
-            {news.publicationEvents.map((event) => (
-              <li key={event.id}>
-                {t(`events.${event.action}`)} ·{" "}
-                <time dateTime={event.createdAt.toISOString()}>
-                  {date(event.createdAt)}
-                </time>
-                {event.reason && <p>{event.reason}</p>}
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p>{t("history.none")}</p>
-        )}
-      </section>
+        </AdminHistorySubsection>
+        <AdminHistorySubsection title={t("history.publication")}>
+          {news.publicationEvents.length ? (
+            <AdminEventList>
+              {news.publicationEvents.map((event) => (
+                <AdminEventItem
+                  key={event.id}
+                  title={t(`events.${event.action}`)}
+                  dateTime={event.createdAt.toISOString()}
+                  dateLabel={date(event.createdAt)}
+                  detail={event.reason ? <p>{event.reason}</p> : undefined}
+                />
+              ))}
+            </AdminEventList>
+          ) : (
+            <p className="admin-history-empty">{t("history.none")}</p>
+          )}
+        </AdminHistorySubsection>
+      </AdminHistory>
     </article>
   );
 }

@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { adminShellProps } from "@/app/[locale]/admin/admin-shell-props";
 import { routing, type Locale } from "@/i18n/routing";
 import {
   AccessDenied,
@@ -8,7 +9,7 @@ import {
   PERMISSIONS,
   requireBackoffice,
 } from "@/modules/identity";
-import { AdminShell, type AdminNavItem } from "@/shared/ui/admin-shell";
+import { AdminShell } from "@/shared/ui/admin-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -32,54 +33,95 @@ export default async function AdminPage({
   const otherLocale = routing.locales.find(
     (candidate) => candidate !== locale,
   ) as Locale;
-  const shell = {
-    locale,
-    title: t("shell.adminTitle"),
-    email: gate.user.email,
-    navLabel: t("shell.adminNav"),
-    skipLabel: t("shell.skipToContent"),
-    switchTo: {
-      href: `/${otherLocale}/admin`,
-      lang: otherLocale,
-      label: t("shell.language"),
-      ariaLabel: t("shell.languageSwitch"),
-    },
-    actions: <LogoutButton locale={locale as Locale} />,
-  } as const;
+  const shell =
+    gate.status === "granted"
+      ? {
+          ...adminShellProps(locale, t, gate.permissions, {
+            switchHref: `/${otherLocale}/admin`,
+            activeHref: `/${locale}/admin`,
+          }),
+          email: gate.user.email,
+          actions: <LogoutButton locale={locale as Locale} />,
+        }
+      : {
+          locale,
+          title: t("shell.adminTitle"),
+          email: gate.user.email,
+          navLabel: t("shell.adminNav"),
+          skipLabel: t("shell.skipToContent"),
+          openMenuLabel: t("shell.openMenu"),
+          closeMenuLabel: t("shell.closeMenu"),
+          navItems: [],
+          switchTo: {
+            href: `/${otherLocale}/admin`,
+            lang: otherLocale,
+            label: t("shell.language"),
+            ariaLabel: t("shell.languageSwitch"),
+          },
+          actions: <LogoutButton locale={locale as Locale} />,
+        };
 
   if (gate.status === "denied") {
     return (
-      <AdminShell {...shell} navItems={[]}>
+      <AdminShell {...shell}>
         <AccessDenied locale={locale as Locale} />
       </AdminShell>
     );
   }
 
-  const navItems: AdminNavItem[] = [
-    ...(gate.permissions.has(PERMISSIONS.NEWS_READ)
-      ? [{ href: `/${locale}/admin/content/news`, label: t("news.title") }]
-      : []),
-    ...(gate.permissions.has(PERMISSIONS.ROLES_READ)
-      ? [
-          {
-            href: `/${locale}/admin/access/roles`,
-            label: t("access.links.roles"),
-          },
-        ]
-      : []),
-    ...(gate.permissions.has(PERMISSIONS.USERS_READ)
-      ? [
-          {
-            href: `/${locale}/admin/access/users`,
-            label: t("access.links.users"),
-          },
-        ]
-      : []),
-  ];
-
   return (
-    <AdminShell {...shell} navItems={navItems}>
-      <AdminHome email={gate.user.email} />
+    <AdminShell {...shell}>
+      <AdminHome
+        email={gate.user.email}
+        destinations={buildAdminHomeDestinations(locale, t, gate.permissions)}
+      />
     </AdminShell>
   );
+}
+
+function buildAdminHomeDestinations(
+  locale: string,
+  t: Awaited<ReturnType<typeof getTranslations>>,
+  permissions: ReadonlySet<string>,
+) {
+  const content: {
+    heading: string;
+    links: { href: string; label: string }[];
+  }[] = [];
+  const contentLinks: { href: string; label: string }[] = [];
+  if (permissions.has(PERMISSIONS.NEWS_READ)) {
+    contentLinks.push({
+      href: `/${locale}/admin/content/news`,
+      label: t("news.title"),
+    });
+  }
+  if (permissions.has(PERMISSIONS.MANAGED_PAGES_READ)) {
+    contentLinks.push({
+      href: `/${locale}/admin/content/pages`,
+      label: t("managedPages.title"),
+    });
+  }
+  if (contentLinks.length) {
+    content.push({
+      heading: t("adminHome.contentSection"),
+      links: contentLinks,
+    });
+  }
+  const accessLinks: { href: string; label: string }[] = [];
+  if (permissions.has(PERMISSIONS.USERS_READ)) {
+    accessLinks.push({
+      href: `/${locale}/admin/access/users`,
+      label: t("access.links.users"),
+    });
+  }
+  if (permissions.has(PERMISSIONS.ROLES_READ)) {
+    accessLinks.push({
+      href: `/${locale}/admin/access/roles`,
+      label: t("access.links.roles"),
+    });
+  }
+  if (accessLinks.length) {
+    content.push({ heading: t("adminHome.accessSection"), links: accessLinks });
+  }
+  return content;
 }

@@ -48,13 +48,14 @@ export function LoginForm({ locale }: { locale: Locale }) {
   }
 
   return (
-    <main className="auth-page">
+    <div className="auth-card ui-surface">
       <h1>{t("login.title")}</h1>
-      <form onSubmit={onSubmit} noValidate>
-        <div>
+      <form className="auth-form" onSubmit={onSubmit} noValidate>
+        <div className="ui-field">
           <label htmlFor="login-email">{t("login.email")}</label>
           <input
             id="login-email"
+            className="ui-input"
             name="email"
             type="email"
             autoComplete="username"
@@ -63,10 +64,11 @@ export function LoginForm({ locale }: { locale: Locale }) {
             onChange={(event) => setEmail(event.target.value)}
           />
         </div>
-        <div>
+        <div className="ui-field">
           <label htmlFor="login-password">{t("login.password")}</label>
           <input
             id="login-password"
+            className="ui-input"
             name="password"
             type="password"
             autoComplete="current-password"
@@ -76,14 +78,18 @@ export function LoginForm({ locale }: { locale: Locale }) {
           />
         </div>
         {error ? (
-          <p role="alert" className="auth-error">
+          <p role="alert" className="ui-alert ui-alert-error">
             {error}
           </p>
         ) : null}
-        <button type="submit" disabled={pending}>
+        <button
+          type="submit"
+          className="ui-button ui-button-primary"
+          disabled={pending}
+        >
           {pending ? t("login.submitting") : t("login.submit")}
         </button>
       </form>
-    </main>
+    </div>
   );
 }

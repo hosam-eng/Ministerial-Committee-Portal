@@ -9,6 +9,7 @@ import { getDirection, routing } from "@/i18n/routing";
 // shared/ui vendor boundary (IMP-08). Must precede portal styles.
 import "@/shared/ui/dga/core.css";
 import "@/styles/globals.css";
+import "@/styles/ui-foundation.css";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -24,6 +25,7 @@ export async function generateMetadata({
 
   return {
     title: t("name"),
+    icons: { icon: "/brand/committee-logo-icon.svg" },
     alternates: {
       canonical: `/${locale}`,
       languages: {

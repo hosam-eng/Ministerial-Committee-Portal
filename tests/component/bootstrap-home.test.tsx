@@ -20,7 +20,11 @@ describe("public shell (IMP-08)", () => {
         identity={en.app.name}
         switchTo={switchTo.en}
         skipLabel={en.shell.skipToContent}
-        footerText={en.app.name}
+        footer={{
+          identity: en.app.name,
+          groups: [],
+          copyright: en.shell.copyright.replace("{year}", "2026"),
+        }}
       >
         <h1>{en.home.title}</h1>
       </PublicShell>,
@@ -51,7 +55,11 @@ describe("public shell (IMP-08)", () => {
         identity={ar.app.name}
         switchTo={switchTo.ar}
         skipLabel={ar.shell.skipToContent}
-        footerText={ar.app.name}
+        footer={{
+          identity: ar.app.name,
+          groups: [],
+          copyright: ar.app.name,
+        }}
       >
         <h1>{ar.home.title}</h1>
       </PublicShell>,

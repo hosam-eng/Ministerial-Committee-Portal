@@ -5,6 +5,8 @@ import { routing, type Locale } from "@/i18n/routing";
 import { listPublishedNews } from "@/modules/publishing";
 import { PublicShell } from "@/shared/ui/public-shell";
 
+import { publicChrome } from "../public-chrome";
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
@@ -46,17 +48,15 @@ export default async function NewsPage({
   return (
     <PublicShell
       locale={locale}
-      identity={t("app.name")}
-      switchTo={{
-        href: `/${otherLocale}/news`,
-        lang: otherLocale,
-        label: t("shell.language"),
-        ariaLabel: t("shell.languageSwitch"),
-      }}
-      skipLabel={t("shell.skipToContent")}
-      footerText={t("shell.copyright", { year: new Date().getFullYear() })}
+      {...publicChrome(t, locale, {
+        switchHref: `/${otherLocale}/news`,
+        active: "news",
+      })}
     >
-      <section className="public-news" aria-labelledby="public-news-title">
+      <section
+        className="public-news public-news-listing"
+        aria-labelledby="public-news-title"
+      >
         <header className="public-news-header">
           <h1 id="public-news-title">{t("publicNews.title")}</h1>
           <p>{t("publicNews.description")}</p>

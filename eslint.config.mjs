@@ -11,7 +11,10 @@ import eslintConfigPrettier from "eslint-config-prettier";
  */
 
 const MODULE_PUBLIC_CONTRACT = {
-  group: ["@/modules/*/**"],
+  // Deep module paths stay private. Negation is gitignore-style (ESLint
+  // matches these with the `ignore` package). The Managed Pages editor is a
+  // second public entry so the TipTap editor is not re-exported from index.ts.
+  group: ["@/modules/*/**", "!@/modules/managed-pages/editor"],
   message:
     "Cross-module imports must go through the module's public contract (@/modules/<name>). Use relative imports for a module's own internals.",
 };

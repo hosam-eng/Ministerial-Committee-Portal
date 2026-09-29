@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { adminShellProps } from "@/app/[locale]/admin/admin-shell-props";
 import { routing, type Locale } from "@/i18n/routing";
 import {
   AccessDenied,
@@ -10,7 +11,8 @@ import {
   requireBackoffice,
   UsersAdmin,
 } from "@/modules/identity";
-import { AdminShell, type AdminNavItem } from "@/shared/ui/admin-shell";
+import { AdminPageHeader } from "@/shared/ui/admin-page-header";
+import { AdminShell } from "@/shared/ui/admin-shell";
 
 import { assignRoleAction, removeUserRoleAction } from "../actions";
 
@@ -38,42 +40,26 @@ export default async function AdminUsersPage({
   const otherLocale = routing.locales.find(
     (candidate) => candidate !== locale,
   ) as Locale;
+  const permissions =
+    gate.status === "granted" ? gate.permissions : new Set<string>();
+  const props = adminShellProps(locale, t, permissions, {
+    switchHref: `/${otherLocale}/admin/access/users`,
+    activeHref: `/${locale}/admin/access/users`,
+  });
   const shell = {
-    locale,
-    title: t("shell.adminTitle"),
+    ...props,
     email: gate.user.email,
-    navLabel: t("shell.adminNav"),
-    skipLabel: t("shell.skipToContent"),
-    switchTo: {
-      href: `/${otherLocale}/admin/access/users`,
-      lang: otherLocale,
-      label: t("shell.language"),
-      ariaLabel: t("shell.languageSwitch"),
-    },
     actions: <LogoutButton locale={locale as Locale} />,
-  } as const;
+    navItems: gate.status === "granted" ? props.navItems : [],
+  };
 
   if (gate.status === "denied") {
     return (
-      <AdminShell {...shell} navItems={[]}>
+      <AdminShell {...shell}>
         <AccessDenied locale={locale as Locale} />
       </AdminShell>
     );
   }
-
-  const navItems: AdminNavItem[] = [
-    ...(gate.permissions.has(PERMISSIONS.NEWS_READ)
-      ? [{ href: `/${locale}/admin/content/news`, label: t("news.title") }]
-      : []),
-    ...(gate.permissions.has(PERMISSIONS.ROLES_READ)
-      ? [
-          {
-            href: `/${locale}/admin/access/roles`,
-            label: t("access.links.roles"),
-          },
-        ]
-      : []),
-  ];
 
   const [users, roles, { error }] = await Promise.all([
     listBackofficeUsers(gate.user.id),
@@ -81,8 +67,14 @@ export default async function AdminUsersPage({
     searchParams,
   ]);
 
+  const tAccess = await getTranslations({ locale, namespace: "access" });
+
   return (
-    <AdminShell {...shell} navItems={navItems}>
+    <AdminShell {...shell}>
+      <AdminPageHeader
+        title={tAccess("users.title")}
+        description={tAccess("links.users")}
+      />
       <UsersAdmin
         returnPath={`/${locale}/admin/access/users`}
         users={users.map((user) => ({
