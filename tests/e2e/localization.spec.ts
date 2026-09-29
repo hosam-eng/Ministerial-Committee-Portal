@@ -59,12 +59,19 @@ test.describe("locale routing", () => {
 
   test("language switch is keyboard reachable", async ({ page }) => {
     await page.goto("/ar");
-    // Focus order: skip link → identity → language switch (IMP-08 shell).
+    // Focus order: skip link → logo → current main navigation → language switch.
     await page.keyboard.press("Tab");
     await expect(
       page.getByRole("link", { name: "التخطي إلى المحتوى الرئيسي" }),
     ).toBeFocused();
     await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("link", { name: "اللجنة الوزارية للسلامة المرورية" }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      page.locator(".shell-main-nav").getByRole("link", { name: "الأخبار" }),
+    ).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "English" })).toBeFocused();
   });
