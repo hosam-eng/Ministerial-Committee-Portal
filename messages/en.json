@@ -8,7 +8,13 @@
     "language": "العربية",
     "adminTitle": "Admin console",
     "adminNav": "Admin console sections",
-    "copyright": "© {year} Ministerial Committee for Traffic Safety. All rights reserved."
+    "copyright": "© {year} Ministerial Committee for Traffic Safety. All rights reserved.",
+    "mainNavigation": "Main",
+    "openMenu": "Menu",
+    "closeMenu": "Close",
+    "footerImportant": "Important links",
+    "footerPortal": "The portal",
+    "home": "Home"
   },
   "home": {
     "title": "Ministerial Committee for Traffic Safety",

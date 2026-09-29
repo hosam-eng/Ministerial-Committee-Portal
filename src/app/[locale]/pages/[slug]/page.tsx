@@ -10,6 +10,8 @@ import {
 } from "@/modules/managed-pages";
 import { PublicShell } from "@/shared/ui/public-shell";
 
+import { publicChrome } from "../../public-chrome";
+
 export const dynamic = "force-dynamic";
 
 type PageParams = { params: Promise<{ locale: Locale; slug: string }> };
@@ -84,19 +86,11 @@ export default async function ManagedPagePublicPage({ params }: PageParams) {
   return (
     <PublicShell
       locale={locale}
-      identity={shell("app.name")}
-      switchTo={
-        page.counterpartSlug
-          ? {
-              href: `/${otherLocale}/pages/${encodeURIComponent(page.counterpartSlug)}`,
-              lang: otherLocale,
-              label: shell("shell.language"),
-              ariaLabel: shell("shell.languageSwitch"),
-            }
-          : null
-      }
-      skipLabel={shell("shell.skipToContent")}
-      footerText={shell("shell.copyright", { year: new Date().getFullYear() })}
+      {...publicChrome(shell, locale, {
+        switchHref: page.counterpartSlug
+          ? `/${otherLocale}/pages/${encodeURIComponent(page.counterpartSlug)}`
+          : null,
+      })}
     >
       <ManagedPagePublicContent
         content={page.content}

@@ -6,6 +6,8 @@ import { routing, type Locale } from "@/i18n/routing";
 import { resolvePublishedNewsBySlug } from "@/modules/publishing";
 import { PublicShell } from "@/shared/ui/public-shell";
 
+import { publicChrome } from "../../public-chrome";
+
 export const dynamic = "force-dynamic";
 
 type DetailParams = { params: Promise<{ locale: Locale; slug: string }> };
@@ -64,19 +66,12 @@ export default async function NewsDetailPage({ params }: DetailParams) {
   return (
     <PublicShell
       locale={locale}
-      identity={t("app.name")}
-      switchTo={
-        news.counterpartSlug
-          ? {
-              href: `/${otherLocale}/news/${encodeURIComponent(news.counterpartSlug)}`,
-              lang: otherLocale,
-              label: t("shell.language"),
-              ariaLabel: t("shell.languageSwitch"),
-            }
-          : null
-      }
-      skipLabel={t("shell.skipToContent")}
-      footerText={t("shell.copyright", { year: new Date().getFullYear() })}
+      {...publicChrome(t, locale, {
+        switchHref: news.counterpartSlug
+          ? `/${otherLocale}/news/${encodeURIComponent(news.counterpartSlug)}`
+          : null,
+        active: "news",
+      })}
     >
       <div className="public-news public-news-detail">
         <nav

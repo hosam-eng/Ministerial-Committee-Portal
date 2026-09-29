@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import { createOTP } from "@better-auth/utils/otp";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import {
   hasDatabase,
@@ -21,6 +21,27 @@ const EVIDENCE = path.resolve(
   import.meta.dirname,
   "../../../docs/implementation/evidence/IMP-13",
 );
+const CORRECTION = path.join(EVIDENCE, "correction-visual");
+
+async function expectProductionShell(page: Page) {
+  await expect(page.locator(".shell-logo img")).toHaveAttribute(
+    "src",
+    "/brand/committee-logo-horizontal.svg",
+  );
+  await expect(
+    page.locator("img[src*='stacked'], img[src*='reverse']"),
+  ).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /بحث|Search/i })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /تواصل|Contact/i })).toHaveCount(
+    0,
+  );
+  const overflow = await page.evaluate(
+    () =>
+      document.documentElement.scrollWidth >
+      document.documentElement.clientWidth + 1,
+  );
+  expect(overflow).toBe(false);
+}
 
 test.use({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000",
@@ -179,8 +200,14 @@ test.describe("managed pages acceptance", () => {
       page.getByRole("heading", { level: 1, name: "عن اللجنة" }),
     ).toBeVisible();
     await expect(page.getByText("نص عربي منشور")).toBeVisible();
+    await expectProductionShell(page);
+    await expect(page.locator(".preview-banner")).toBeVisible();
     await page.screenshot({
       path: path.join(EVIDENCE, "managed-page-preview-ar-1440.png"),
+      fullPage: true,
+    });
+    await page.screenshot({
+      path: path.join(CORRECTION, "managed-page-preview-ar-1440.png"),
       fullPage: true,
     });
     await page.getByRole("link", { name: "English" }).click();
@@ -219,13 +246,41 @@ test.describe("managed pages acceptance", () => {
     );
     const language = page.getByRole("link", { name: "English" });
     await expect(language).toHaveAttribute("href", `/en/pages/${enSlug}`);
+    await expectProductionShell(page);
+    const accent = await page
+      .locator(".managed-callout-institutional")
+      .evaluate((element) => getComputedStyle(element).borderInlineStartColor);
+    expect(accent).toBe("rgb(14, 178, 222)");
     await page.screenshot({
       path: path.join(EVIDENCE, "managed-page-public-ar-1440.png"),
       fullPage: true,
     });
+    await page.screenshot({
+      path: path.join(CORRECTION, "managed-page-public-ar-1440.png"),
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 900, height: 900 });
+    await expect(page.getByRole("button", { name: "القائمة" })).toBeVisible();
+    await expect(page.locator(".shell-main-nav")).toBeHidden();
+    await expectProductionShell(page);
+    await page.screenshot({
+      path: path.join(CORRECTION, "public-shell-ar-900.png"),
+      fullPage: true,
+    });
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole("button", { name: "القائمة" }).click();
+    await expect(
+      page.getByRole("navigation", { name: "التنقل الرئيسي" }),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".shell-drawer")).toHaveCount(0);
+    await expectProductionShell(page);
     await page.screenshot({
       path: path.join(EVIDENCE, "managed-page-public-ar-390.png"),
+      fullPage: true,
+    });
+    await page.screenshot({
+      path: path.join(CORRECTION, "managed-page-public-ar-390.png"),
       fullPage: true,
     });
 
@@ -240,13 +295,38 @@ test.describe("managed pages acceptance", () => {
       "href",
       `/ar/pages/${arSlug}`,
     );
+    await expectProductionShell(page);
     await page.screenshot({
       path: path.join(EVIDENCE, "managed-page-public-en-1440.png"),
       fullPage: true,
     });
+    await page.screenshot({
+      path: path.join(CORRECTION, "managed-page-public-en-1440.png"),
+      fullPage: true,
+    });
     await page.setViewportSize({ width: 390, height: 844 });
+    await expectProductionShell(page);
     await page.screenshot({
       path: path.join(EVIDENCE, "managed-page-public-en-390.png"),
+      fullPage: true,
+    });
+    await page.screenshot({
+      path: path.join(CORRECTION, "managed-page-public-en-390.png"),
+      fullPage: true,
+    });
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/ar/news");
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expectProductionShell(page);
+    await page.screenshot({
+      path: path.join(CORRECTION, "news-public-ar-1440.png"),
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectProductionShell(page);
+    await page.screenshot({
+      path: path.join(CORRECTION, "news-public-ar-390.png"),
       fullPage: true,
     });
 

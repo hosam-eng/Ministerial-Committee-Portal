@@ -8,7 +8,13 @@
     "language": "English",
     "adminTitle": "لوحة الإدارة",
     "adminNav": "أقسام لوحة الإدارة",
-    "copyright": "© {year} اللجنة الوزارية للسلامة المرورية. جميع الحقوق محفوظة."
+    "copyright": "© {year} اللجنة الوزارية للسلامة المرورية. جميع الحقوق محفوظة.",
+    "mainNavigation": "التنقل الرئيسي",
+    "openMenu": "القائمة",
+    "closeMenu": "إغلاق",
+    "footerImportant": "روابط مهمة",
+    "footerPortal": "البوابة",
+    "home": "الرئيسية"
   },
   "home": {
     "title": "اللجنة الوزارية للسلامة المرورية",

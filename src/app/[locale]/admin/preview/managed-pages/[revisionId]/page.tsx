@@ -17,6 +17,8 @@ import { previewRobots } from "@/shared/preview/safety";
 import { PreviewFrame } from "@/shared/ui/preview-frame";
 import { PublicShell } from "@/shared/ui/public-shell";
 
+import { publicChrome } from "../../../../public-chrome";
+
 export const dynamic = "force-dynamic";
 
 type PreviewParams = {
@@ -72,16 +74,8 @@ export default async function ManagedPagePreviewPage({
     <PreviewFrame label={t("previewBanner")}>
       <PublicShell
         locale={contentLocale}
-        identity={shell("app.name")}
-        switchTo={{
-          href: `/${contentLocale === "ar" ? "en" : "ar"}/admin/preview/managed-pages/${revisionId}`,
-          lang: contentLocale === "ar" ? "en" : "ar",
-          label: shell("shell.language"),
-          ariaLabel: shell("shell.languageSwitch"),
-        }}
-        skipLabel={shell("shell.skipToContent")}
-        footerText={shell("shell.copyright", {
-          year: new Date().getFullYear(),
+        {...publicChrome(shell, contentLocale, {
+          switchHref: `/${contentLocale === "ar" ? "en" : "ar"}/admin/preview/managed-pages/${revisionId}`,
         })}
       >
         {preview.incomplete && (

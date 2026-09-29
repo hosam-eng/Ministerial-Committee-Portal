@@ -24,6 +24,7 @@ export async function generateMetadata({
 
   return {
     title: t("name"),
+    icons: { icon: "/brand/committee-logo-icon.svg" },
     alternates: {
       canonical: `/${locale}`,
       languages: {

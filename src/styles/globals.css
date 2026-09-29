@@ -4,13 +4,19 @@
    semantic aliases are defined here, no competing token system. */
 
 :root {
+  /* Committee identity. DGA green is not the portal brand. */
+  --brand-primary: #106484;
+  --brand-primary-hover: #0d5369;
+  --brand-accent: #0eb2de;
   /* Semantic portal container (~1280px). DGA --width-* tokens are card-
      scale widths; --width-3xl is deliberately chosen, not default. */
   --portal-content-width: var(--width-3xl);
   --portal-header-bg: var(--colors-base-white);
   --portal-header-border: var(--colors-neutral-200);
+  --portal-surface: var(--colors-base-white);
+  --portal-border: var(--colors-neutral-200);
   --portal-footer-bg: var(--colors-neutral-50);
-  --portal-identity: var(--colors-primary-sa-flag-600-primary);
+  --portal-identity: var(--brand-primary);
   --portal-text: var(--colors-neutral-800);
   --portal-text-secondary: var(--colors-neutral-600);
 }
@@ -350,8 +356,11 @@ h3 {
   cursor: pointer;
 }
 .news-workspace .news-primary {
-  background: var(--portal-identity);
+  background: var(--brand-primary);
   color: var(--colors-base-white);
+}
+.news-workspace .news-primary:hover {
+  background: var(--brand-primary-hover);
 }
 .news-danger {
   border-color: var(--colors-error-600, #b3261e);
@@ -600,11 +609,11 @@ h3 {
 .managed-callout {
   margin-block: var(--spacing-5);
   padding: var(--spacing-4);
-  border-inline-start: 3px solid var(--portal-identity);
-  background: var(--portal-footer-bg);
+  border-inline-start: 4px solid var(--brand-accent);
+  background: var(--colors-neutral-50, #f7f7f7);
 }
 .managed-callout-institutional {
-  border-color: var(--portal-identity);
+  border-color: var(--brand-accent);
 }
 .managed-callout-info {
   border-color: var(--colors-info-600, var(--colors-blue-600, #175cd3));
@@ -817,8 +826,11 @@ h3 {
 }
 .managed-callout {
   padding: var(--spacing-4);
-  border-inline-start: 4px solid var(--portal-identity);
+  border-inline-start: 4px solid var(--brand-accent);
   background: var(--colors-neutral-50, #f7f7f7);
+}
+.managed-callout-institutional {
+  border-inline-start-color: var(--brand-accent);
 }
 .managed-callout-info {
   border-inline-start-color: var(--colors-info-600, #1d4e89);
@@ -850,4 +862,189 @@ h3 {
   .managed-page-list-row {
     display: grid;
   }
+}
+
+/* UX-1 public shell. Scoped so the backoffice shell keeps its layout. */
+.public-shell {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100vh;
+}
+.public-shell .shell-main {
+  flex: 1;
+}
+.public-shell .shell-header {
+  position: relative;
+  background: var(--portal-surface);
+  border-block-end: 1px solid var(--portal-border);
+}
+@media (min-width: 600px) {
+  .public-shell .shell-header {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 20;
+  }
+}
+.public-shell .shell-header-inner {
+  max-inline-size: var(--portal-content-width);
+  min-block-size: 4.5rem;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--spacing-3);
+}
+.public-shell .shell-logo {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  text-decoration: none;
+}
+.public-shell .shell-logo img {
+  display: block;
+  block-size: 2.25rem;
+  inline-size: auto;
+  max-inline-size: min(11rem, 46vw);
+}
+.public-shell .shell-utilities {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-inline-start: auto;
+}
+.public-shell .shell-main-nav {
+  display: none;
+}
+.public-shell .shell-menu {
+  display: block;
+}
+.public-shell .shell-lang,
+.public-shell .shell-menu-button,
+.public-shell .shell-footer-toggle {
+  min-block-size: 2.75rem;
+  min-inline-size: 2.75rem;
+}
+.public-shell .shell-lang {
+  display: inline-flex;
+  align-items: center;
+  color: var(--brand-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.public-shell .shell-menu-button,
+.public-shell .shell-footer-toggle {
+  border: 1px solid var(--portal-border);
+  background: var(--portal-surface);
+  color: var(--brand-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.public-shell .shell-nav-link {
+  color: var(--portal-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.public-shell .shell-nav-link[aria-current="page"] {
+  color: var(--brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.public-shell .shell-nav-link:hover,
+.public-shell .shell-lang:hover {
+  color: var(--brand-primary-hover);
+}
+.public-shell .shell-drawer {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 100%;
+  z-index: 30;
+  background: var(--portal-surface);
+  border-block-end: 1px solid var(--portal-border);
+  padding: var(--spacing-4);
+}
+.public-shell .shell-drawer .shell-nav-list {
+  display: grid;
+  gap: var(--spacing-2);
+}
+.public-shell .shell-drawer .shell-nav-link {
+  display: flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+}
+.public-shell .shell-footer {
+  background: var(--brand-primary);
+  color: var(--colors-base-white);
+  border-block-start: 0;
+}
+.public-shell .shell-footer-inner {
+  display: grid;
+  gap: var(--spacing-4);
+  padding-block: var(--spacing-6);
+}
+.public-shell .shell-footer-identity,
+.public-shell .shell-footer-text {
+  margin: 0;
+  color: var(--colors-base-white);
+}
+.public-shell .shell-footer-heading {
+  margin: 0;
+  font-size: 1rem;
+}
+.public-shell .shell-footer-toggle {
+  inline-size: 100%;
+  border-color: transparent;
+  background: transparent;
+  color: var(--colors-base-white);
+  text-align: start;
+}
+.public-shell .shell-footer a {
+  color: var(--colors-base-white);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.public-shell .shell-footer-links {
+  display: grid;
+  gap: var(--spacing-2);
+  margin: var(--spacing-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 960px) {
+  .public-shell .shell-logo img {
+    block-size: 3.5rem;
+    max-inline-size: 16rem;
+  }
+  .public-shell .shell-header-inner {
+    min-block-size: 5.5rem;
+  }
+  .public-shell .shell-main-nav {
+    display: block;
+  }
+  .public-shell .shell-menu {
+    display: none;
+  }
+  .public-shell .shell-footer-inner {
+    grid-template-columns: minmax(12rem, 1.4fr) repeat(2, minmax(8rem, 1fr));
+    align-items: start;
+  }
+  .public-shell .shell-footer-text {
+    grid-column: 1 / -1;
+  }
+  .public-shell .shell-footer-toggle {
+    pointer-events: none;
+    padding: 0;
+  }
+}
+.public-managed-page a,
+.public-news a,
+.managed-page-breadcrumb a,
+.managed-link-list a,
+.managed-rich-text a {
+  color: var(--brand-primary);
+}
+.public-managed-page a:hover,
+.public-news a:hover,
+.managed-link-list a:hover,
+.managed-rich-text a:hover {
+  color: var(--brand-primary-hover);
 }
