@@ -4,9 +4,9 @@
  * Only the sanctioned surface is exported: the Better Auth instance and
  * its Next.js route handlers (for /api/auth/*), the server-side admin
  * authentication gate, the IMP-06 RBAC authorization contract
- * (permission catalog, evaluation, role/user-role management,
- * first-administrator bootstrap), and the localized admin/access
- * presentation components.
+ * (permission catalog, evaluation, the actor permission check used by
+ * other modules, role/user-role management, first-administrator
+ * bootstrap), and the localized admin/access presentation components.
  */
 export {
   AccessDeniedError,
@@ -38,6 +38,7 @@ export {
   createCustomRole,
   getAuthorizationContext,
   hasPermission,
+  requireActorPermission,
   listAllRoles,
   listBackofficeUsers,
   listCatalogPermissions,

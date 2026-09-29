@@ -8,6 +8,7 @@ import {
 } from "@testcontainers/postgresql";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { requireActorPermission } from "@/modules/identity";
 import {
   AccessDeniedError,
   BootstrapClosedError,
@@ -25,7 +26,10 @@ import {
   type Auth,
 } from "@/modules/identity/infrastructure/auth/auth";
 import * as service from "@/modules/identity/infrastructure/rbac/service";
+import { createNewsDraft } from "@/modules/publishing";
+import { resetServerConfigForTest } from "@/platform/config";
 import { createDatabase, type Database } from "@/platform/database";
+import { closeRuntimeDatabase } from "@/platform/runtime";
 
 /**
  * IMP-06 RBAC persistence + authorization suite — a real ephemeral
@@ -49,6 +53,7 @@ let container: StartedPostgreSqlContainer;
 let runtimeDatabase: Database;
 let auth: Auth;
 let counter = 0;
+let previousDatabaseUrl: string | undefined;
 
 function uriFor(user: string, password: string): string {
   const url = new URL(container.getConnectionUri());
@@ -122,9 +127,17 @@ beforeAll(async () => {
     connectionString: uriFor("mcp_runtime", "mcp_runtime_dev"),
   });
   auth = createAuth(runtimeDatabase);
+  previousDatabaseUrl = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = uriFor("mcp_runtime", "mcp_runtime_dev");
+  resetServerConfigForTest();
+  await closeRuntimeDatabase();
 }, CONTAINER_TIMEOUT_MS);
 
 afterAll(async () => {
+  await closeRuntimeDatabase();
+  if (previousDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+  else process.env.DATABASE_URL = previousDatabaseUrl;
+  resetServerConfigForTest();
   await runtimeDatabase?.close();
   await container?.stop();
 });
@@ -529,5 +542,78 @@ describe("role mutation authorization + system-role protection", () => {
         db(),
       ),
     ).rejects.toBeInstanceOf(RoleValidationError);
+  });
+});
+
+describe("public actor authorization contract (ARCH-1)", () => {
+  async function administratorId(): Promise<string> {
+    return (
+      await runtimeDatabase.prisma.userRole.findFirstOrThrow({
+        where: { role: { systemKey: ADMINISTRATOR_SYSTEM_KEY } },
+      })
+    ).userId;
+  }
+
+  it("grants an authorized actor and denies an unauthorized actor", async () => {
+    const admin = await administratorId();
+    const denied = await makeUser();
+    await expect(
+      requireActorPermission(denied.id, PERMISSIONS.NEWS_CREATE),
+    ).rejects.toBeInstanceOf(AccessDeniedError);
+
+    const allowed = await makeUser();
+    const role = await service.createCustomRole(
+      admin,
+      {
+        name: `News Create ${counter}`,
+        description: null,
+        permissionIds: [await permissionId(PERMISSIONS.NEWS_CREATE)],
+      },
+      db(),
+    );
+    await service.assignRole(admin, allowed.id, role.id, db());
+    await expect(
+      requireActorPermission(allowed.id, PERMISSIONS.NEWS_CREATE),
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe("publishing authorization boundary (ARCH-1)", () => {
+  async function administratorId(): Promise<string> {
+    return (
+      await runtimeDatabase.prisma.userRole.findFirstOrThrow({
+        where: { role: { systemKey: ADMINISTRATOR_SYSTEM_KEY } },
+      })
+    ).userId;
+  }
+
+  it("denies an unauthorized News draft before a Publishing row exists", async () => {
+    const actor = await makeUser();
+    const before = await runtimeDatabase.prisma.news.count();
+    await expect(createNewsDraft(actor.id)).rejects.toBeInstanceOf(
+      AccessDeniedError,
+    );
+    expect(await runtimeDatabase.prisma.news.count()).toBe(before);
+  });
+
+  it("creates a News draft for an actor who holds publishing.news.create", async () => {
+    const admin = await administratorId();
+    const actor = await makeUser();
+    const role = await service.createCustomRole(
+      admin,
+      {
+        name: `News Author ${counter}`,
+        description: null,
+        permissionIds: [await permissionId(PERMISSIONS.NEWS_CREATE)],
+      },
+      db(),
+    );
+    await service.assignRole(admin, actor.id, role.id, db());
+    const created = await createNewsDraft(actor.id);
+    const row = await runtimeDatabase.prisma.news.findUnique({
+      where: { id: created.newsId },
+    });
+    expect(row?.createdById).toBe(actor.id);
+    expect(created.revisionId).toEqual(expect.any(String));
   });
 });

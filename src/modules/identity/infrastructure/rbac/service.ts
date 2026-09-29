@@ -78,6 +78,19 @@ async function requireActor(
   return ctx;
 }
 
+/**
+ * Narrow public authorization use case. Resolves the actor against the
+ * current database and throws AccessDeniedError when the permission is
+ * absent. Callers pass an actor id and a permission key only — no
+ * database handle, transaction, or persistence record.
+ */
+export async function requireActorPermission(
+  actorId: string,
+  permission: PermissionKey,
+): Promise<void> {
+  await requireActor(actorId, permission, getRuntimeDatabase());
+}
+
 export function listAllRoles(database: Database = getRuntimeDatabase()) {
   return listRoles(database);
 }
