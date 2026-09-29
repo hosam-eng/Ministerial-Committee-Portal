@@ -77,17 +77,22 @@ export function PublicShell({
       </a>
       <header className="shell-header">
         <div className="shell-header-inner">
-          <a className="shell-logo" href={`/${locale}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- approved SVG must stay an exact file */}
-            <img
-              src={COMMITTEE_LOGO_HORIZONTAL}
-              alt={identity}
-              width={226}
-              height={56}
-            />
-          </a>
+          <div className="shell-header-zone shell-header-zone-identity">
+            <a className="shell-logo" href={`/${locale}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- approved SVG must stay an exact file */}
+              <img
+                src={COMMITTEE_LOGO_HORIZONTAL}
+                alt={identity}
+                width={226}
+                height={56}
+              />
+            </a>
+          </div>
           {items.length > 0 && navigation ? (
-            <nav className="shell-main-nav" aria-label={navigation.label}>
+            <nav
+              className="shell-header-zone shell-header-zone-nav shell-main-nav"
+              aria-label={navigation.label}
+            >
               <ul className="shell-nav-list">
                 {items.map((item) => (
                   <li key={item.href}>
@@ -103,7 +108,7 @@ export function PublicShell({
               </ul>
             </nav>
           ) : null}
-          <div className="shell-utilities">
+          <div className="shell-header-zone shell-header-zone-utilities shell-utilities">
             {search ? (
               <a className="shell-search" href={search.href}>
                 {search.label}

@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import { adminNavItems } from "@/app/[locale]/admin/admin-nav";
+import { adminShellProps } from "@/app/[locale]/admin/admin-shell-props";
 import { routing, type Locale } from "@/i18n/routing";
 import { LogoutButton, requireBackoffice } from "@/modules/identity";
 import { AdminShell } from "@/shared/ui/admin-shell";
@@ -21,30 +21,18 @@ export default async function ManagedPagesLayout({
   const otherLocale = routing.locales.find(
     (candidate) => candidate !== locale,
   ) as Locale;
-  const navItems =
-    gate.status === "granted"
-      ? adminNavItems(locale, gate.permissions, {
-          news: t("news.title"),
-          pages: t("managedPages.title"),
-          roles: t("access.links.roles"),
-          users: t("access.links.users"),
-        })
-      : [];
+  const permissions =
+    gate.status === "granted" ? gate.permissions : new Set<string>();
+  const props = adminShellProps(locale, t, permissions, {
+    switchHref: `/${otherLocale}/admin/content/pages`,
+    activeHref: `/${locale}/admin/content/pages`,
+  });
   return (
     <AdminShell
-      locale={locale}
-      title={t("shell.adminTitle")}
+      {...props}
       email={gate.user.email}
-      navLabel={t("shell.adminNav")}
-      skipLabel={t("shell.skipToContent")}
-      navItems={navItems}
-      switchTo={{
-        href: `/${otherLocale}/admin/content/pages`,
-        lang: otherLocale,
-        label: t("shell.language"),
-        ariaLabel: t("shell.languageSwitch"),
-      }}
       actions={<LogoutButton locale={locale as Locale} />}
+      navItems={gate.status === "granted" ? props.navItems : []}
     >
       {children}
     </AdminShell>

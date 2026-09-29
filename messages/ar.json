@@ -7,6 +7,7 @@
     "languageSwitch": "اللغة",
     "language": "English",
     "adminTitle": "لوحة الإدارة",
+    "adminDashboard": "الرئيسية",
     "adminNav": "أقسام لوحة الإدارة",
     "copyright": "© {year} اللجنة الوزارية للسلامة المرورية. جميع الحقوق محفوظة.",
     "mainNavigation": "التنقل الرئيسي",
@@ -15,6 +16,12 @@
     "footerImportant": "روابط مهمة",
     "footerPortal": "البوابة",
     "home": "الرئيسية"
+  },
+  "adminHome": {
+    "title": "الصفحة الرئيسية للوحة الإدارة",
+    "signedInAs": "مسجل الدخول باسم {email}",
+    "contentSection": "إدارة المحتوى",
+    "accessSection": "إدارة الوصول"
   },
   "home": {
     "title": "اللجنة الوزارية للسلامة المرورية",

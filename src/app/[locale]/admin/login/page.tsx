@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import type { Locale } from "@/i18n/routing";
+import { routing, type Locale } from "@/i18n/routing";
 import { getAdminAuthState, LoginForm } from "@/modules/identity";
+import { AuthShell } from "@/shared/ui/auth-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -30,5 +31,23 @@ export default async function AdminLoginPage({
     redirect(`/${locale}/admin/mfa`);
   }
 
-  return <LoginForm locale={locale as Locale} />;
+  const t = await getTranslations({ locale });
+  const otherLocale = routing.locales.find(
+    (candidate) => candidate !== locale,
+  ) as Locale;
+
+  return (
+    <AuthShell
+      locale={locale}
+      productTitle={t("app.name")}
+      switchTo={{
+        href: `/${otherLocale}/admin/login`,
+        lang: otherLocale,
+        label: t("shell.language"),
+        ariaLabel: t("shell.languageSwitch"),
+      }}
+    >
+      <LoginForm locale={locale as Locale} />
+    </AuthShell>
+  );
 }

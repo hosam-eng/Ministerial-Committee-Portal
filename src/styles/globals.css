@@ -319,7 +319,7 @@ h3 {
 .news-workspace {
   max-inline-size: 76rem;
 }
-.news-workspace a {
+.news-workspace a:not(.ui-button) {
   color: var(--portal-identity);
 }
 .news-heading {
@@ -908,6 +908,8 @@ h3 {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+}
+.public-shell .shell-header-zone-utilities.shell-utilities {
   margin-inline-start: auto;
 }
 .public-shell .shell-main-nav {

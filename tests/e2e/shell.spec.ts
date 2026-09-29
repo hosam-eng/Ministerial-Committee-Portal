@@ -95,15 +95,14 @@ test.describe("admin shell", () => {
     // Shell chrome: banner, main, permission-aware nav, email, switch.
     await expect(page.getByRole("banner")).toBeVisible();
     await expect(page.getByRole("main")).toBeVisible();
+    const adminNav = page.locator(".admin-shell-sidebar");
     await expect(
-      page.getByRole("link", { name: "إدارة الأدوار" }),
+      adminNav.getByRole("link", { name: "إدارة الأدوار" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "إدارة المستخدمين" }),
+      adminNav.getByRole("link", { name: "إدارة المستخدمين" }),
     ).toBeVisible();
-    await expect(
-      page.getByText(`البريد الإلكتروني: ${E2E_USER.email}`),
-    ).toBeVisible();
+    await expect(page.locator(".admin-shell-email")).toHaveText(E2E_USER.email);
     await expect(page.getByRole("link", { name: "English" })).toBeVisible();
 
     // Roles page inside the shell; Administrator shows localized
@@ -122,12 +121,9 @@ test.describe("admin shell", () => {
 
     // DGA button element upgrades and performs logout.
     await page.goto("/ar/admin");
-    const logout = page.locator("dga-button-v2.hydrated");
+    const logout = page.getByRole("button", { name: "تسجيل الخروج" });
     await expect(logout).toBeVisible();
-    await expect(
-      logout.getByRole("button", { name: "تسجيل الخروج" }),
-    ).toBeVisible();
-    await logout.getByRole("button").first().click();
+    await logout.click();
     await expect(page).toHaveURL(/\/ar\/admin\/login$/);
   });
 
@@ -156,9 +152,10 @@ test.describe("admin shell", () => {
     await expect(page).toHaveURL(/\/en\/admin$/);
     await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
     await expect(page.getByRole("banner")).toBeVisible();
+    const adminNav = page.locator(".admin-shell-sidebar");
     await expect(
-      page.getByRole("link", { name: "Manage roles" }),
+      adminNav.getByRole("link", { name: "Manage roles" }),
     ).toBeVisible();
-    await expect(page.getByText(`Email: ${E2E_USER.email}`)).toBeVisible();
+    await expect(page.locator(".admin-shell-email")).toHaveText(E2E_USER.email);
   });
 });

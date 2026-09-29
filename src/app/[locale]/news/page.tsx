@@ -53,7 +53,10 @@ export default async function NewsPage({
         active: "news",
       })}
     >
-      <section className="public-news" aria-labelledby="public-news-title">
+      <section
+        className="public-news public-news-listing"
+        aria-labelledby="public-news-title"
+      >
         <header className="public-news-header">
           <h1 id="public-news-title">{t("publicNews.title")}</h1>
           <p>{t("publicNews.description")}</p>

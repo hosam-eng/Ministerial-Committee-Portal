@@ -1,12 +1,9 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { adminShellProps } from "@/app/[locale]/admin/admin-shell-props";
 import { routing, type Locale } from "@/i18n/routing";
-import {
-  LogoutButton,
-  PERMISSIONS,
-  requireBackoffice,
-} from "@/modules/identity";
-import { AdminShell, type AdminNavItem } from "@/shared/ui/admin-shell";
+import { LogoutButton, requireBackoffice } from "@/modules/identity";
+import { AdminShell } from "@/shared/ui/admin-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -24,58 +21,18 @@ export default async function NewsLayout({
   const otherLocale = routing.locales.find(
     (candidate) => candidate !== locale,
   ) as Locale;
-  const navItems: AdminNavItem[] =
-    gate.status === "granted"
-      ? [
-          ...(gate.permissions.has(PERMISSIONS.NEWS_READ)
-            ? [
-                {
-                  href: `/${locale}/admin/content/news`,
-                  label: t("news.title"),
-                },
-              ]
-            : []),
-          ...(gate.permissions.has(PERMISSIONS.MANAGED_PAGES_READ)
-            ? [
-                {
-                  href: `/${locale}/admin/content/pages`,
-                  label: t("managedPages.title"),
-                },
-              ]
-            : []),
-          ...(gate.permissions.has(PERMISSIONS.ROLES_READ)
-            ? [
-                {
-                  href: `/${locale}/admin/access/roles`,
-                  label: t("access.links.roles"),
-                },
-              ]
-            : []),
-          ...(gate.permissions.has(PERMISSIONS.USERS_READ)
-            ? [
-                {
-                  href: `/${locale}/admin/access/users`,
-                  label: t("access.links.users"),
-                },
-              ]
-            : []),
-        ]
-      : [];
+  const permissions =
+    gate.status === "granted" ? gate.permissions : new Set<string>();
+  const props = adminShellProps(locale, t, permissions, {
+    switchHref: `/${otherLocale}/admin/content/news`,
+    activeHref: `/${locale}/admin/content/news`,
+  });
   return (
     <AdminShell
-      locale={locale}
-      title={t("shell.adminTitle")}
+      {...props}
       email={gate.user.email}
-      navLabel={t("shell.adminNav")}
-      skipLabel={t("shell.skipToContent")}
-      navItems={navItems}
-      switchTo={{
-        href: `/${otherLocale}/admin/content/news`,
-        lang: otherLocale,
-        label: t("shell.language"),
-        ariaLabel: t("shell.languageSwitch"),
-      }}
       actions={<LogoutButton locale={locale as Locale} />}
+      navItems={gate.status === "granted" ? props.navItems : []}
     >
       {children}
     </AdminShell>
