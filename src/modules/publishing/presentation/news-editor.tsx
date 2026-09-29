@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState, type ChangeEvent } from "react";
-import { useTranslations } from "next-intl";
 
 export interface NewsEditorState {
   error: string | null;
@@ -17,10 +16,40 @@ export type NewsSubmitAction = (
   formData: FormData,
 ) => Promise<{ error: string | null; attemptedVersion: number }>;
 
+export interface NewsEditorMessages {
+  editorTitle: string;
+  editorIntro: string;
+  saved: string;
+  saving: string;
+  save: string;
+  unsaved: string;
+  submit: string;
+  languages: { ar: string; en: string };
+  fields: {
+    title: string;
+    summary: string;
+    body: string;
+    bodyHint: string;
+    slug: string;
+    seoTitle: string;
+    seoDescription: string;
+  };
+  errors: Readonly<Record<string, string>>;
+}
+
+function localizedError(
+  code: string | null,
+  errors: Readonly<Record<string, string>>,
+) {
+  if (code && Object.hasOwn(errors, code)) return errors[code];
+  return errors.generic;
+}
+
 export function NewsEditor({
   locale,
   newsId,
   revision,
+  messages,
   saveAction,
   submitAction,
 }: {
@@ -41,10 +70,10 @@ export function NewsEditor({
       }
     >;
   };
+  messages: NewsEditorMessages;
   saveAction: NewsEditorAction;
   submitAction: NewsSubmitAction;
 }) {
-  const t = useTranslations("news");
   const [state, action, pending] = useActionState(saveAction, {
     error: null,
     saved: false,
@@ -76,14 +105,11 @@ export function NewsEditor({
     },
   });
   const dirty = dirtyVersion === state.editVersion;
-  const safeError =
-    state.error && t.has(`errors.${state.error}`)
-      ? t(`errors.${state.error}`)
-      : t("errors.generic");
+  const safeError = localizedError(state.error, messages.errors);
   return (
     <section className="news-editor" aria-labelledby="news-editor-title">
-      <h2 id="news-editor-title">{t("editorTitle")}</h2>
-      <p className="news-muted">{t("editorIntro")}</p>
+      <h2 id="news-editor-title">{messages.editorTitle}</h2>
+      <p className="news-muted">{messages.editorIntro}</p>
       {state.error && (
         <p className="news-alert" role="alert">
           {safeError}
@@ -91,7 +117,7 @@ export function NewsEditor({
       )}
       {state.saved && !state.error && !dirty && (
         <p className="news-success" role="status">
-          {t("saved")}
+          {messages.saved}
         </p>
       )}
       <form action={action} className="news-form">
@@ -110,15 +136,17 @@ export function NewsEditor({
                 lang={language}
                 dir={language === "ar" ? "rtl" : "ltr"}
               >
-                <legend>{t(`languages.${language}`)}</legend>
-                <label htmlFor={`title_${language}`}>{t("fields.title")}</label>
+                <legend>{messages.languages[language]}</legend>
+                <label htmlFor={`title_${language}`}>
+                  {messages.fields.title}
+                </label>
                 <input
                   id={`title_${language}`}
                   name={`title_${language}`}
                   {...fieldValue("title", language)}
                 />
                 <label htmlFor={`summary_${language}`}>
-                  {t("fields.summary")}
+                  {messages.fields.summary}
                 </label>
                 <textarea
                   id={`summary_${language}`}
@@ -126,9 +154,11 @@ export function NewsEditor({
                   rows={3}
                   {...fieldValue("summary", language)}
                 />
-                <label htmlFor={`body_${language}`}>{t("fields.body")}</label>
+                <label htmlFor={`body_${language}`}>
+                  {messages.fields.body}
+                </label>
                 <p className="news-hint" id={`body_hint_${language}`}>
-                  {t("fields.bodyHint")}
+                  {messages.fields.bodyHint}
                 </p>
                 <textarea
                   id={`body_${language}`}
@@ -137,7 +167,9 @@ export function NewsEditor({
                   aria-describedby={`body_hint_${language}`}
                   {...fieldValue("body", language)}
                 />
-                <label htmlFor={`slug_${language}`}>{t("fields.slug")}</label>
+                <label htmlFor={`slug_${language}`}>
+                  {messages.fields.slug}
+                </label>
                 <input
                   id={`slug_${language}`}
                   name={`slug_${language}`}
@@ -145,7 +177,7 @@ export function NewsEditor({
                   {...fieldValue("slug", language)}
                 />
                 <label htmlFor={`seoTitle_${language}`}>
-                  {t("fields.seoTitle")}
+                  {messages.fields.seoTitle}
                 </label>
                 <input
                   id={`seoTitle_${language}`}
@@ -153,7 +185,7 @@ export function NewsEditor({
                   {...fieldValue("seoTitle", language)}
                 />
                 <label htmlFor={`seoDescription_${language}`}>
-                  {t("fields.seoDescription")}
+                  {messages.fields.seoDescription}
                 </label>
                 <textarea
                   id={`seoDescription_${language}`}
@@ -170,12 +202,12 @@ export function NewsEditor({
           type="submit"
           disabled={pending}
         >
-          {pending ? t("saving") : t("save")}
+          {pending ? messages.saving : messages.save}
         </button>
       </form>
       {dirty && (
         <p className="news-notice" role="status">
-          {t("unsaved")}
+          {messages.unsaved}
         </p>
       )}
       <form action={submit} className="news-actions">
@@ -187,14 +219,12 @@ export function NewsEditor({
           type="submit"
           disabled={dirty || pending || submitting}
         >
-          {t("actions.submit")}
+          {messages.submit}
         </button>
         {submitState.error &&
           submitState.attemptedVersion === state.editVersion && (
             <p className="news-alert" role="alert">
-              {t.has(`errors.${submitState.error}`)
-                ? t(`errors.${submitState.error}`)
-                : t("errors.generic")}
+              {localizedError(submitState.error, messages.errors)}
             </p>
           )}
       </form>

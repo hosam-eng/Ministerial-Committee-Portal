@@ -19,6 +19,15 @@ import {
   submitNewsAction,
 } from "../actions";
 
+function stringMessages(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string",
+    ),
+  );
+}
+
 export default async function NewsDetailPage({
   params,
   searchParams,
@@ -139,6 +148,29 @@ export default async function NewsDetailPage({
                 },
               ]),
             ),
+          }}
+          messages={{
+            editorTitle: t("editorTitle"),
+            editorIntro: t("editorIntro"),
+            saved: t("saved"),
+            saving: t("saving"),
+            save: t("save"),
+            unsaved: t("unsaved"),
+            submit: t("actions.submit"),
+            languages: { ar: t("languages.ar"), en: t("languages.en") },
+            fields: {
+              title: t("fields.title"),
+              summary: t("fields.summary"),
+              body: t("fields.body"),
+              bodyHint: t("fields.bodyHint"),
+              slug: t("fields.slug"),
+              seoTitle: t("fields.seoTitle"),
+              seoDescription: t("fields.seoDescription"),
+            },
+            errors: {
+              ...stringMessages(t.raw("errors")),
+              generic: t("errors.generic"),
+            },
           }}
           saveAction={saveNewsAction}
           submitAction={submitNewsAction}
