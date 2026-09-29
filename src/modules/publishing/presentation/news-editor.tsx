@@ -24,6 +24,7 @@ export interface NewsEditorMessages {
   save: string;
   unsaved: string;
   submit: string;
+  sections: { content: string; metadata: string };
   languages: { ar: string; en: string };
   fields: {
     title: string;
@@ -43,6 +44,112 @@ function localizedError(
 ) {
   if (code && Object.hasOwn(errors, code)) return errors[code];
   return errors.generic;
+}
+
+function LanguageFields({
+  language,
+  messages,
+  fieldValue,
+}: {
+  language: "ar" | "en";
+  messages: NewsEditorMessages;
+  fieldValue: (
+    name: string,
+    language: string,
+  ) => {
+    value: string;
+    onChange: (
+      event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => void;
+  };
+}) {
+  return (
+    <fieldset
+      className="news-language"
+      lang={language}
+      dir={language === "ar" ? "rtl" : "ltr"}
+    >
+      <legend>{messages.languages[language]}</legend>
+      <div className="admin-form-section">
+        <h3 className="admin-form-section-title">
+          {messages.sections.content}
+        </h3>
+        <div className="ui-field">
+          <label htmlFor={`title_${language}`}>{messages.fields.title}</label>
+          <input
+            id={`title_${language}`}
+            className="ui-input"
+            name={`title_${language}`}
+            {...fieldValue("title", language)}
+          />
+        </div>
+        <div className="ui-field">
+          <label htmlFor={`summary_${language}`}>
+            {messages.fields.summary}
+          </label>
+          <textarea
+            id={`summary_${language}`}
+            className="ui-input"
+            name={`summary_${language}`}
+            rows={2}
+            {...fieldValue("summary", language)}
+          />
+        </div>
+        <div className="ui-field">
+          <label htmlFor={`body_${language}`}>{messages.fields.body}</label>
+          <p className="news-hint" id={`body_hint_${language}`}>
+            {messages.fields.bodyHint}
+          </p>
+          <textarea
+            id={`body_${language}`}
+            className="ui-input"
+            name={`body_${language}`}
+            rows={6}
+            aria-describedby={`body_hint_${language}`}
+            {...fieldValue("body", language)}
+          />
+        </div>
+      </div>
+      <div className="admin-form-section">
+        <h3 className="admin-form-section-title">
+          {messages.sections.metadata}
+        </h3>
+        <div className="ui-field">
+          <label htmlFor={`slug_${language}`}>{messages.fields.slug}</label>
+          <input
+            id={`slug_${language}`}
+            className="ui-input"
+            name={`slug_${language}`}
+            dir="auto"
+            {...fieldValue("slug", language)}
+          />
+        </div>
+        <div className="ui-field">
+          <label htmlFor={`seoTitle_${language}`}>
+            {messages.fields.seoTitle}
+          </label>
+          <input
+            id={`seoTitle_${language}`}
+            className="ui-input"
+            name={`seoTitle_${language}`}
+            {...fieldValue("seoTitle", language)}
+          />
+        </div>
+        <div className="ui-field">
+          <label htmlFor={`seoDescription_${language}`}>
+            {messages.fields.seoDescription}
+          </label>
+          <textarea
+            id={`seoDescription_${language}`}
+            className="ui-input"
+            name={`seoDescription_${language}`}
+            rows={2}
+            {...fieldValue("seoDescription", language)}
+          />
+        </div>
+      </div>
+    </fieldset>
+  );
 }
 
 export function NewsEditor({
@@ -108,126 +215,86 @@ export function NewsEditor({
   const safeError = localizedError(state.error, messages.errors);
   return (
     <section className="news-editor" aria-labelledby="news-editor-title">
-      <h2 id="news-editor-title">{messages.editorTitle}</h2>
-      <p className="news-muted">{messages.editorIntro}</p>
-      {state.error && (
-        <p className="news-alert" role="alert">
-          {safeError}
-        </p>
-      )}
-      {state.saved && !state.error && !dirty && (
-        <p className="news-success" role="status">
-          {messages.saved}
-        </p>
-      )}
-      <form action={action} className="news-form">
-        <input type="hidden" name="locale" value={locale} />
-        <input type="hidden" name="newsId" value={newsId} />
-        <input type="hidden" name="editVersion" value={state.editVersion} />
-        {revision.categoryIds.map((id) => (
-          <input key={id} type="hidden" name="categoryId" value={id} />
-        ))}
-        <div className="news-language-grid">
-          {(["ar", "en"] as const).map((language) => {
-            return (
-              <fieldset
-                key={language}
-                className="news-language"
-                lang={language}
-                dir={language === "ar" ? "rtl" : "ltr"}
-              >
-                <legend>{messages.languages[language]}</legend>
-                <label htmlFor={`title_${language}`}>
-                  {messages.fields.title}
-                </label>
-                <input
-                  id={`title_${language}`}
-                  name={`title_${language}`}
-                  {...fieldValue("title", language)}
-                />
-                <label htmlFor={`summary_${language}`}>
-                  {messages.fields.summary}
-                </label>
-                <textarea
-                  id={`summary_${language}`}
-                  name={`summary_${language}`}
-                  rows={3}
-                  {...fieldValue("summary", language)}
-                />
-                <label htmlFor={`body_${language}`}>
-                  {messages.fields.body}
-                </label>
-                <p className="news-hint" id={`body_hint_${language}`}>
-                  {messages.fields.bodyHint}
-                </p>
-                <textarea
-                  id={`body_${language}`}
-                  name={`body_${language}`}
-                  rows={9}
-                  aria-describedby={`body_hint_${language}`}
-                  {...fieldValue("body", language)}
-                />
-                <label htmlFor={`slug_${language}`}>
-                  {messages.fields.slug}
-                </label>
-                <input
-                  id={`slug_${language}`}
-                  name={`slug_${language}`}
-                  dir="auto"
-                  {...fieldValue("slug", language)}
-                />
-                <label htmlFor={`seoTitle_${language}`}>
-                  {messages.fields.seoTitle}
-                </label>
-                <input
-                  id={`seoTitle_${language}`}
-                  name={`seoTitle_${language}`}
-                  {...fieldValue("seoTitle", language)}
-                />
-                <label htmlFor={`seoDescription_${language}`}>
-                  {messages.fields.seoDescription}
-                </label>
-                <textarea
-                  id={`seoDescription_${language}`}
-                  name={`seoDescription_${language}`}
-                  rows={2}
-                  {...fieldValue("seoDescription", language)}
-                />
-              </fieldset>
-            );
-          })}
+      <div className="admin-editor-layout">
+        <div className="admin-editor-main admin-editor-block">
+          <div className="admin-editor-section">
+            <h2 id="news-editor-title">{messages.editorTitle}</h2>
+            <p className="news-muted">{messages.editorIntro}</p>
+            {state.error && (
+              <p className="news-alert" role="alert">
+                {safeError}
+              </p>
+            )}
+            {state.saved && !state.error && !dirty && (
+              <p className="news-success" role="status">
+                {messages.saved}
+              </p>
+            )}
+            <form action={action} className="news-form">
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="newsId" value={newsId} />
+              <input
+                type="hidden"
+                name="editVersion"
+                value={state.editVersion}
+              />
+              {revision.categoryIds.map((id) => (
+                <input key={id} type="hidden" name="categoryId" value={id} />
+              ))}
+              <div className="news-language-grid">
+                {(["ar", "en"] as const).map((language) => (
+                  <LanguageFields
+                    key={language}
+                    language={language}
+                    messages={messages}
+                    fieldValue={fieldValue}
+                  />
+                ))}
+              </div>
+              <div className="ui-action-group">
+                <button
+                  className="ui-button ui-button-primary"
+                  type="submit"
+                  disabled={pending}
+                >
+                  {pending ? messages.saving : messages.save}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-        <button
-          className="news-button news-primary"
-          type="submit"
-          disabled={pending}
+        <aside
+          className="admin-editor-rail admin-editor-block"
+          aria-labelledby="news-editor-rail"
         >
-          {pending ? messages.saving : messages.save}
-        </button>
-      </form>
-      {dirty && (
-        <p className="news-notice" role="status">
-          {messages.unsaved}
-        </p>
-      )}
-      <form action={submit} className="news-actions">
-        <input type="hidden" name="locale" value={locale} />
-        <input type="hidden" name="newsId" value={newsId} />
-        <input type="hidden" name="editVersion" value={state.editVersion} />
-        <button
-          className="news-button"
-          type="submit"
-          disabled={dirty || pending || submitting}
-        >
-          {messages.submit}
-        </button>
-        {submitState.error &&
-          submitState.attemptedVersion === state.editVersion && (
-            <p className="news-alert" role="alert">
-              {localizedError(submitState.error, messages.errors)}
+          <h2 id="news-editor-rail">{messages.submit}</h2>
+          {dirty && (
+            <p className="news-notice" role="status">
+              {messages.unsaved}
             </p>
           )}
-      </form>
+          <form action={submit}>
+            <input type="hidden" name="locale" value={locale} />
+            <input type="hidden" name="newsId" value={newsId} />
+            <input type="hidden" name="editVersion" value={state.editVersion} />
+            <div className="ui-action-group ui-action-group--stack">
+              <button
+                className="ui-button ui-button-secondary"
+                type="submit"
+                disabled={dirty || pending || submitting}
+              >
+                {messages.submit}
+              </button>
+              {submitState.error &&
+                submitState.attemptedVersion === state.editVersion && (
+                  <p className="news-alert" role="alert">
+                    {localizedError(submitState.error, messages.errors)}
+                  </p>
+                )}
+            </div>
+          </form>
+        </aside>
+      </div>
     </section>
   );
 }

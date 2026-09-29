@@ -11,6 +11,7 @@ import {
   requireBackoffice,
   UsersAdmin,
 } from "@/modules/identity";
+import { AdminPageHeader } from "@/shared/ui/admin-page-header";
 import { AdminShell } from "@/shared/ui/admin-shell";
 
 import { assignRoleAction, removeUserRoleAction } from "../actions";
@@ -66,8 +67,14 @@ export default async function AdminUsersPage({
     searchParams,
   ]);
 
+  const tAccess = await getTranslations({ locale, namespace: "access" });
+
   return (
     <AdminShell {...shell}>
+      <AdminPageHeader
+        title={tAccess("users.title")}
+        description={tAccess("links.users")}
+      />
       <UsersAdmin
         returnPath={`/${locale}/admin/access/users`}
         users={users.map((user) => ({

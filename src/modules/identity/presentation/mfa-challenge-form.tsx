@@ -43,16 +43,17 @@ export function MfaChallengeForm({ locale }: { locale: Locale }) {
   }
 
   return (
-    <main className="auth-page">
+    <div className="auth-card ui-surface">
       <h1>{t("mfa.title")}</h1>
       <p>{t("mfa.instructions")}</p>
-      <form onSubmit={onSubmit} noValidate>
-        <div>
+      <form className="auth-form" onSubmit={onSubmit} noValidate>
+        <div className="ui-field">
           <label htmlFor="mfa-code">
             {mode === "totp" ? t("mfa.totpLabel") : t("mfa.backupLabel")}
           </label>
           <input
             id="mfa-code"
+            className="ui-input"
             name="code"
             type="text"
             inputMode={mode === "totp" ? "numeric" : "text"}
@@ -63,27 +64,31 @@ export function MfaChallengeForm({ locale }: { locale: Locale }) {
           />
         </div>
         {error ? (
-          <p role="alert" className="auth-error">
+          <p role="alert" className="ui-alert ui-alert-error">
             {error}
           </p>
         ) : null}
-        <button type="submit" disabled={pending}>
-          {pending ? t("mfa.verifying") : t("mfa.verify")}
-        </button>
+        <div className="ui-action-group ui-action-group--stack">
+          <button
+            type="submit"
+            className="ui-button ui-button-primary"
+            disabled={pending}
+          >
+            {pending ? t("mfa.verifying") : t("mfa.verify")}
+          </button>
+          <button
+            type="button"
+            className="ui-button ui-button-secondary"
+            onClick={() => {
+              setMode(mode === "totp" ? "backup" : "totp");
+              setCode("");
+              setError(null);
+            }}
+          >
+            {mode === "totp" ? t("mfa.useBackupCode") : t("mfa.useTotp")}
+          </button>
+        </div>
       </form>
-      <p>
-        <button
-          type="button"
-          className="auth-link"
-          onClick={() => {
-            setMode(mode === "totp" ? "backup" : "totp");
-            setCode("");
-            setError(null);
-          }}
-        >
-          {mode === "totp" ? t("mfa.useBackupCode") : t("mfa.useTotp")}
-        </button>
-      </p>
-    </main>
+    </div>
   );
 }

@@ -73,14 +73,15 @@ export function MfaSetupForm({ locale }: { locale: Locale }) {
 
   if (!secret) {
     return (
-      <main className="auth-page">
+      <div className="auth-card ui-surface">
         <h1>{t("setup.title")}</h1>
         <p>{t("setup.intro")}</p>
-        <form onSubmit={onRequestEnrollment} noValidate>
-          <div>
+        <form className="auth-form" onSubmit={onRequestEnrollment} noValidate>
+          <div className="ui-field">
             <label htmlFor="setup-password">{t("login.password")}</label>
             <input
               id="setup-password"
+              className="ui-input"
               name="password"
               type="password"
               autoComplete="current-password"
@@ -90,29 +91,31 @@ export function MfaSetupForm({ locale }: { locale: Locale }) {
             />
           </div>
           {error ? (
-            <p role="alert" className="auth-error">
+            <p role="alert" className="ui-alert ui-alert-error">
               {error}
             </p>
           ) : null}
-          <button type="submit" disabled={pending}>
+          <button
+            type="submit"
+            className="ui-button ui-button-primary"
+            disabled={pending}
+          >
             {pending ? t("setup.submitting") : t("setup.submit")}
           </button>
         </form>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="auth-page">
+    <div className="auth-card ui-surface">
       <h1>{t("setup.title")}</h1>
-      <section>
+      <section className="auth-setup-section">
         <h2>{t("setup.authenticatorTitle")}</h2>
         <p>{t("setup.authenticatorInstructions")}</p>
-        <p>
-          <code className="auth-secret">{secret.totpURI}</code>
-        </p>
+        <code className="auth-secret">{secret.totpURI}</code>
       </section>
-      <section>
+      <section className="auth-setup-section">
         <h2>{t("setup.backupCodesTitle")}</h2>
         <p>{t("setup.backupCodesWarning")}</p>
         <ul className="auth-backup-codes">
@@ -123,11 +126,12 @@ export function MfaSetupForm({ locale }: { locale: Locale }) {
           ))}
         </ul>
       </section>
-      <form onSubmit={onConfirmEnrollment} noValidate>
-        <div>
+      <form className="auth-form" onSubmit={onConfirmEnrollment} noValidate>
+        <div className="ui-field">
           <label htmlFor="setup-code">{t("mfa.totpLabel")}</label>
           <input
             id="setup-code"
+            className="ui-input"
             name="code"
             type="text"
             inputMode="numeric"
@@ -138,14 +142,18 @@ export function MfaSetupForm({ locale }: { locale: Locale }) {
           />
         </div>
         {error ? (
-          <p role="alert" className="auth-error">
+          <p role="alert" className="ui-alert ui-alert-error">
             {error}
           </p>
         ) : null}
-        <button type="submit" disabled={pending}>
+        <button
+          type="submit"
+          className="ui-button ui-button-primary"
+          disabled={pending}
+        >
           {pending ? t("mfa.verifying") : t("mfa.verify")}
         </button>
       </form>
-    </main>
+    </div>
   );
 }

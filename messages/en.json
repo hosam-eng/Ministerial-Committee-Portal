@@ -110,6 +110,10 @@
     "noActive": "No active revision",
     "liveUnchanged": "The current live revision remains unchanged until this editorial revision is approved and published.",
     "editorTitle": "Edit bilingual draft",
+    "editorSections": {
+      "content": "Content",
+      "metadata": "Link and search metadata"
+    },
     "editorIntro": "Save the draft before submitting for review. Both languages are required to submit; incomplete drafts can be saved.",
     "readOnly": "You can view this draft but do not have editing permission.",
     "save": "Save draft",
@@ -231,6 +235,11 @@
     "noActive": "No active revision",
     "liveUnchanged": "The live revision stays unchanged until this editorial revision is published.",
     "editorTitle": "Edit bilingual page",
+    "editorSections": {
+      "content": "Page content",
+      "metadata": "Link and search metadata",
+      "blocks": "Controlled blocks"
+    },
     "editorIntro": "Arabic and English share one block structure. Save before submitting. Both languages are required to submit.",
     "readOnly": "You can view this page but do not have editing permission.",
     "save": "Save draft",
@@ -334,8 +343,22 @@
       "RETURNED": "Returned",
       "ABANDONED": "Abandoned"
     },
+    "events": {
+      "SUBMIT": "Submitted for review",
+      "RETURN": "Returned for changes",
+      "APPROVE": "Approved",
+      "RESTORE": "Restored to a new editing revision",
+      "MARK_READY": "Marked ready",
+      "ABANDON": "Abandoned",
+      "PUBLISH": "Published",
+      "UNPUBLISH": "Unpublished"
+    },
     "history": {
       "title": "Revision history",
+      "revisions": "Revisions",
+      "workflow": "Workflow activity",
+      "publication": "Publication activity",
+      "none": "No activity yet.",
       "restoreHint": "Restore copies this revision into a new draft."
     },
     "public": {
@@ -380,6 +403,12 @@
     }
   },
   "access": {
+    "permissionGroups": {
+      "backoffice": "Administration",
+      "identity": "Identity & Access",
+      "managed_pages": "Managed Pages",
+      "publishing": "News & Publishing"
+    },
     "links": {
       "home": "Admin console",
       "roles": "Manage roles",
@@ -405,6 +434,7 @@
       "noPermissions": "No permissions",
       "create": "Create role",
       "createTitle": "New custom role",
+      "cancel": "Cancel",
       "save": "Save",
       "activate": "Activate",
       "deactivate": "Deactivate",

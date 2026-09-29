@@ -27,7 +27,7 @@ export function ManagedPagePublicContent({
   const title = content.title || labels.untitled;
   return (
     <article
-      className="managed-page public-managed-page"
+      className="managed-page public-managed-page public-news-detail"
       lang={locale}
       dir={locale === "ar" ? "rtl" : "ltr"}
     >

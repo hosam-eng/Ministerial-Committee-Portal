@@ -70,9 +70,13 @@ export default async function AdminRolesPage({
     searchParams,
   ]);
 
+  const tAccess = await getTranslations({ locale, namespace: "access" });
+
   return (
     <AdminShell {...shell}>
       <RolesAdmin
+        title={tAccess("roles.title")}
+        description={tAccess("links.roles")}
         returnPath={`/${locale}/admin/access/roles`}
         roles={roles.map((role) => ({
           id: role.id,

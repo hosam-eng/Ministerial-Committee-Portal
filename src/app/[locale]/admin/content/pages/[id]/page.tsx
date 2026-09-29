@@ -15,6 +15,16 @@ import {
   ManagedPageEditor,
   type ManagedPageEditorMessages,
 } from "@/modules/managed-pages/editor";
+import { AdminPageHeader } from "@/shared/ui/admin-page-header";
+import {
+  AdminEventItem,
+  AdminEventList,
+  AdminHistory,
+  AdminHistorySubsection,
+  AdminRevisionItem,
+  AdminRevisionList,
+} from "@/shared/ui/admin-history";
+import { AdminWorkflowStack } from "@/shared/ui/admin-workflow-stack";
 
 import {
   managedPageWorkflowAction,
@@ -141,15 +151,15 @@ export default async function ManagedPageDetailPage({
   };
   const previewRevision = editorial?.id;
   return (
-    <article className="news-workspace">
-      <a href={`/${locale}/admin/content/pages`}>{t("back")}</a>
-      <div className="news-heading">
-        <div>
-          <p className="news-eyebrow">{t("section")}</p>
-          <h1>{title}</h1>
-          <p>{t("detailIntro")}</p>
-        </div>
-      </div>
+    <article className="admin-editor-page">
+      <a className="admin-editor-back" href={`/${locale}/admin/content/pages`}>
+        {t("back")}
+      </a>
+      <AdminPageHeader
+        eyebrow={t("section")}
+        title={title}
+        description={t("detailIntro")}
+      />
       {error && (
         <p role="alert" className="news-alert">
           {error}
@@ -160,21 +170,23 @@ export default async function ManagedPageDetailPage({
           {status}
         </p>
       )}
-      <section className="news-summary" aria-label={t("statusTitle")}>
-        <div>
-          <span>{t("publicationLabel")}</span>
-          <strong>{t(`publication.${page.publicationStatus}`)}</strong>
+      <section className="admin-status-grid" aria-label={t("statusTitle")}>
+        <div className="admin-status-item">
+          <p className="admin-status-label">{t("publicationLabel")}</p>
+          <span className="ui-badge ui-badge-brand">
+            {t(`publication.${page.publicationStatus}`)}
+          </span>
         </div>
-        <div>
-          <span>{t("editorialLabel")}</span>
-          <strong>
+        <div className="admin-status-item">
+          <p className="admin-status-label">{t("editorialLabel")}</p>
+          <span className="ui-badge ui-badge-neutral">
             {editorial
               ? t(`workflow.${editorial.workflowStatus}`)
               : t("noActive")}
-          </strong>
+          </span>
         </div>
-        <div>
-          <span>{t("liveRevision")}</span>
+        <div className="admin-status-item">
+          <p className="admin-status-label">{t("liveRevision")}</p>
           <strong>
             {page.liveRevisionNumber
               ? t("revisionNumber", { number: page.liveRevisionNumber })
@@ -182,101 +194,174 @@ export default async function ManagedPageDetailPage({
           </strong>
         </div>
       </section>
-      <p>{t("dependencies", { count: page.outgoingTargets.length })}</p>
-      <p>{t("incoming", { count: page.incomingCount })}</p>
+      <p className="news-muted">
+        {t("dependencies", { count: page.outgoingTargets.length })}
+      </p>
+      <p className="news-muted">
+        {t("incoming", { count: page.incomingCount })}
+      </p>
       {page.liveRevisionId && editorial && (
         <p className="news-notice">{t("liveUnchanged")}</p>
       )}
       {previewRevision && (
-        <p className="news-actions">
+        <div className="news-actions">
           <a
-            className="news-button"
+            className="ui-button ui-button-secondary"
             href={`/ar/admin/preview/managed-pages/${previewRevision}`}
           >
             {t("previewAr")}
           </a>
           <a
-            className="news-button"
+            className="ui-button ui-button-secondary"
             href={`/en/admin/preview/managed-pages/${previewRevision}`}
           >
             {t("previewEn")}
           </a>
-        </p>
+        </div>
       )}
-      {editorial?.workflowStatus === "EDITING" && canEdit ? (
-        <ManagedPageEditor
-          key={`${editorial.id}-${editorial.editVersion}`}
+      <AdminWorkflowStack>
+        {editorial?.workflowStatus === "EDITING" && canEdit ? (
+          <ManagedPageEditor
+            key={`${editorial.id}-${editorial.editVersion}`}
+            locale={locale}
+            pageId={page.id}
+            editVersion={editorial.editVersion}
+            draft={editorial.draft}
+            pages={page.linkOptions}
+            messages={messages}
+            saveAction={saveManagedPageAction}
+            submitAction={submitManagedPageAction}
+          />
+        ) : null}
+        {editorial?.workflowStatus === "EDITING" && !canEdit ? (
+          <p className="news-muted">{t("readOnly")}</p>
+        ) : null}
+        <ManagedPageActionBar
           locale={locale}
           pageId={page.id}
-          editVersion={editorial.editVersion}
-          draft={editorial.draft}
-          pages={page.linkOptions}
-          messages={messages}
-          saveAction={saveManagedPageAction}
-          submitAction={submitManagedPageAction}
+          workflowStatus={editorial?.workflowStatus ?? null}
+          publicationStatus={page.publicationStatus}
+          canEdit={canEdit}
+          canReview={canReview}
+          canPublish={canPublish}
+          action={managedPageWorkflowAction}
+          messages={{
+            return: t("actions.return"),
+            approve: t("actions.approve"),
+            publish: t("actions.publish"),
+            unpublish: t("actions.unpublish"),
+            edit: t("actions.edit"),
+            returnComment: t("fields.returnComment"),
+            unpublishReason: t("fields.unpublishReason"),
+          }}
         />
-      ) : null}
-      {editorial?.workflowStatus === "EDITING" && !canEdit ? (
-        <p className="news-muted">{t("readOnly")}</p>
-      ) : null}
-      <ManagedPageActionBar
-        locale={locale}
-        pageId={page.id}
-        workflowStatus={editorial?.workflowStatus ?? null}
-        publicationStatus={page.publicationStatus}
-        canEdit={canEdit}
-        canReview={canReview}
-        canPublish={canPublish}
-        action={managedPageWorkflowAction}
-        messages={{
-          return: t("actions.return"),
-          approve: t("actions.approve"),
-          publish: t("actions.publish"),
-          unpublish: t("actions.unpublish"),
-          edit: t("actions.edit"),
-          returnComment: t("fields.returnComment"),
-          unpublishReason: t("fields.unpublishReason"),
-        }}
-      />
-      {editorial?.workflowStatus === "APPROVED" && <p>{t("approvedTitle")}</p>}
-      {editorial?.workflowStatus === "PENDING_REVIEW" && (
-        <p>{t("reviewTitle")}</p>
-      )}
-      <section className="news-history">
-        <h2>{t("history.title")}</h2>
+      </AdminWorkflowStack>
+      <AdminHistory title={t("history.title")}>
         <p className="news-hint">{t("history.restoreHint")}</p>
-        <ol>
-          {page.revisions.map((revision) => (
-            <li key={revision.id}>
-              <span>
-                {t("revisionNumber", { number: revision.revisionNumber })}
-              </span>
-              {" — "}
-              <span>{t(`workflow.${revision.workflowStatus}`)}</span>
-              {canEdit && (
-                <form
-                  action={managedPageWorkflowAction}
-                  className="news-inline-form"
-                >
-                  <input type="hidden" name="locale" value={locale} />
-                  <input type="hidden" name="pageId" value={page.id} />
-                  <input type="hidden" name="operation" value="restore" />
-                  <input type="hidden" name="revisionId" value={revision.id} />
-                  <button className="news-button" type="submit">
-                    {t("actions.restore")}
-                  </button>
-                </form>
-              )}
-              <a href={`/ar/admin/preview/managed-pages/${revision.id}`}>
-                {t("previewAr")}
-              </a>{" "}
-              <a href={`/en/admin/preview/managed-pages/${revision.id}`}>
-                {t("previewEn")}
-              </a>
-            </li>
-          ))}
-        </ol>
-      </section>
+        <AdminHistorySubsection title={t("history.revisions")}>
+          <AdminRevisionList>
+            {page.revisions.map((revision) => (
+              <AdminRevisionItem
+                key={revision.id}
+                revisionLabel={t("revisionNumber", {
+                  number: revision.revisionNumber,
+                })}
+                statusBadge={
+                  <span className="ui-badge ui-badge-neutral">
+                    {t(`workflow.${revision.workflowStatus}`)}
+                  </span>
+                }
+                liveBadge={
+                  revision.id === page.liveRevisionId ? (
+                    <span className="ui-badge ui-badge-brand">
+                      {t("liveRevision")}
+                    </span>
+                  ) : undefined
+                }
+                dateTime={revision.createdAt.toISOString()}
+                dateLabel={new Intl.DateTimeFormat(locale, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                }).format(revision.createdAt)}
+                actions={
+                  <>
+                    {canEdit ? (
+                      <form action={managedPageWorkflowAction}>
+                        <input type="hidden" name="locale" value={locale} />
+                        <input type="hidden" name="pageId" value={page.id} />
+                        <input type="hidden" name="operation" value="restore" />
+                        <input
+                          type="hidden"
+                          name="revisionId"
+                          value={revision.id}
+                        />
+                        <button
+                          className="ui-button ui-button-secondary ui-button-compact"
+                          type="submit"
+                        >
+                          {t("actions.restore")}
+                        </button>
+                      </form>
+                    ) : null}
+                    <a
+                      className="ui-button ui-button-secondary ui-button-compact"
+                      href={`/ar/admin/preview/managed-pages/${revision.id}`}
+                    >
+                      {t("previewAr")}
+                    </a>
+                    <a
+                      className="ui-button ui-button-secondary ui-button-compact"
+                      href={`/en/admin/preview/managed-pages/${revision.id}`}
+                    >
+                      {t("previewEn")}
+                    </a>
+                  </>
+                }
+              />
+            ))}
+          </AdminRevisionList>
+        </AdminHistorySubsection>
+        <AdminHistorySubsection title={t("history.workflow")}>
+          {page.workflowEvents.length ? (
+            <AdminEventList>
+              {page.workflowEvents.map((event, index) => (
+                <AdminEventItem
+                  key={`${event.action}-${event.createdAt.toISOString()}-${index}`}
+                  title={t(`events.${event.action}`)}
+                  dateTime={event.createdAt.toISOString()}
+                  dateLabel={new Intl.DateTimeFormat(locale, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(event.createdAt)}
+                  detail={event.comment ? <p>{event.comment}</p> : undefined}
+                />
+              ))}
+            </AdminEventList>
+          ) : (
+            <p className="admin-history-empty">{t("history.none")}</p>
+          )}
+        </AdminHistorySubsection>
+        <AdminHistorySubsection title={t("history.publication")}>
+          {page.publicationEvents.length ? (
+            <AdminEventList>
+              {page.publicationEvents.map((event, index) => (
+                <AdminEventItem
+                  key={`${event.action}-${event.createdAt.toISOString()}-${index}`}
+                  title={t(`events.${event.action}`)}
+                  dateTime={event.createdAt.toISOString()}
+                  dateLabel={new Intl.DateTimeFormat(locale, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(event.createdAt)}
+                  detail={event.reason ? <p>{event.reason}</p> : undefined}
+                />
+              ))}
+            </AdminEventList>
+          ) : (
+            <p className="admin-history-empty">{t("history.none")}</p>
+          )}
+        </AdminHistorySubsection>
+      </AdminHistory>
     </article>
   );
 }

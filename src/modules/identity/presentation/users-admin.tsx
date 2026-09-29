@@ -1,3 +1,5 @@
+"use client";
+
 import { useTranslations } from "next-intl";
 
 import type { AccessFormAction, RoleView } from "./roles-admin";
@@ -34,68 +36,103 @@ export function UsersAdmin({
   const t = useTranslations("access");
 
   return (
-    <div className="access-page">
-      <h1>{t("users.title")}</h1>
+    <div className="admin-access-page">
       {errorKey ? (
-        <p role="alert" className="auth-error">
+        <p role="alert" className="ui-alert ui-alert-error">
           {t(`errors.${errorKey}`)}
         </p>
       ) : null}
 
-      {users.map((user) => (
-        <section key={user.id} className="access-card">
-          <h2>{user.email}</h2>
-          {user.roles.length === 0 ? (
-            <p>{t("users.noRoles")}</p>
-          ) : (
-            <ul className="access-permissions">
-              {user.roles.map((role) => (
-                <li key={role.id}>
-                  {role.name}
-                  {role.systemKey ? ` (${t("roles.system")})` : ""}
-                  {role.isActive ? "" : ` (${t("roles.inactive")})`}
-                  {canManage ? (
-                    <form action={actions.remove} className="access-inline">
-                      <input type="hidden" name="userId" value={user.id} />
-                      <input type="hidden" name="roleId" value={role.id} />
-                      <input
-                        type="hidden"
-                        name="returnPath"
-                        value={returnPath}
-                      />
-                      <button type="submit" className="auth-link">
-                        {t("users.remove")}
-                      </button>
-                    </form>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-          {canManage && assignableRoles.length > 0 ? (
-            <form action={actions.assign} className="access-form">
-              <input type="hidden" name="userId" value={user.id} />
-              <input type="hidden" name="returnPath" value={returnPath} />
-              <label htmlFor={`assign-${user.id}`}>
-                {t("users.assignRole")}
-              </label>
-              <select id={`assign-${user.id}`} name="roleId">
-                {assignableRoles
-                  .filter(
-                    (role) =>
-                      !user.roles.some((assigned) => assigned.id === role.id),
-                  )
-                  .map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-              </select>
-              <button type="submit">{t("users.assign")}</button>
-            </form>
-          ) : null}
-        </section>
-      ))}
+      <div className="admin-users-data" role="table">
+        <div className="admin-users-head" role="row">
+          <span role="columnheader">{t("users.email")}</span>
+          <span role="columnheader">{t("users.roles")}</span>
+          <span role="columnheader">{t("users.actions")}</span>
+        </div>
+        {users.map((user) => {
+          const available = assignableRoles.filter(
+            (role) => !user.roles.some((assigned) => assigned.id === role.id),
+          );
+          return (
+            <div className="admin-users-row" role="row" key={user.id}>
+              <div className="admin-users-email" role="cell">
+                {user.email}
+              </div>
+              <div className="admin-users-roles" role="cell">
+                {user.roles.length === 0 ? (
+                  <p className="admin-users-empty-hint">{t("users.noRoles")}</p>
+                ) : (
+                  user.roles.map((role) => (
+                    <span
+                      key={role.id}
+                      className="admin-users-role-chip ui-action-group"
+                    >
+                      <span className="ui-badge ui-badge-neutral">
+                        {role.name}
+                        {role.systemKey ? ` (${t("roles.system")})` : ""}
+                        {role.isActive ? "" : ` (${t("roles.inactive")})`}
+                      </span>
+                      {canManage ? (
+                        <form action={actions.remove}>
+                          <input type="hidden" name="userId" value={user.id} />
+                          <input type="hidden" name="roleId" value={role.id} />
+                          <input
+                            type="hidden"
+                            name="returnPath"
+                            value={returnPath}
+                          />
+                          <button
+                            type="submit"
+                            className="ui-button ui-button-secondary ui-button-compact"
+                          >
+                            {t("users.remove")}
+                          </button>
+                        </form>
+                      ) : null}
+                    </span>
+                  ))
+                )}
+              </div>
+              <div className="admin-users-assign" role="cell">
+                {canManage && available.length > 0 ? (
+                  <form
+                    action={actions.assign}
+                    className="ui-action-group admin-users-assign-form"
+                  >
+                    <input type="hidden" name="userId" value={user.id} />
+                    <input type="hidden" name="returnPath" value={returnPath} />
+                    <div className="ui-field">
+                      <label className="sr-only" htmlFor={`assign-${user.id}`}>
+                        {t("users.assignRole")}
+                      </label>
+                      <select
+                        id={`assign-${user.id}`}
+                        className="ui-input"
+                        name="roleId"
+                        aria-label={t("users.assignRole")}
+                      >
+                        {available.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="submit"
+                      className="ui-button ui-button-primary ui-button-compact"
+                    >
+                      {t("users.assign")}
+                    </button>
+                  </form>
+                ) : (
+                  <span className="admin-users-empty-hint">—</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

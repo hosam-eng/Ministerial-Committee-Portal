@@ -7,6 +7,7 @@ import {
   requireBackoffice,
 } from "@/modules/identity";
 import { listEditorialManagedPages } from "@/modules/managed-pages";
+import { AdminPageHeader } from "@/shared/ui/admin-page-header";
 
 export default async function ManagedPagesListPage({
   params,
@@ -18,66 +19,80 @@ export default async function ManagedPagesListPage({
   const gate = await requireBackoffice(locale, PERMISSIONS.MANAGED_PAGES_READ);
   if (gate.status === "denied")
     return <AccessDenied locale={locale as Locale} />;
-  const [pages, t] = await Promise.all([
+  const [pages, t, tCommon] = await Promise.all([
     listEditorialManagedPages(gate.user.id, locale === "en" ? "en" : "ar"),
     getTranslations({ locale, namespace: "managedPages" }),
+    getTranslations({ locale, namespace: "news" }),
   ]);
+  const openLabel = tCommon("open");
   return (
-    <section className="news-workspace">
-      <div className="news-heading">
-        <div>
-          <p className="news-eyebrow">{t("section")}</p>
-          <h1>{t("title")}</h1>
-          <p>{t("listIntro")}</p>
-        </div>
-        {gate.permissions.has(PERMISSIONS.MANAGED_PAGES_CREATE) && (
-          <a
-            className="news-button news-primary"
-            href={`/${locale}/admin/content/pages/new`}
-          >
-            {t("create")}
-          </a>
-        )}
-      </div>
+    <section className="admin-pages-list">
+      <AdminPageHeader
+        eyebrow={t("section")}
+        title={t("title")}
+        description={t("listIntro")}
+        action={
+          gate.permissions.has(PERMISSIONS.MANAGED_PAGES_CREATE) ? (
+            <a
+              className="ui-button ui-button-primary"
+              href={`/${locale}/admin/content/pages/new`}
+            >
+              {t("create")}
+            </a>
+          ) : undefined
+        }
+      />
       {pages.length ? (
-        <div className="news-list" role="list">
+        <div className="admin-data-table" role="list">
+          <div className="admin-data-table-head" aria-hidden="true">
+            <span>{t("fields.title")}</span>
+            <span>{t("editorialLabel")}</span>
+            <span>{t("publicationLabel")}</span>
+            <span>{t("updated")}</span>
+            <span>{openLabel}</span>
+          </div>
           {pages.map((item) => (
-            <article className="news-list-row" role="listitem" key={item.id}>
-              <div className="news-list-main">
+            <article className="admin-data-row" role="listitem" key={item.id}>
+              <div className="admin-data-title">
                 <h2>
                   <a href={`/${locale}/admin/content/pages/${item.id}`}>
                     {item.title || t("untitled")}
                   </a>
                 </h2>
-                <p>
-                  {t("updated")}:{" "}
-                  <time dateTime={item.updatedAt.toISOString()}>
-                    {new Intl.DateTimeFormat(locale, {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    }).format(item.updatedAt)}
-                  </time>
-                </p>
               </div>
-              <div className="news-list-status">
-                <span>
-                  {t("publicationLabel")}:{" "}
-                  <strong>{t(`publication.${item.publicationStatus}`)}</strong>
+              <div className="admin-data-cell">
+                <span className="ui-badge ui-badge-neutral">
+                  {item.workflowStatus
+                    ? t(`workflow.${item.workflowStatus}`)
+                    : t("noActive")}
                 </span>
-                <span>
-                  {t("editorialLabel")}:{" "}
-                  <strong>
-                    {item.workflowStatus
-                      ? t(`workflow.${item.workflowStatus}`)
-                      : t("noActive")}
-                  </strong>
+              </div>
+              <div className="admin-data-cell">
+                <span className="ui-badge ui-badge-brand">
+                  {t(`publication.${item.publicationStatus}`)}
                 </span>
+              </div>
+              <div className="admin-data-cell admin-data-meta">
+                <time dateTime={item.updatedAt.toISOString()}>
+                  {new Intl.DateTimeFormat(locale, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(item.updatedAt)}
+                </time>
+              </div>
+              <div className="admin-data-cell">
+                <a
+                  className="ui-button ui-button-secondary ui-button-compact"
+                  href={`/${locale}/admin/content/pages/${item.id}`}
+                >
+                  {openLabel}
+                </a>
               </div>
             </article>
           ))}
         </div>
       ) : (
-        <p className="news-empty">{t("empty")}</p>
+        <p className="news-empty ui-surface">{t("empty")}</p>
       )}
     </section>
   );
