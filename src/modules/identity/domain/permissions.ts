@@ -15,6 +15,11 @@ export const PERMISSIONS = {
   NEWS_EDIT: "publishing.news.edit",
   NEWS_REVIEW: "publishing.news.review",
   NEWS_PUBLISH: "publishing.news.publish",
+  MANAGED_PAGES_READ: "managed_pages.pages.read",
+  MANAGED_PAGES_CREATE: "managed_pages.pages.create",
+  MANAGED_PAGES_EDIT: "managed_pages.pages.edit",
+  MANAGED_PAGES_REVIEW: "managed_pages.pages.review",
+  MANAGED_PAGES_PUBLISH: "managed_pages.pages.publish",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

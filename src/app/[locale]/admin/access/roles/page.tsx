@@ -69,6 +69,14 @@ export default async function AdminRolesPage({
     ...(gate.permissions.has(PERMISSIONS.NEWS_READ)
       ? [{ href: `/${locale}/admin/content/news`, label: t("news.title") }]
       : []),
+    ...(gate.permissions.has(PERMISSIONS.MANAGED_PAGES_READ)
+      ? [
+          {
+            href: `/${locale}/admin/content/pages`,
+            label: t("managedPages.title"),
+          },
+        ]
+      : []),
     ...(gate.permissions.has(PERMISSIONS.USERS_READ)
       ? [
           {

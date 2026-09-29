@@ -79,7 +79,10 @@ function isModulePublicSurface(rel: string): boolean {
   return (
     seg[0] === "modules" &&
     seg.length >= 2 &&
-    (seg.length === 2 || (seg.length === 3 && /^index(\.[^.]+)?$/.test(seg[2])))
+    (seg.length === 2 ||
+      (seg.length === 3 &&
+        (/^index(\.[^.]+)?$/.test(seg[2]) ||
+          (seg[1] === "managed-pages" && /^editor(\.[^.]+)?$/.test(seg[2])))))
   );
 }
 

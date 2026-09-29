@@ -35,6 +35,14 @@ export default async function NewsLayout({
                 },
               ]
             : []),
+          ...(gate.permissions.has(PERMISSIONS.MANAGED_PAGES_READ)
+            ? [
+                {
+                  href: `/${locale}/admin/content/pages`,
+                  label: t("managedPages.title"),
+                },
+              ]
+            : []),
           ...(gate.permissions.has(PERMISSIONS.ROLES_READ)
             ? [
                 {

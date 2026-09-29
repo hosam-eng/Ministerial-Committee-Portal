@@ -1,0 +1,236 @@
+enum ManagedPagePublicationStatus {
+  NEVER_PUBLISHED
+  PUBLISHED
+  UNPUBLISHED
+
+  @@schema("publishing")
+}
+
+enum ManagedPageWorkflowStatus {
+  EDITING
+  PENDING_REVIEW
+  APPROVED
+  RETURNED
+
+  @@schema("publishing")
+}
+
+enum ManagedPageWorkflowAction {
+  SUBMIT
+  RETURN
+  APPROVE
+  RESTORE
+
+  @@schema("publishing")
+}
+
+enum ManagedPagePublicationAction {
+  PUBLISH
+  UNPUBLISH
+
+  @@schema("publishing")
+}
+
+enum ManagedPageBlockType {
+  RICHTEXT
+  CALLOUT
+  LINK_LIST
+
+  @@schema("publishing")
+}
+
+enum ManagedPageCalloutVariant {
+  INSTITUTIONAL
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+
+  @@schema("publishing")
+}
+
+enum ManagedPageReferenceOrigin {
+  RICHTEXT
+  LINK_LIST
+
+  @@schema("publishing")
+}
+
+model ManagedPage {
+  id                String                       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  systemKey         String?                      @unique @map("system_key")
+  publicationStatus ManagedPagePublicationStatus @default(NEVER_PUBLISHED) @map("publication_status")
+  liveRevisionId    String?                      @map("live_revision_id") @db.Uuid
+  activeRevisionId  String?                      @unique @map("active_revision_id") @db.Uuid
+  publishedAt       DateTime?                    @map("published_at") @db.Timestamptz(6)
+  unpublishedAt     DateTime?                    @map("unpublished_at") @db.Timestamptz(6)
+  createdById       String?                      @map("created_by_id") @db.Uuid
+  createdAt         DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  liveRevision       ManagedPageRevision?          @relation("ManagedPageLiveRevision", fields: [liveRevisionId], references: [id])
+  activeRevision     ManagedPageRevision?          @relation("ManagedPageActiveRevision", fields: [activeRevisionId], references: [id])
+  revisions          ManagedPageRevision[]         @relation("ManagedPageRevisions")
+  workflowEvents     ManagedPageWorkflowEvent[]
+  publicationEvents  ManagedPagePublicationEvent[]
+  slugRedirects      ManagedPageSlugRedirect[]
+  incomingReferences ManagedPageReference[]        @relation("ManagedPageReferenceTarget")
+
+  @@map("managed_page")
+  @@schema("publishing")
+}
+
+model ManagedPageRevision {
+  id                String                    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  managedPageId     String                    @map("managed_page_id") @db.Uuid
+  revisionNumber    Int                       @map("revision_number")
+  workflowStatus    ManagedPageWorkflowStatus @default(EDITING) @map("workflow_status")
+  editVersion       Int                       @default(0) @map("edit_version")
+  basedOnRevisionId String?                   @map("based_on_revision_id") @db.Uuid
+  createdById       String?                   @map("created_by_id") @db.Uuid
+  submittedById     String?                   @map("submitted_by_id") @db.Uuid
+  reviewedById      String?                   @map("reviewed_by_id") @db.Uuid
+  submittedAt       DateTime?                 @map("submitted_at") @db.Timestamptz(6)
+  reviewedAt        DateTime?                 @map("reviewed_at") @db.Timestamptz(6)
+  createdAt         DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  managedPage       ManagedPage                      @relation("ManagedPageRevisions", fields: [managedPageId], references: [id])
+  basedOn           ManagedPageRevision?             @relation("ManagedPageRevisionLineage", fields: [basedOnRevisionId], references: [id])
+  derivedRevisions  ManagedPageRevision[]            @relation("ManagedPageRevisionLineage")
+  liveFor           ManagedPage[]                    @relation("ManagedPageLiveRevision")
+  activeFor         ManagedPage[]                    @relation("ManagedPageActiveRevision")
+  translations      ManagedPageRevisionTranslation[]
+  blocks            ManagedPageRevisionBlock[]
+  references        ManagedPageReference[]
+  workflowEvents    ManagedPageWorkflowEvent[]
+  publicationEvents ManagedPagePublicationEvent[]
+
+  @@unique([managedPageId, revisionNumber])
+  @@index([managedPageId])
+  @@map("managed_page_revision")
+  @@schema("publishing")
+}
+
+model ManagedPageRevisionTranslation {
+  id             String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  revisionId     String   @map("revision_id") @db.Uuid
+  locale         String
+  title          String
+  slug           String
+  intro          String?
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  revision ManagedPageRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+
+  @@unique([revisionId, locale])
+  @@index([locale, slug])
+  @@map("managed_page_revision_translation")
+  @@schema("publishing")
+}
+
+model ManagedPageRevisionBlock {
+  id             String                     @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  revisionId     String                     @map("revision_id") @db.Uuid
+  position       Int
+  blockType      ManagedPageBlockType       @map("block_type")
+  schemaVersion  Int                        @map("schema_version")
+  calloutVariant ManagedPageCalloutVariant? @map("callout_variant")
+  linkItems      Json?                      @map("link_items")
+  createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  revision     ManagedPageRevision                   @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  translations ManagedPageRevisionBlockTranslation[]
+  references   ManagedPageReference[]
+
+  @@unique([revisionId, position])
+  @@index([revisionId])
+  @@map("managed_page_revision_block")
+  @@schema("publishing")
+}
+
+model ManagedPageRevisionBlockTranslation {
+  id      String @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  blockId String @map("block_id") @db.Uuid
+  locale  String
+  payload Json
+
+  block ManagedPageRevisionBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@unique([blockId, locale])
+  @@map("managed_page_revision_block_translation")
+  @@schema("publishing")
+}
+
+model ManagedPageReference {
+  id               String                     @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  sourceRevisionId String                     @map("source_revision_id") @db.Uuid
+  sourceBlockId    String                     @map("source_block_id") @db.Uuid
+  targetPageId     String                     @map("target_page_id") @db.Uuid
+  locale           String?
+  origin           ManagedPageReferenceOrigin
+  itemKey          String?                    @map("item_key")
+  createdAt        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  revision ManagedPageRevision      @relation(fields: [sourceRevisionId], references: [id], onDelete: Cascade)
+  block    ManagedPageRevisionBlock @relation(fields: [sourceBlockId], references: [id], onDelete: Cascade)
+  target   ManagedPage              @relation("ManagedPageReferenceTarget", fields: [targetPageId], references: [id])
+
+  @@index([sourceRevisionId])
+  @@index([targetPageId])
+  @@map("managed_page_reference")
+  @@schema("publishing")
+}
+
+model ManagedPageSlugRedirect {
+  id            String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  managedPageId String   @map("managed_page_id") @db.Uuid
+  locale        String
+  slug          String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  managedPage ManagedPage @relation(fields: [managedPageId], references: [id])
+
+  @@unique([locale, slug])
+  @@map("managed_page_slug_redirect")
+  @@schema("publishing")
+}
+
+model ManagedPageWorkflowEvent {
+  id            String                    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  managedPageId String                    @map("managed_page_id") @db.Uuid
+  revisionId    String                    @map("revision_id") @db.Uuid
+  action        ManagedPageWorkflowAction
+  fromStatus    ManagedPageWorkflowStatus @map("from_status")
+  toStatus      ManagedPageWorkflowStatus @map("to_status")
+  comment       String?
+  actorId       String?                   @map("actor_id") @db.Uuid
+  createdAt     DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  managedPage ManagedPage         @relation(fields: [managedPageId], references: [id])
+  revision    ManagedPageRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([managedPageId])
+  @@map("managed_page_workflow_event")
+  @@schema("publishing")
+}
+
+model ManagedPagePublicationEvent {
+  id            String                       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  managedPageId String                       @map("managed_page_id") @db.Uuid
+  revisionId    String                       @map("revision_id") @db.Uuid
+  action        ManagedPagePublicationAction
+  reason        String?
+  actorId       String?                      @map("actor_id") @db.Uuid
+  createdAt     DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  managedPage ManagedPage         @relation(fields: [managedPageId], references: [id])
+  revision    ManagedPageRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([managedPageId])
+  @@map("managed_page_publication_event")
+  @@schema("publishing")
+}

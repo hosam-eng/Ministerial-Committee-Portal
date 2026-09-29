@@ -20,6 +20,7 @@ describe("prisma model ownership", () => {
     expect(ownership.delegateOwner.get("permission")).toBe("identity");
     expect(ownership.delegateOwner.get("rolePermission")).toBe("identity");
     expect(ownership.delegateOwner.get("news")).toBe("publishing");
+    expect(ownership.delegateOwner.get("managedPage")).toBe("managed-pages");
   });
 });
 
@@ -59,6 +60,47 @@ describe("foreign prisma delegate access", () => {
     );
     expect(violations.map((item) => [item.delegate, item.owner])).toEqual([
       ["news", "publishing"],
+    ]);
+  });
+
+  it("allows Managed Pages access to Managed Pages", () => {
+    expect(
+      findForeignPrismaDelegateAccess(
+        "modules/managed-pages/infrastructure/managed-page-service.ts",
+        "export async function ok(tx: { managedPage: { create: () => unknown } }) {\n  return tx.managedPage.create();\n}\n",
+        ownership,
+      ),
+    ).toEqual([]);
+  });
+
+  it("denies Managed Pages access to Identity persistence", () => {
+    const violations = findForeignPrismaDelegateAccess(
+      "modules/managed-pages/infrastructure/managed-page-service.ts",
+      "export async function bad(tx: { userRole: { findMany: () => unknown } }) {\n  return tx.userRole.findMany();\n}\n",
+      ownership,
+    );
+    expect(
+      violations.map((item) => [item.delegate, item.owner, item.accessor]),
+    ).toEqual([["userRole", "identity", "managed-pages"]]);
+  });
+
+  it("denies Publishing access to Managed Pages persistence", () => {
+    const violations = findForeignPrismaDelegateAccess(
+      "modules/publishing/news-service.ts",
+      "export async function bad(tx: { managedPage: { findMany: () => unknown } }) {\n  return tx.managedPage.findMany();\n}\n",
+      ownership,
+    );
+    expect(violations.map((item) => item.owner)).toEqual(["managed-pages"]);
+  });
+
+  it("denies Identity access to Managed Pages persistence", () => {
+    const violations = findForeignPrismaDelegateAccess(
+      "modules/identity/infrastructure/rbac/store.ts",
+      "export async function bad(tx: { managedPage: { findFirst: () => unknown } }) {\n  return tx.managedPage.findFirst();\n}\n",
+      ownership,
+    );
+    expect(violations.map((item) => [item.delegate, item.accessor])).toEqual([
+      ["managedPage", "identity"],
     ]);
   });
 
