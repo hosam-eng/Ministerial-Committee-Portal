@@ -13,5 +13,5 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["identity", "publishing"]
+  schemas  = ["identity", "publishing", "reference_data"]
 }

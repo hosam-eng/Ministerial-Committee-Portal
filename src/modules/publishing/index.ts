@@ -31,3 +31,14 @@ export {
   type NewsEditorState,
   type NewsSubmitAction,
 } from "./presentation/news-editor";
+export {
+  createNewsCategory,
+  deleteNewsCategory,
+  getNewsCategoryDependencies,
+  listNewsCategoriesForAdmin,
+  listNewsCategoryOptions,
+  setNewsCategoryActive,
+  updateNewsCategory,
+  type NewsCategoryListItem,
+  type NewsCategoryOption,
+} from "./news-category-service";

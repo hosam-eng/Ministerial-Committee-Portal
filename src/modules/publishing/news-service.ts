@@ -78,12 +78,28 @@ function translationRows(input: NewsDraftInput) {
   }));
 }
 
-async function checkCategories(tx: Transaction, categoryIds: string[]) {
+async function checkCategories(
+  tx: Transaction,
+  revisionId: string,
+  categoryIds: string[],
+) {
   if (!categoryIds.length) return;
-  const count = await tx.newsCategory.count({
+  const existing = await tx.newsRevisionCategory.findMany({
+    where: { revisionId },
+    select: { categoryId: true },
+  });
+  const previouslyAssigned = new Set(existing.map((row) => row.categoryId));
+  const categories = await tx.newsCategory.findMany({
     where: { id: { in: categoryIds } },
   });
-  if (count !== categoryIds.length) throw new NewsError("INVALID_REFERENCE");
+  if (categories.length !== categoryIds.length) {
+    throw new NewsError("INVALID_REFERENCE");
+  }
+  for (const category of categories) {
+    if (!category.isActive && !previouslyAssigned.has(category.id)) {
+      throw new NewsError("INACTIVE_CATEGORY");
+    }
+  }
 }
 
 async function clone(
@@ -163,7 +179,7 @@ export async function saveNewsDraft(
     requireState(revision.workflowStatus, "EDITING");
     if (revision.editVersion !== expectedVersion)
       throw new NewsError("CONCURRENT_MODIFICATION");
-    await checkCategories(tx, draft.categoryIds);
+    await checkCategories(tx, revision.id, draft.categoryIds);
     const changed = await tx.newsRevision.updateMany({
       where: {
         id: revision.id,

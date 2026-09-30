@@ -112,7 +112,13 @@
     "editorTitle": "Edit bilingual draft",
     "editorSections": {
       "content": "Content",
-      "metadata": "Link and search metadata"
+      "metadata": "Link and search metadata",
+      "categories": "Categories"
+    },
+    "categories": {
+      "hint": "Assign one or more news categories to this revision. Inactive categories already on the draft remain visible until you remove them.",
+      "inactiveAssigned": "Inactive",
+      "noneAvailable": "No categories are defined yet. Add them under Reference Data."
     },
     "editorIntro": "Save the draft before submitting for review. Both languages are required to submit; incomplete drafts can be saved.",
     "readOnly": "You can view this draft but do not have editing permission.",
@@ -207,6 +213,11 @@
       "INVALID_SLUG": "Use a slug made of letters or numbers separated by hyphens.",
       "SLUG_ALREADY_IN_USE": "A published or reserved URL already uses this slug. Restore to editing to correct it, then submit for review again.",
       "INVALID_REFERENCE": "One or more assigned categories are unavailable.",
+      "INACTIVE_CATEGORY": "Inactive categories cannot be newly assigned. Remove unavailable selections or reactivate the category.",
+      "DUPLICATE_NAME": "A category with the same name already exists.",
+      "DELETE_BLOCKED": "This category is still referenced by news revisions and cannot be deleted. Deactivate it instead.",
+      "REQUIRED_FIELD": "Arabic and English names are required.",
+      "NOT_FOUND": "The requested category was not found.",
       "RETURN_COMMENT_REQUIRED": "Enter a reason for returning this revision.",
       "UNPUBLISH_REASON_REQUIRED": "Enter a reason for unpublishing.",
       "SELF_APPROVAL_FORBIDDEN": "You cannot approve your own submitted revision.",
@@ -407,7 +418,8 @@
       "backoffice": "Administration",
       "identity": "Identity & Access",
       "managed_pages": "Managed Pages",
-      "publishing": "News & Publishing"
+      "publishing": "News & Publishing",
+      "reference_data": "Reference Data"
     },
     "links": {
       "home": "Admin console",
@@ -476,6 +488,21 @@
           "edit": "Edit and submit News",
           "review": "Review and approve News",
           "publish": "Publish and unpublish News"
+        },
+        "news_categories": {
+          "manage": "Manage news categories"
+        }
+      },
+      "reference_data": {
+        "read": "View reference data administration",
+        "taxonomies": {
+          "manage": "Manage reference taxonomies"
+        },
+        "organizations": {
+          "manage": "Manage organizations"
+        },
+        "geographic_areas": {
+          "manage": "Manage geographic areas"
         }
       },
       "managed_pages": {
@@ -493,6 +520,105 @@
       "invalid": "Invalid input. Check the fields and try again.",
       "nameTaken": "That role name is already in use.",
       "lastAdmin": "The final Administrator membership cannot be removed."
+    }
+  },
+  "referenceData": {
+    "nav": "Reference Data",
+    "title": "Reference Data",
+    "intro": "Maintain shared taxonomies, organizations and geographic areas used across the portal.",
+    "navLabel": "Reference data sections",
+    "back": "Back to reference data",
+    "sectionIntro": "Manage bilingual names, active state and safe deletion rules.",
+    "sections": {
+      "newsCategory": "News categories",
+      "eventCategory": "Event categories",
+      "awarenessTopic": "Awareness topics",
+      "targetAudience": "Target audiences",
+      "publicationType": "Publication types",
+      "openDatasetCategory": "Open dataset categories",
+      "organization": "Organizations",
+      "geographicArea": "Geographic areas"
+    },
+    "taxonomy": {
+      "nameAr": "Arabic name",
+      "nameEn": "English name",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "references": "Referenced by {count} record(s).",
+      "noReferences": "Not referenced yet.",
+      "usageCount": "{count} reference(s)",
+      "columnNameAr": "Arabic name",
+      "columnNameEn": "English name",
+      "columnStatus": "Status",
+      "columnUsage": "Usage",
+      "columnActions": "Actions",
+      "actions": "Governance",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "create": "Create",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "delete": "Delete",
+      "cannotDelete": "Cannot delete",
+      "createTitle": "New entry",
+      "editTitle": "Edit entry",
+      "dependencyBlocked": "Deletion is blocked while references exist. Deactivate instead."
+    },
+    "organization": {
+      "searchLabel": "Search before create",
+      "searchHint": "Search existing organizations by Arabic or English official name before adding a new record.",
+      "searchPlaceholder": "Type an organization name",
+      "similarWarning": "Similar organizations were found. Review the matches below before creating a possible duplicate.",
+      "similarFoundTitle": "Similar organizations:",
+      "acknowledgeSimilar": "Create anyway",
+      "reviewMatches": "Review list"
+    },
+    "geographic": {
+      "nameAr": "Arabic name",
+      "nameEn": "English name",
+      "code": "Code (optional)",
+      "parent": "Parent area",
+      "noParent": "None (root)",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "actions": "Governance",
+      "create": "Create",
+      "save": "Save",
+      "cancel": "Cancel",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "delete": "Delete",
+      "createTitle": "New geographic area",
+      "editTitle": "Edit geographic area",
+      "dependencyBlocked": "Remove or reassign child areas before deleting this parent.",
+      "childDeleteBlocked": "Cannot delete because child geographic areas still reference this parent.",
+      "cannotDelete": "Cannot delete",
+      "columnNameAr": "Arabic name",
+      "columnNameEn": "English name",
+      "columnStatus": "Status",
+      "columnUsage": "Usage",
+      "columnActions": "Actions",
+      "edit": "Edit",
+      "usageChildren": "{count} child area(s)",
+      "usageNone": "No child areas",
+      "hierarchyPath": "Parent"
+    },
+    "errors": {
+      "generic": "The operation could not be completed.",
+      "denied": "You do not have permission for this action.",
+      "DUPLICATE_NAME": "An entry with the same Arabic or English name already exists.",
+      "DUPLICATE_CODE": "This geographic code is already in use.",
+      "DUPLICATE_ORGANIZATION": "An organization with the same official name already exists.",
+      "SIMILAR_ORGANIZATION": "Similar organizations were found. Search and review before creating a duplicate.",
+      "DELETE_BLOCKED": "Deletion is blocked while dependencies exist.",
+      "REQUIRED_FIELD": "Required fields are missing.",
+      "NOT_FOUND": "The requested record was not found.",
+      "INVALID_HIERARCHY": "The selected parent is not valid.",
+      "HIERARCHY_CYCLE": "You can’t select this parent because it would create an invalid parent-child relationship.",
+      "INVALID_KIND": "Unknown reference data section."
     }
   }
 }

@@ -20,6 +20,12 @@ export const PERMISSIONS = {
   MANAGED_PAGES_EDIT: "managed_pages.pages.edit",
   MANAGED_PAGES_REVIEW: "managed_pages.pages.review",
   MANAGED_PAGES_PUBLISH: "managed_pages.pages.publish",
+  REFERENCE_DATA_READ: "reference_data.read",
+  REFERENCE_DATA_TAXONOMIES_MANAGE: "reference_data.taxonomies.manage",
+  REFERENCE_DATA_ORGANIZATIONS_MANAGE: "reference_data.organizations.manage",
+  REFERENCE_DATA_GEOGRAPHIC_AREAS_MANAGE:
+    "reference_data.geographic_areas.manage",
+  NEWS_CATEGORIES_MANAGE: "publishing.news_categories.manage",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
