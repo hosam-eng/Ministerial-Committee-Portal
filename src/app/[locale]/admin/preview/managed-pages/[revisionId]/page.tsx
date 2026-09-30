@@ -17,7 +17,7 @@ import { previewRobots } from "@/shared/preview/safety";
 import { PreviewFrame } from "@/shared/ui/preview-frame";
 import { PublicShell } from "@/shared/ui/public-shell";
 
-import { publicChrome } from "../../../../public-chrome";
+import { resolvePublicChrome } from "../../../../public-chrome";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +74,7 @@ export default async function ManagedPagePreviewPage({
     <PreviewFrame label={t("previewBanner")}>
       <PublicShell
         locale={contentLocale}
-        {...publicChrome(shell, contentLocale, {
+        {...await resolvePublicChrome(shell, contentLocale, {
           switchHref: `/${contentLocale === "ar" ? "en" : "ar"}/admin/preview/managed-pages/${revisionId}`,
         })}
       >

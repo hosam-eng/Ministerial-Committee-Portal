@@ -1,0 +1,159 @@
+enum SiteSettingsPublicationStatus {
+  NEVER_PUBLISHED
+  PUBLISHED
+  UNPUBLISHED
+
+  @@schema("site_settings")
+}
+
+enum SiteSettingsWorkflowStatus {
+  EDITING
+  PENDING_REVIEW
+  APPROVED
+  RETURNED
+
+  @@schema("site_settings")
+}
+
+enum SiteSettingsWorkflowAction {
+  SUBMIT
+  RETURN
+  APPROVE
+  RESTORE
+
+  @@schema("site_settings")
+}
+
+enum SiteSettingsPublicationAction {
+  PUBLISH
+  UNPUBLISH
+
+  @@schema("site_settings")
+}
+
+model SiteSettings {
+  id                String                        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  singletonKey      String                        @unique @map("singleton_key")
+  publicationStatus SiteSettingsPublicationStatus @default(NEVER_PUBLISHED) @map("publication_status")
+  liveRevisionId    String?                       @map("live_revision_id") @db.Uuid
+  activeRevisionId  String?                       @unique @map("active_revision_id") @db.Uuid
+  publishedAt       DateTime?                     @map("published_at") @db.Timestamptz(6)
+  unpublishedAt     DateTime?                     @map("unpublished_at") @db.Timestamptz(6)
+  createdAt         DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  liveRevision      SiteSettingsRevision?          @relation("SiteSettingsLiveRevision", fields: [liveRevisionId], references: [id])
+  activeRevision    SiteSettingsRevision?          @relation("SiteSettingsActiveRevision", fields: [activeRevisionId], references: [id])
+  revisions         SiteSettingsRevision[]         @relation("SiteSettingsRevisions")
+  workflowEvents    SiteSettingsWorkflowEvent[]
+  publicationEvents SiteSettingsPublicationEvent[]
+
+  @@map("site_settings")
+  @@schema("site_settings")
+}
+
+model SiteSettingsRevision {
+  id                String                     @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  siteSettingsId    String                     @map("site_settings_id") @db.Uuid
+  revisionNumber    Int                        @map("revision_number")
+  workflowStatus    SiteSettingsWorkflowStatus @default(EDITING) @map("workflow_status")
+  editVersion       Int                        @default(0) @map("edit_version")
+  contactEmail      String?                    @map("contact_email")
+  contactPhone      String?                    @map("contact_phone")
+  basedOnRevisionId String?                    @map("based_on_revision_id") @db.Uuid
+  createdById       String?                    @map("created_by_id") @db.Uuid
+  submittedById     String?                    @map("submitted_by_id") @db.Uuid
+  reviewedById      String?                    @map("reviewed_by_id") @db.Uuid
+  submittedAt       DateTime?                  @map("submitted_at") @db.Timestamptz(6)
+  reviewedAt        DateTime?                  @map("reviewed_at") @db.Timestamptz(6)
+  createdAt         DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  siteSettings      SiteSettings                       @relation("SiteSettingsRevisions", fields: [siteSettingsId], references: [id])
+  basedOn           SiteSettingsRevision?              @relation("SiteSettingsRevisionLineage", fields: [basedOnRevisionId], references: [id])
+  derivedRevisions  SiteSettingsRevision[]             @relation("SiteSettingsRevisionLineage")
+  liveFor           SiteSettings[]                     @relation("SiteSettingsLiveRevision")
+  activeFor         SiteSettings[]                     @relation("SiteSettingsActiveRevision")
+  translations      SiteSettingsRevisionTranslation[]
+  socialLinks       SiteSettingsSocialLink[]
+  workflowEvents    SiteSettingsWorkflowEvent[]
+  publicationEvents SiteSettingsPublicationEvent[]
+
+  @@unique([siteSettingsId, revisionNumber])
+  @@index([siteSettingsId])
+  @@map("site_settings_revision")
+  @@schema("site_settings")
+}
+
+model SiteSettingsRevisionTranslation {
+  id                   String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  revisionId           String   @map("revision_id") @db.Uuid
+  locale               String
+  officialName         String   @map("official_name")
+  address              String?
+  defaultSeoTitle      String?  @map("default_seo_title")
+  defaultSeoDescription String? @map("default_seo_description")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  revision SiteSettingsRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+
+  @@unique([revisionId, locale])
+  @@map("site_settings_revision_translation")
+  @@schema("site_settings")
+}
+
+model SiteSettingsSocialLink {
+  id         String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  revisionId String   @map("revision_id") @db.Uuid
+  itemKey    String   @map("item_key")
+  labelAr    String   @map("label_ar")
+  labelEn    String   @map("label_en")
+  url        String
+  position   Int
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  revision SiteSettingsRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+
+  @@unique([revisionId, itemKey])
+  @@unique([revisionId, position])
+  @@index([revisionId])
+  @@map("site_settings_social_link")
+  @@schema("site_settings")
+}
+
+model SiteSettingsWorkflowEvent {
+  id             String                     @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  siteSettingsId String                     @map("site_settings_id") @db.Uuid
+  revisionId     String                     @map("revision_id") @db.Uuid
+  action         SiteSettingsWorkflowAction
+  fromStatus     SiteSettingsWorkflowStatus @map("from_status")
+  toStatus       SiteSettingsWorkflowStatus @map("to_status")
+  comment        String?
+  actorId        String?                    @map("actor_id") @db.Uuid
+  createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  siteSettings SiteSettings       @relation(fields: [siteSettingsId], references: [id])
+  revision     SiteSettingsRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([siteSettingsId])
+  @@map("site_settings_workflow_event")
+  @@schema("site_settings")
+}
+
+model SiteSettingsPublicationEvent {
+  id             String                        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  siteSettingsId String                        @map("site_settings_id") @db.Uuid
+  revisionId     String                        @map("revision_id") @db.Uuid
+  action         SiteSettingsPublicationAction
+  reason         String?
+  actorId        String?                       @map("actor_id") @db.Uuid
+  createdAt      DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  siteSettings SiteSettings       @relation(fields: [siteSettingsId], references: [id])
+  revision     SiteSettingsRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([siteSettingsId])
+  @@map("site_settings_publication_event")
+  @@schema("site_settings")
+}

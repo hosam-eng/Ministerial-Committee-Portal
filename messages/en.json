@@ -620,5 +620,126 @@
       "HIERARCHY_CYCLE": "You can’t select this parent because it would create an invalid parent-child relationship.",
       "INVALID_KIND": "Unknown reference data section."
     }
+  },
+  "siteSettings": {
+    "nav": "Site Settings",
+    "section": "Governance",
+    "title": "Site settings",
+    "intro": "Manage the singleton institutional settings that populate the public shell and default SEO. Approval does not publish.",
+    "statusTitle": "Settings status",
+    "publicationLabel": "Publication",
+    "editorialLabel": "Editorial revision",
+    "liveRevision": "Live revision",
+    "revisionNumber": "Revision {number}",
+    "notLive": "Not live",
+    "noActive": "No active editorial revision.",
+    "liveUnchanged": "The live revision stays unchanged until this editorial revision is published.",
+    "save": "Save draft",
+    "saving": "Saving…",
+    "saved": "Draft saved.",
+    "previewAr": "Preview Arabic",
+    "previewEn": "Preview English",
+    "rail": {
+      "preview": "Preview",
+      "workflow": "Editorial workflow",
+      "submit": "Submit for review",
+      "unpublish": "Unpublish"
+    },
+    "previewBanner": "Preview. This revision is not live site settings.",
+    "previewBack": "Back to site settings",
+    "previewIncomplete": "Mandatory bilingual fields are not complete for this revision.",
+    "previewBody": "Shell header, footer, and contact areas reflect this revision.",
+    "sections": {
+      "identity": "Institutional identity",
+      "identityHint": "Official names appear in the public shell when this revision is live.",
+      "contact": "Contact",
+      "social": "Social links",
+      "seo": "Default SEO"
+    },
+    "fields": {
+      "officialName": "Official institutional name",
+      "contactEmail": "Official contact email",
+      "contactPhone": "Official contact phone",
+      "address": "Official address",
+      "defaultSeoTitle": "Default SEO title",
+      "defaultSeoDescription": "Default SEO description"
+    },
+    "languages": { "ar": "Arabic", "en": "English" },
+    "social": {
+      "hint": "Each link uses bilingual labels and an HTTPS URL. No platform icons in this increment.",
+      "labelAr": "Arabic label",
+      "labelEn": "English label",
+      "url": "HTTPS URL",
+      "add": "Add social link",
+      "remove": "Remove",
+      "moveUp": "Move up",
+      "moveDown": "Move down"
+    },
+    "actions": {
+      "submit": "Submit for review",
+      "return": "Return",
+      "approve": "Approve",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "editPublished": "Edit published settings",
+      "restore": "Restore as new draft",
+      "returnComment": "Reason for return",
+      "unpublishReason": "Reason for unpublishing"
+    },
+    "publication": {
+      "NEVER_PUBLISHED": "Never published",
+      "PUBLISHED": "Published",
+      "UNPUBLISHED": "Unpublished"
+    },
+    "workflow": {
+      "EDITING": "Editing",
+      "PENDING_REVIEW": "Pending review",
+      "APPROVED": "Approved",
+      "RETURNED": "Returned"
+    },
+    "events": {
+      "SUBMIT": "Submitted for review",
+      "RETURN": "Returned",
+      "APPROVE": "Approved",
+      "RESTORE": "Restored as new draft",
+      "PUBLISH": "Published",
+      "UNPUBLISH": "Unpublished"
+    },
+    "results": {
+      "submitted": "Submitted for review.",
+      "returned": "Returned with a new editing revision.",
+      "approved": "Approved for publication.",
+      "published": "Published to the public shell.",
+      "unpublished": "Removed from the public shell.",
+      "editing": "New editing revision started.",
+      "restored": "Restored as a new editing revision."
+    },
+    "history": {
+      "title": "History",
+      "restoreHint": "Restore creates a new editing revision. It does not change live settings until publish.",
+      "revisions": "Revisions",
+      "workflow": "Workflow",
+      "publication": "Publication"
+    },
+    "errors": {
+      "generic": "The operation could not be completed.",
+      "denied": "You do not have permission for this action.",
+      "NOT_FOUND": "Site settings were not found.",
+      "INVALID_WORKFLOW_STATE": "This action is not allowed in the current workflow state.",
+      "CONCURRENT_MODIFICATION": "Someone else saved changes. Reload and try again.",
+      "NO_ACTIVE_REVISION": "No active editorial revision.",
+      "ACTIVE_REVISION_EXISTS": "An active editorial revision already exists.",
+      "ACTIVE_EDITING_EXISTS": "Finish or submit the current draft first.",
+      "REVISION_NOT_FOUND": "Revision not found.",
+      "RETURN_COMMENT_REQUIRED": "A return comment is required.",
+      "UNPUBLISH_REASON_REQUIRED": "An unpublish reason is required.",
+      "SELF_APPROVAL_FORBIDDEN": "You cannot approve your own submission.",
+      "INVALID_EMAIL": "Enter a valid email address.",
+      "INVALID_PHONE": "Enter a valid phone number.",
+      "INVALID_SOCIAL_URL": "Social links must use safe HTTPS URLs.",
+      "DUPLICATE_SOCIAL_URL": "Each social URL may appear only once.",
+      "BILINGUAL_REQUIRED": "Official institutional names are required in Arabic and English.",
+      "INVALID_DRAFT": "The draft could not be saved."
+    }
   }
 }
