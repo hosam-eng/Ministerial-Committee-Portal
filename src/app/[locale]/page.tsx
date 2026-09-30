@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing, type Locale } from "@/i18n/routing";
 import { PublicShell } from "@/shared/ui/public-shell";
 
-import { publicChrome } from "./public-chrome";
+import { resolvePublicChrome } from "./public-chrome";
 
 /**
  * Localized public landing — IMP-08 renders it inside PublicShell.
@@ -22,11 +22,12 @@ export default async function HomePage({
     (candidate) => candidate !== locale,
   ) as Locale;
 
+  const chrome = await resolvePublicChrome(t, locale, {
+    switchHref: `/${otherLocale}`,
+  });
+
   return (
-    <PublicShell
-      locale={locale}
-      {...publicChrome(t, locale, { switchHref: `/${otherLocale}` })}
-    >
+    <PublicShell locale={locale} {...chrome}>
       <h1>{t("home.title")}</h1>
       <p>{t("home.body")}</p>
     </PublicShell>

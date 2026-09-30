@@ -5,7 +5,7 @@ import { routing, type Locale } from "@/i18n/routing";
 import { listPublishedNews } from "@/modules/publishing";
 import { PublicShell } from "@/shared/ui/public-shell";
 
-import { publicChrome } from "../public-chrome";
+import { resolvePublicChrome } from "../public-chrome";
 
 export const dynamic = "force-dynamic";
 
@@ -45,14 +45,13 @@ export default async function NewsPage({
     timeZone: "Asia/Riyadh",
   });
 
+  const chrome = await resolvePublicChrome(t, locale, {
+    switchHref: `/${otherLocale}/news`,
+    active: "news",
+  });
+
   return (
-    <PublicShell
-      locale={locale}
-      {...publicChrome(t, locale, {
-        switchHref: `/${otherLocale}/news`,
-        active: "news",
-      })}
-    >
+    <PublicShell locale={locale} {...chrome}>
       <section
         className="public-news public-news-listing"
         aria-labelledby="public-news-title"

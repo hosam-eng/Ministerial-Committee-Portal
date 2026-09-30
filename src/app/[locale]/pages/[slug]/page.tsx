@@ -10,7 +10,12 @@ import {
 } from "@/modules/managed-pages";
 import { PublicShell } from "@/shared/ui/public-shell";
 
-import { publicChrome } from "../../public-chrome";
+import {
+  composePublicSeoDescription,
+  composePublicSeoTitle,
+  resolveLiveDefaultSeo,
+} from "@/modules/site-settings";
+import { resolvePublicChrome } from "../../public-chrome";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +57,8 @@ export async function generateMetadata({
   if (resolved?.kind !== "page")
     return { robots: { index: false, follow: false } };
   const page = resolved.page;
+  const liveSeo = await resolveLiveDefaultSeo(locale);
+  const app = await getTranslations({ locale, namespace: "app" });
   const otherLocale = locale === "ar" ? "en" : "ar";
   const current = `/${locale}/pages/${encodeURIComponent(page.slug)}`;
   const languages: Record<string, string> = { [locale]: current };
@@ -60,8 +67,17 @@ export async function generateMetadata({
       `/${otherLocale}/pages/${encodeURIComponent(page.counterpartSlug)}`;
   }
   return {
-    title: page.seoTitle?.trim() || page.title,
-    description: page.seoDescription?.trim() || page.intro || undefined,
+    title: composePublicSeoTitle({
+      explicitTitle: page.seoTitle,
+      pageTitle: page.title,
+      liveDefaultTitle: liveSeo?.title,
+      staticFallback: app("name"),
+    }),
+    description: composePublicSeoDescription({
+      explicitDescription: page.seoDescription,
+      pageDescription: page.intro,
+      liveDefaultDescription: liveSeo?.description,
+    }),
     alternates: { canonical: current, languages },
   };
 }
@@ -83,15 +99,14 @@ export default async function ManagedPagePublicPage({ params }: PageParams) {
   const otherLocale = routing.locales.find(
     (candidate) => candidate !== locale,
   ) as Locale;
+  const chrome = await resolvePublicChrome(shell, locale, {
+    switchHref: page.counterpartSlug
+      ? `/${otherLocale}/pages/${encodeURIComponent(page.counterpartSlug)}`
+      : null,
+  });
+
   return (
-    <PublicShell
-      locale={locale}
-      {...publicChrome(shell, locale, {
-        switchHref: page.counterpartSlug
-          ? `/${otherLocale}/pages/${encodeURIComponent(page.counterpartSlug)}`
-          : null,
-      })}
-    >
+    <PublicShell locale={locale} {...chrome}>
       <ManagedPagePublicContent
         content={page.content}
         locale={locale}

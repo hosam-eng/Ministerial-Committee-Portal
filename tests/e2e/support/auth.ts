@@ -17,6 +17,14 @@ export function hasDatabase(): boolean {
 }
 
 /**
+ * Login/MFA form validation errors (`role="alert"`). Scoped to `form.auth-form`
+ * so Next.js route announcer alerts are excluded.
+ */
+export function getAuthFormAlert(page: Page) {
+  return page.locator("form.auth-form").getByRole("alert");
+}
+
+/**
  * E2E auth fixtures. Seeds one disposable credential user through plain
  * SQL on the runtime identity — equivalent to what Better Auth's
  * internal adapter persists (user + credential account), hashed via the

@@ -36,10 +36,23 @@ export interface PublicLinkGroup {
   links: readonly PublicNavItem[];
 }
 
+export interface PublicFooterContact {
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+}
+
+export interface PublicFooterSocialLink {
+  href: string;
+  label: string;
+}
+
 export interface PublicFooter {
   identity: string;
   groups: readonly PublicLinkGroup[];
   copyright: string;
+  contact?: PublicFooterContact | null;
+  socialLinks?: readonly PublicFooterSocialLink[] | null;
 }
 
 /**
@@ -47,6 +60,10 @@ export interface PublicFooter {
  * string and every link is supplied by the caller. Search and contact
  * render only when a real target is passed.
  */
+function compactTelHref(phone: string): string {
+  return phone.replace(/[\s\-().]/gu, "");
+}
+
 export function PublicShell({
   locale,
   identity,
@@ -148,6 +165,48 @@ export function PublicShell({
       <footer className="shell-footer">
         <div className="shell-footer-inner">
           <p className="shell-footer-identity">{footer.identity}</p>
+          {footer.contact?.email ||
+          footer.contact?.phone ||
+          footer.contact?.address ? (
+            <address className="shell-footer-contact">
+              {footer.contact.address ? (
+                <span className="shell-footer-contact-line">
+                  {footer.contact.address}
+                </span>
+              ) : null}
+              {footer.contact.email ? (
+                <a
+                  className="shell-footer-contact-line"
+                  href={`mailto:${footer.contact.email}`}
+                >
+                  <bdi dir="ltr" className="shell-contact-ltr">
+                    {footer.contact.email}
+                  </bdi>
+                </a>
+              ) : null}
+              {footer.contact.phone ? (
+                <a
+                  className="shell-footer-contact-line"
+                  href={`tel:${compactTelHref(footer.contact.phone)}`}
+                >
+                  <bdi dir="ltr" className="shell-contact-ltr">
+                    {footer.contact.phone}
+                  </bdi>
+                </a>
+              ) : null}
+            </address>
+          ) : null}
+          {footer.socialLinks && footer.socialLinks.length > 0 ? (
+            <ul className="shell-footer-social">
+              {footer.socialLinks.map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} rel="noopener noreferrer" target="_blank">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {groups.length > 0 ? <PublicFooterGroups groups={groups} /> : null}
           <p className="shell-footer-text">{footer.copyright}</p>
         </div>

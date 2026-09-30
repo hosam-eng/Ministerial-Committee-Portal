@@ -26,6 +26,10 @@ export const PERMISSIONS = {
   REFERENCE_DATA_GEOGRAPHIC_AREAS_MANAGE:
     "reference_data.geographic_areas.manage",
   NEWS_CATEGORIES_MANAGE: "publishing.news_categories.manage",
+  SITE_SETTINGS_READ: "site_settings.read",
+  SITE_SETTINGS_EDIT: "site_settings.edit",
+  SITE_SETTINGS_REVIEW: "site_settings.review",
+  SITE_SETTINGS_PUBLISH: "site_settings.publish",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

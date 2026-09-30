@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { getAdminNavigation } from "./support/admin-nav";
 import {
   completeMfaEnrollment,
   hasDatabase,
@@ -87,11 +88,12 @@ test.describe("backoffice RBAC journey (ar)", () => {
       await expect(admin).toHaveURL(/\/ar\/admin\/mfa\/setup$/);
       await completeMfaEnrollment(admin, AR_SETUP, ACCESS_ADMIN.password);
       await expect(admin).toHaveURL(/\/ar\/admin$/);
+      const adminNav = getAdminNavigation(admin, "ar");
       await expect(
-        admin.getByRole("link", { name: "إدارة الأدوار" }),
+        adminNav.getByRole("link", { name: "إدارة الأدوار" }),
       ).toBeVisible();
       await expect(
-        admin.getByRole("link", { name: "إدارة المستخدمين" }),
+        adminNav.getByRole("link", { name: "إدارة المستخدمين" }),
       ).toBeVisible();
 
       // 2. Create the custom role: backoffice.access + users.read only.
@@ -99,31 +101,29 @@ test.describe("backoffice RBAC journey (ar)", () => {
       await expect(
         admin.getByRole("heading", { level: 1, name: "الأدوار" }),
       ).toBeVisible();
-      const createCard = admin.locator("section.access-card", {
-        hasText: "دور مخصص جديد",
-      });
-      await createCard.getByLabel("اسم الدور").fill(CUSTOM_ROLE);
-      await createCard.getByLabel("الوصول إلى لوحة الإدارة").check();
-      await createCard.getByLabel("عرض المستخدمين").check();
-      await createCard.getByRole("button", { name: "إنشاء دور" }).click();
-      const roleCard = admin.locator("section.access-card", {
-        hasText: CUSTOM_ROLE,
-      });
-      await expect(roleCard).toBeVisible();
+      await admin.getByRole("button", { name: "إنشاء دور" }).click();
+      const createPanel = admin.locator(".admin-roles-detail");
+      await createPanel.getByLabel("اسم الدور").fill(CUSTOM_ROLE);
+      await createPanel.getByLabel("الوصول إلى لوحة الإدارة").check();
+      await createPanel.getByLabel("عرض المستخدمين").check();
+      await createPanel.getByRole("button", { name: "إنشاء دور" }).click();
+      await admin.getByRole("button", { name: CUSTOM_ROLE }).click();
+      const roleDetail = admin.locator(".admin-roles-detail");
+      await expect(roleDetail).toContainText(CUSTOM_ROLE);
 
       // 3. Assign it to the staff user via the users page.
       await admin.goto("/ar/admin/access/users");
       await expect(
         admin.getByRole("heading", { level: 1, name: "المستخدمون" }),
       ).toBeVisible();
-      const staffCard = admin.locator("section.access-card", {
+      const staffRow = admin.locator(".admin-users-row", {
         hasText: ACCESS_STAFF.email,
       });
-      await staffCard
+      await staffRow
         .getByLabel("تعيين دور")
         .selectOption({ label: CUSTOM_ROLE }, { timeout: 15_000 });
-      await staffCard.getByRole("button", { name: "تعيين" }).click();
-      await expect(staffCard).toContainText(CUSTOM_ROLE);
+      await staffRow.getByRole("button", { name: "تعيين" }).click();
+      await expect(staffRow).toContainText(CUSTOM_ROLE);
 
       // 4. Staff authenticates → exactly the granted scope.
       await staff.goto("/ar/admin/login");
@@ -131,11 +131,12 @@ test.describe("backoffice RBAC journey (ar)", () => {
       await expect(staff).toHaveURL(/\/ar\/admin\/mfa\/setup$/);
       await completeMfaEnrollment(staff, AR_SETUP, ACCESS_STAFF.password);
       await expect(staff).toHaveURL(/\/ar\/admin$/);
+      const staffNav = getAdminNavigation(staff, "ar");
       await expect(
-        staff.getByRole("link", { name: "إدارة المستخدمين" }),
+        staffNav.getByRole("link", { name: "إدارة المستخدمين" }),
       ).toBeVisible();
       await expect(
-        staff.getByRole("link", { name: "إدارة الأدوار" }),
+        staffNav.getByRole("link", { name: "إدارة الأدوار" }),
       ).toHaveCount(0);
 
       await staff.goto("/ar/admin/access/users");
@@ -151,8 +152,16 @@ test.describe("backoffice RBAC journey (ar)", () => {
       // 5. Deactivate the granting role — next request is denied,
       //    the staff session itself is untouched (no re-login).
       await admin.goto("/ar/admin/access/roles");
-      await roleCard.getByRole("button", { name: "إلغاء التنشيط" }).click();
-      await expect(roleCard).toContainText("غير نشط");
+      await admin.getByRole("button", { name: CUSTOM_ROLE }).click();
+      const roleDetailAfterDeactivate = admin.locator(".admin-roles-detail");
+      await roleDetailAfterDeactivate
+        .getByRole("button", { name: "إلغاء التنشيط" })
+        .click();
+      await expect(
+        admin
+          .locator(".admin-roles-list")
+          .getByRole("button", { name: CUSTOM_ROLE }),
+      ).toContainText("غير نشط");
 
       await staff.goto("/ar/admin");
       await expect(

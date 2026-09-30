@@ -4,9 +4,13 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing, type Locale } from "@/i18n/routing";
 import { resolvePublishedNewsBySlug } from "@/modules/publishing";
+import {
+  composePublicSeoDescription,
+  composePublicSeoTitle,
+  resolveLiveDefaultSeo,
+} from "@/modules/site-settings";
+import { resolvePublicChrome } from "../../public-chrome";
 import { PublicShell } from "@/shared/ui/public-shell";
-
-import { publicChrome } from "../../public-chrome";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +34,8 @@ export async function generateMetadata({
   );
   if (resolved?.kind !== "news") return { robots: { index: false } };
   const news = resolved.news;
+  const liveSeo = await resolveLiveDefaultSeo(locale);
+  const t = await getTranslations({ locale, namespace: "app" });
   const otherLocale = locale === "ar" ? "en" : "ar";
   const current = `/${locale}/news/${encodeURIComponent(news.slug)}`;
   const languages: Record<string, string> = { [locale]: current };
@@ -37,8 +43,17 @@ export async function generateMetadata({
     languages[otherLocale] =
       `/${otherLocale}/news/${encodeURIComponent(news.counterpartSlug)}`;
   return {
-    title: news.seoTitle?.trim() || news.title,
-    description: news.seoDescription?.trim() || news.summary,
+    title: composePublicSeoTitle({
+      explicitTitle: news.seoTitle,
+      pageTitle: news.title,
+      liveDefaultTitle: liveSeo?.title,
+      staticFallback: t("name"),
+    }),
+    description: composePublicSeoDescription({
+      explicitDescription: news.seoDescription,
+      pageDescription: news.summary,
+      liveDefaultDescription: liveSeo?.description,
+    }),
     alternates: { canonical: current, languages },
   };
 }
@@ -63,16 +78,15 @@ export default async function NewsDetailPage({ params }: DetailParams) {
     dateStyle: "long",
     timeZone: "Asia/Riyadh",
   });
+  const chrome = await resolvePublicChrome(t, locale, {
+    switchHref: news.counterpartSlug
+      ? `/${otherLocale}/news/${encodeURIComponent(news.counterpartSlug)}`
+      : null,
+    active: "news",
+  });
+
   return (
-    <PublicShell
-      locale={locale}
-      {...publicChrome(t, locale, {
-        switchHref: news.counterpartSlug
-          ? `/${otherLocale}/news/${encodeURIComponent(news.counterpartSlug)}`
-          : null,
-        active: "news",
-      })}
-    >
+    <PublicShell locale={locale} {...chrome}>
       <div className="public-news public-news-detail">
         <nav
           aria-label={t("publicNews.breadcrumb")}

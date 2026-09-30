@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 
 import {
   E2E_USER,
+  getAuthFormAlert,
   hasDatabase,
   seedE2eUser,
   submitMfaEnable,
@@ -83,9 +84,7 @@ test.describe("admin auth journey (ar)", () => {
       email: E2E_USER.email,
       password: "wrong-password-9999",
     });
-    await expect(page.locator(".auth-error")).toHaveText(
-      "بيانات الدخول غير صحيحة.",
-    );
+    await expect(getAuthFormAlert(page)).toHaveText("بيانات الدخول غير صحيحة.");
 
     // 3. Correct credentials → session created, MFA not enrolled →
     //    forwarded to mandatory setup.
@@ -116,12 +115,13 @@ test.describe("admin auth journey (ar)", () => {
       code,
     );
     await expect(page).toHaveURL(/\/ar\/admin$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      "تم تسجيل الدخول بنجاح",
-    );
     await expect(
-      page.getByText(`البريد الإلكتروني: ${E2E_USER.email}`),
+      page.getByRole("heading", {
+        level: 1,
+        name: "الصفحة الرئيسية للوحة الإدارة",
+      }),
     ).toBeVisible();
+    await expect(page.getByRole("main")).toContainText(E2E_USER.email);
 
     // 6. Logout revokes the session → back to login; /admin redirects.
     await page.getByRole("button", { name: "تسجيل الخروج" }).click();
@@ -132,7 +132,7 @@ test.describe("admin auth journey (ar)", () => {
     // 7. Password alone no longer completes login — TOTP challenge.
     await submitSignIn(page, AR_SIGN_IN, E2E_USER);
     await expect(page).toHaveURL(/\/ar\/admin\/mfa$/);
-    await expect(page.locator(".auth-error")).toHaveCount(0);
+    await expect(getAuthFormAlert(page)).toHaveCount(0);
 
     // A code for the current step could equal the consumed enrollment
     // code — use the next step's code (still inside the ±1 window) if so.
@@ -160,7 +160,7 @@ test.describe("admin auth journey (ar)", () => {
       { code: AR_MFA.totp, submit: AR_MFA.submit },
       challengeCode,
     );
-    await expect(page.locator(".auth-error")).toHaveText(
+    await expect(getAuthFormAlert(page)).toHaveText(
       "الرمز غير صالح أو منتهي الصلاحية.",
     );
     await expect(page).toHaveURL(/\/ar\/admin\/mfa$/);

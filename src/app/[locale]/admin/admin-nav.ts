@@ -44,5 +44,11 @@ export function buildAdminNav(
       label: t("referenceData.nav"),
     });
   }
+  if (permissions.has(PERMISSIONS.SITE_SETTINGS_READ)) {
+    items.push({
+      href: `/${locale}/admin/site-settings`,
+      label: t("siteSettings.nav"),
+    });
+  }
   return items;
 }

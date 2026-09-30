@@ -4,6 +4,11 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { getDirection, routing } from "@/i18n/routing";
+import {
+  composePublicSeoDescription,
+  composePublicSeoTitle,
+  resolveLiveDefaultSeo,
+} from "@/modules/site-settings";
 
 // DGA Platforms Code tokens/reset — imported once at the root via the
 // shared/ui vendor boundary (IMP-08). Must precede portal styles.
@@ -22,9 +27,17 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "app" });
+  const contentLocale = locale === "en" ? "en" : "ar";
+  const liveSeo = await resolveLiveDefaultSeo(contentLocale);
 
   return {
-    title: t("name"),
+    title: composePublicSeoTitle({
+      liveDefaultTitle: liveSeo?.title,
+      staticFallback: t("name"),
+    }),
+    description: composePublicSeoDescription({
+      liveDefaultDescription: liveSeo?.description,
+    }),
     icons: { icon: "/brand/committee-logo-icon.svg" },
     alternates: {
       canonical: `/${locale}`,
