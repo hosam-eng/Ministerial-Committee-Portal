@@ -78,9 +78,10 @@ test.describe("managed pages acceptance", () => {
       },
       USER,
     );
-    if (await page.locator(".auth-error").isVisible()) {
+    const signInAlert = page.locator("form.auth-form").getByRole("alert");
+    if (await signInAlert.isVisible()) {
       throw new Error(
-        `sign-in stayed on login: ${await page.locator(".auth-error").innerText()}`,
+        `sign-in stayed on login: ${await signInAlert.innerText()}`,
       );
     }
     await expect(page).toHaveURL(/\/ar\/admin\/mfa\/setup$/, {

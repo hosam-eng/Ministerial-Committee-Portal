@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { getAdminNavigation } from "./support/admin-nav";
 import {
   completeMfaEnrollment,
   E2E_USER,
@@ -95,7 +96,7 @@ test.describe("admin shell", () => {
     // Shell chrome: banner, main, permission-aware nav, email, switch.
     await expect(page.getByRole("banner")).toBeVisible();
     await expect(page.getByRole("main")).toBeVisible();
-    const adminNav = page.locator(".admin-shell-sidebar");
+    const adminNav = getAdminNavigation(page, "ar");
     await expect(
       adminNav.getByRole("link", { name: "إدارة الأدوار" }),
     ).toBeVisible();
@@ -152,7 +153,7 @@ test.describe("admin shell", () => {
     await expect(page).toHaveURL(/\/en\/admin$/);
     await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
     await expect(page.getByRole("banner")).toBeVisible();
-    const adminNav = page.locator(".admin-shell-sidebar");
+    const adminNav = getAdminNavigation(page, "en");
     await expect(
       adminNav.getByRole("link", { name: "Manage roles" }),
     ).toBeVisible();
