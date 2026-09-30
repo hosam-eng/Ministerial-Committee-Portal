@@ -2,7 +2,128 @@
 
 import { useEffect, useId, useState } from "react";
 
-import type { PublicNavItem } from "./public-shell";
+import type { PublicNavTreeLink, PublicNavTreeNode } from "./public-shell";
+
+function NavLink({
+  item,
+  onNavigate,
+}: {
+  item: PublicNavTreeLink;
+  onNavigate?: () => void;
+}) {
+  return (
+    <a
+      className="shell-nav-link"
+      href={item.href}
+      aria-current={item.current ? "page" : undefined}
+      onClick={onNavigate}
+      {...(item.external
+        ? { rel: "noopener noreferrer", target: "_blank" }
+        : {})}
+    >
+      {item.label}
+    </a>
+  );
+}
+
+function DesktopNavGroup({
+  node,
+}: {
+  node: Extract<PublicNavTreeNode, { kind: "group" }>;
+}) {
+  const panelId = useId();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="shell-nav-disclosure">
+      <button
+        type="button"
+        className={`shell-nav-link shell-nav-disclosure-trigger${node.current ? " shell-nav-link-current" : ""}`}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {node.label}
+      </button>
+      {open ? (
+        <div id={panelId} className="shell-nav-disclosure-panel">
+          <ul className="shell-nav-sublist">
+            {node.children.map((child) => (
+              <li key={child.kind === "link" ? child.href : child.label}>
+                <DesktopNavNode node={child} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DesktopNavNode({ node }: { node: PublicNavTreeNode }) {
+  if (node.kind === "link") return <NavLink item={node} />;
+  return <DesktopNavGroup node={node} />;
+}
+
+function DrawerNavGroup({
+  node,
+  onNavigate,
+}: {
+  node: Extract<PublicNavTreeNode, { kind: "group" }>;
+  onNavigate: () => void;
+}) {
+  const panelId = useId();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="shell-nav-disclosure shell-nav-disclosure-drawer">
+      <button
+        type="button"
+        className="shell-nav-link shell-nav-disclosure-trigger"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {node.label}
+      </button>
+      {open ? (
+        <ul id={panelId} className="shell-nav-sublist">
+          {node.children.map((child) => (
+            <li key={child.kind === "link" ? child.href : child.label}>
+              <DrawerNavNode node={child} onNavigate={onNavigate} />
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function DrawerNavNode({
+  node,
+  onNavigate,
+}: {
+  node: PublicNavTreeNode;
+  onNavigate: () => void;
+}) {
+  if (node.kind === "link")
+    return <NavLink item={node} onNavigate={onNavigate} />;
+  return <DrawerNavGroup node={node} onNavigate={onNavigate} />;
+}
+
+export function PublicMainNavList({
+  items,
+}: {
+  items: readonly PublicNavTreeNode[];
+}) {
+  return (
+    <ul className="shell-nav-list">
+      {items.map((item) => (
+        <li key={item.kind === "link" ? item.href : item.label}>
+          <DesktopNavNode node={item} />
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function PublicShellMenu({
   label,
@@ -13,7 +134,7 @@ export function PublicShellMenu({
   label: string;
   openLabel: string;
   closeLabel: string;
-  items: readonly PublicNavItem[];
+  items: readonly PublicNavTreeNode[];
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -46,15 +167,8 @@ export function PublicShellMenu({
         <nav id={panelId} className="shell-drawer" aria-label={label}>
           <ul className="shell-nav-list">
             {items.map((item) => (
-              <li key={item.href}>
-                <a
-                  className="shell-nav-link"
-                  href={item.href}
-                  aria-current={item.current ? "page" : undefined}
-                  onClick={() => setOpen(false)}
-                >
-                  {item.label}
-                </a>
+              <li key={item.kind === "link" ? item.href : item.label}>
+                <DrawerNavNode node={item} onNavigate={() => setOpen(false)} />
               </li>
             ))}
           </ul>
@@ -67,7 +181,7 @@ export function PublicShellMenu({
 export function PublicFooterGroups({
   groups,
 }: {
-  groups: readonly { heading: string; links: readonly PublicNavItem[] }[];
+  groups: readonly { heading: string; links: readonly PublicNavTreeLink[] }[];
 }) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [wide, setWide] = useState(true);
@@ -104,7 +218,14 @@ export function PublicFooterGroups({
             <ul className="shell-footer-links" hidden={!expanded}>
               {group.links.map((link) => (
                 <li key={link.href}>
-                  <a href={link.href}>{link.label}</a>
+                  <a
+                    href={link.href}
+                    {...(link.external
+                      ? { rel: "noopener noreferrer", target: "_blank" }
+                      : {})}
+                  >
+                    {link.label}
+                  </a>
                 </li>
               ))}
             </ul>

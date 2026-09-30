@@ -5,6 +5,33 @@ import ar from "../../messages/ar.json";
 import en from "../../messages/en.json";
 import { getFormattingLocale, resolveRequestConfig } from "@/i18n/config";
 import { getDirection, routing } from "@/i18n/routing";
+import { PERMISSION_KEYS } from "@/modules/identity/domain/permissions";
+
+function permissionLabel(catalog: typeof en, key: string): string | undefined {
+  const labels = catalog.access.permissions;
+  const node = key.split(".").reduce<unknown>((current, segment) => {
+    if (
+      current !== null &&
+      typeof current === "object" &&
+      !Array.isArray(current)
+    ) {
+      return (current as Record<string, unknown>)[segment];
+    }
+    return undefined;
+  }, labels);
+  return typeof node === "string" ? node : undefined;
+}
+
+function permissionGroupLabel(
+  catalog: typeof en,
+  prefix: string,
+): string | undefined {
+  const label =
+    catalog.access.permissionGroups[
+      prefix as keyof typeof catalog.access.permissionGroups
+    ];
+  return typeof label === "string" ? label : undefined;
+}
 
 describe("localization routing config", () => {
   it("supports exactly ar and en with ar as default", () => {
@@ -95,5 +122,17 @@ describe("message catalog alignment", () => {
   it("language-switch labels point at the other language", () => {
     expect(ar.home.switchToLanguage).toBe("English");
     expect(en.home.switchToLanguage).toBe("العربية");
+  });
+
+  it("localizes every seeded permission key for the roles admin UI", () => {
+    for (const key of PERMISSION_KEYS) {
+      const prefix = key.split(".")[0] ?? key;
+      for (const catalog of [ar, en]) {
+        expect(permissionLabel(catalog, key)).toBeDefined();
+        expect(permissionLabel(catalog, key)).not.toBe(key);
+        expect(permissionGroupLabel(catalog, prefix)).toBeDefined();
+        expect(permissionGroupLabel(catalog, prefix)).not.toBe(prefix);
+      }
+    }
   });
 });

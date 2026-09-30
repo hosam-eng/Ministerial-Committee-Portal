@@ -82,7 +82,7 @@ export default async function NewsDetailPage({ params }: DetailParams) {
     switchHref: news.counterpartSlug
       ? `/${otherLocale}/news/${encodeURIComponent(news.counterpartSlug)}`
       : null,
-    active: "news",
+    currentPath: `/${locale}/news/${encodeURIComponent(news.slug)}`,
   });
 
   return (

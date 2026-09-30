@@ -419,7 +419,9 @@
       "identity": "الهوية والصلاحيات",
       "managed_pages": "الصفحات المدارة",
       "publishing": "الأخبار والنشر",
-      "reference_data": "البيانات المرجعية"
+      "reference_data": "البيانات المرجعية",
+      "site_settings": "إعدادات الموقع",
+      "navigation": "إدارة التنقل"
     },
     "links": {
       "home": "لوحة الإدارة",
@@ -513,6 +515,18 @@
           "review": "مراجعة الصفحات المُدارة واعتمادها",
           "publish": "نشر الصفحات المُدارة وإلغاء نشرها"
         }
+      },
+      "site_settings": {
+        "read": "عرض إعدادات الموقع",
+        "edit": "تعديل إعدادات الموقع",
+        "review": "مراجعة إعدادات الموقع",
+        "publish": "نشر إعدادات الموقع"
+      },
+      "navigation": {
+        "read": "عرض إدارة التنقل",
+        "edit": "تعديل إدارة التنقل",
+        "review": "مراجعة إدارة التنقل",
+        "publish": "نشر إدارة التنقل"
       }
     },
     "errors": {
@@ -740,6 +754,151 @@
       "DUPLICATE_SOCIAL_URL": "لا يمكن تكرار عنوان URL للتواصل.",
       "BILINGUAL_REQUIRED": "الاسمان المؤسسيان الرسميان مطلوبان بالعربية والإنجليزية.",
       "INVALID_DRAFT": "تعذّر حفظ المسودة."
+    }
+  },
+  "navigation": {
+    "nav": "إدارة التنقل",
+    "section": "الحوكمة",
+    "title": "التنقل العام",
+    "intro": "إدارة تنقل الهيدر والأدوات والتذييل في الواجهة العامة.",
+    "statusTitle": "حالة التنقل",
+    "publicationLabel": "النشر",
+    "editorialLabel": "المراجعة التحريرية",
+    "liveRevision": "المراجعة المنشورة",
+    "revisionNumber": "المراجعة {number}",
+    "notLive": "غير منشور",
+    "noActive": "لا توجد مراجعة تحريرية نشطة.",
+    "liveUnchanged": "تبقى المراجعة المنشورة دون تغيير حتى نشر هذه المراجعة التحريرية.",
+    "save": "حفظ المسودة",
+    "saving": "جارٍ الحفظ…",
+    "saved": "تم حفظ المسودة.",
+    "previewAr": "معاينة العربية",
+    "previewEn": "معاينة الإنجليزية",
+    "rail": {
+      "preview": "معاينة",
+      "workflow": "سير العمل التحريري",
+      "submit": "إرسال للمراجعة",
+      "unpublish": "إلغاء النشر"
+    },
+    "previewBanner": "معاينة. هذه المراجعة ليست تنقلاً منشوراً.",
+    "previewBack": "العودة إلى التنقل",
+    "previewIncomplete": "التسميات ثنائية اللغة أو الأهداف القابلة للنشر غير مكتملة لهذه المراجعة.",
+    "previewBody": "يعكس الهيدر ومنطقة الأدوات وروابط التذييل في الواجهة العامة مراجعة التنقل هذه.",
+    "locations": {
+      "MAIN": "الرئيسي",
+      "UTILITY": "الأدوات",
+      "FOOTER": "التذييل"
+    },
+    "itemTypes": {
+      "GROUP": "مجموعة",
+      "SYSTEM_ROUTE": "مسار نظام",
+      "CONTENT_ROUTE": "مسار محتوى",
+      "EXTERNAL_LINK": "رابط خارجي"
+    },
+    "fields": {
+      "labelAr": "التسمية العربية",
+      "labelEn": "التسمية الإنجليزية",
+      "parentGroup": "المجموعة الرئيسية",
+      "systemRouteKey": "مسار النظام",
+      "managedPage": "صفحة مُدارة",
+      "externalUrl": "عنوان HTTPS"
+    },
+    "ui": {
+      "locationPickerLabel": "موقع التنقل",
+      "locationContext": {
+        "MAIN": "التنقل الرئيسي",
+        "UTILITY": "تنقل الأدوات",
+        "FOOTER": "تنقل التذييل"
+      },
+      "itemCount": "{count, plural, =0 {لا توجد عناصر} one {عنصر واحد} other {# عناصر}}",
+      "addItem": "إضافة عنصر",
+      "treeTitle": "شجرة التنقل",
+      "noSelection": "اختر عنصراً من الشجرة لتحريره.",
+      "draftRail": "المسودة"
+    },
+    "tree": {
+      "addGroup": "إضافة مجموعة",
+      "addSystemRoute": "إضافة مسار نظام",
+      "addContentRoute": "إضافة مسار محتوى",
+      "addExternalLink": "إضافة رابط خارجي",
+      "editItem": "تحرير العنصر",
+      "rootLevel": "المستوى الأعلى",
+      "selectPage": "اختر صفحة",
+      "unavailable": "غير متاح للعامة",
+      "removeItem": "إزالة العنصر",
+      "moveUp": "نقل لأعلى",
+      "moveDown": "نقل لأسفل"
+    },
+    "actions": {
+      "submit": "إرسال للمراجعة",
+      "return": "إرجاع",
+      "approve": "اعتماد",
+      "publish": "نشر",
+      "unpublish": "إلغاء النشر",
+      "editPublished": "تحرير التنقل المنشور",
+      "restore": "استعادة كمسودة جديدة",
+      "returnComment": "سبب الإرجاع",
+      "unpublishReason": "سبب إلغاء النشر"
+    },
+    "publication": {
+      "NEVER_PUBLISHED": "لم يُنشر",
+      "PUBLISHED": "منشور",
+      "UNPUBLISHED": "غير منشور"
+    },
+    "workflow": {
+      "EDITING": "تحرير",
+      "PENDING_REVIEW": "بانتظار المراجعة",
+      "APPROVED": "معتمد",
+      "RETURNED": "مُرجَع"
+    },
+    "events": {
+      "SUBMIT": "أُرسل للمراجعة",
+      "RETURN": "أُرجع",
+      "APPROVE": "اعتُمد",
+      "RESTORE": "استُعيد كمسودة جديدة",
+      "PUBLISH": "نُشر",
+      "UNPUBLISH": "أُلغي نشره"
+    },
+    "results": {
+      "submitted": "أُرسل للمراجعة.",
+      "returned": "أُرجع مع مراجعة تحريرية جديدة.",
+      "approved": "اعتُمد للنشر.",
+      "published": "نُشر في الواجهة العامة.",
+      "unpublished": "أُزيل من الواجهة العامة.",
+      "editing": "بدأت مراجعة تحريرية جديدة.",
+      "restored": "استُعيدت كمسودة تحرير جديدة."
+    },
+    "history": {
+      "title": "السجل",
+      "restoreHint": "الاستعادة تنشئ مراجعة تحرير جديدة. لا تغيّر التنقل المنشور حتى النشر.",
+      "revisions": "المراجعات",
+      "workflow": "سير العمل",
+      "publication": "النشر"
+    },
+    "errors": {
+      "generic": "تعذّر إكمال العملية.",
+      "denied": "ليست لديك صلاحية لهذا الإجراء.",
+      "NOT_FOUND": "التنقل غير موجود.",
+      "INVALID_WORKFLOW_STATE": "هذا الإجراء غير مسموح في حالة سير العمل الحالية.",
+      "CONCURRENT_MODIFICATION": "قام شخص آخر بحفظ تغييرات. أعد التحميل وحاول مجدداً.",
+      "NO_ACTIVE_REVISION": "لا توجد مراجعة تحريرية نشطة.",
+      "ACTIVE_REVISION_EXISTS": "توجد مراجعة تحريرية نشطة بالفعل.",
+      "ACTIVE_EDITING_EXISTS": "أكمل أو أرسل المسودة الحالية أولاً.",
+      "REVISION_NOT_FOUND": "المراجعة غير موجودة.",
+      "RETURN_COMMENT_REQUIRED": "سبب الإرجاع مطلوب.",
+      "UNPUBLISH_REASON_REQUIRED": "سبب إلغاء النشر مطلوب.",
+      "SELF_APPROVAL_FORBIDDEN": "لا يمكنك اعتماد إرسالك الخاص.",
+      "INVALID_HIERARCHY": "لا يمكن اختيار هذا العنصر كعنصر رئيسي لأن ذلك سيؤدي إلى علاقة غير صحيحة في بنية القائمة.",
+      "INVALID_PARENT": "لا يمكن اختيار هذا العنصر كعنصر رئيسي لأن ذلك سيؤدي إلى علاقة غير صحيحة في بنية القائمة.",
+      "MAX_DEPTH_EXCEEDED": "لا يمكن أن يتجاوز التنقل ثلاثة مستويات.",
+      "MISSING_LABEL": "التسميات العربية والإنجليزية مطلوبة لهذا النوع من العناصر.",
+      "INVALID_SYSTEM_ROUTE": "اختر مسار نظام صالحاً.",
+      "INVALID_CONTENT_TARGET": "اختر هدف محتوى صالحاً.",
+      "INVALID_EXTERNAL_URL": "يجب أن تستخدم الروابط الخارجية عناوين HTTPS آمنة.",
+      "UNAVAILABLE_TARGET": "هدف داخلي واحد أو أكثر غير متاح للعامة.",
+      "INVALID_ORDER": "ترتيب العناصر غير صالح.",
+      "DUPLICATE_ITEM_KEY": "هوية عنصر التنقل مكررة.",
+      "INVALID_ITEM_TYPE": "عنصر التنقل غير صالح."
     }
   }
 }

@@ -419,7 +419,9 @@
       "identity": "Identity & Access",
       "managed_pages": "Managed Pages",
       "publishing": "News & Publishing",
-      "reference_data": "Reference Data"
+      "reference_data": "Reference Data",
+      "site_settings": "Site Settings",
+      "navigation": "Public Navigation"
     },
     "links": {
       "home": "Admin console",
@@ -513,6 +515,18 @@
           "review": "Review and approve managed pages",
           "publish": "Publish and unpublish managed pages"
         }
+      },
+      "site_settings": {
+        "read": "View Site Settings",
+        "edit": "Edit Site Settings",
+        "review": "Review Site Settings",
+        "publish": "Publish Site Settings"
+      },
+      "navigation": {
+        "read": "View Public Navigation",
+        "edit": "Edit Public Navigation",
+        "review": "Review Public Navigation",
+        "publish": "Publish Public Navigation"
       }
     },
     "errors": {
@@ -740,6 +754,151 @@
       "DUPLICATE_SOCIAL_URL": "Each social URL may appear only once.",
       "BILINGUAL_REQUIRED": "Official institutional names are required in Arabic and English.",
       "INVALID_DRAFT": "The draft could not be saved."
+    }
+  },
+  "navigation": {
+    "nav": "Public Navigation",
+    "section": "Governance",
+    "title": "Public navigation",
+    "intro": "Manage public header, utility, and footer navigation.",
+    "statusTitle": "Navigation status",
+    "publicationLabel": "Publication",
+    "editorialLabel": "Editorial revision",
+    "liveRevision": "Live revision",
+    "revisionNumber": "Revision {number}",
+    "notLive": "Not live",
+    "noActive": "No active editorial revision.",
+    "liveUnchanged": "The live revision stays unchanged until this editorial revision is published.",
+    "save": "Save draft",
+    "saving": "Saving…",
+    "saved": "Draft saved.",
+    "previewAr": "Preview Arabic",
+    "previewEn": "Preview English",
+    "rail": {
+      "preview": "Preview",
+      "workflow": "Editorial workflow",
+      "submit": "Submit for review",
+      "unpublish": "Unpublish"
+    },
+    "previewBanner": "Preview. This navigation revision is not live.",
+    "previewBack": "Back to navigation",
+    "previewIncomplete": "Mandatory bilingual labels or publishable targets are not complete for this revision.",
+    "previewBody": "The public shell header, utility region, and footer links reflect this navigation revision.",
+    "locations": {
+      "MAIN": "Main",
+      "UTILITY": "Utility",
+      "FOOTER": "Footer"
+    },
+    "itemTypes": {
+      "GROUP": "Group",
+      "SYSTEM_ROUTE": "System route",
+      "CONTENT_ROUTE": "Content route",
+      "EXTERNAL_LINK": "External link"
+    },
+    "fields": {
+      "labelAr": "Arabic label",
+      "labelEn": "English label",
+      "parentGroup": "Parent group",
+      "systemRouteKey": "System route",
+      "managedPage": "Managed page",
+      "externalUrl": "HTTPS URL"
+    },
+    "ui": {
+      "locationPickerLabel": "Navigation location",
+      "locationContext": {
+        "MAIN": "Main navigation",
+        "UTILITY": "Utility navigation",
+        "FOOTER": "Footer navigation"
+      },
+      "itemCount": "{count, plural, =0 {No items} one {1 item} other {# items}}",
+      "addItem": "Add item",
+      "treeTitle": "Navigation tree",
+      "noSelection": "Select an item in the tree to edit it.",
+      "draftRail": "Draft"
+    },
+    "tree": {
+      "addGroup": "Add group",
+      "addSystemRoute": "Add system route",
+      "addContentRoute": "Add content route",
+      "addExternalLink": "Add external link",
+      "editItem": "Edit item",
+      "rootLevel": "Top level",
+      "selectPage": "Select a page",
+      "unavailable": "not publicly available",
+      "removeItem": "Remove item",
+      "moveUp": "Move up",
+      "moveDown": "Move down"
+    },
+    "actions": {
+      "submit": "Submit for review",
+      "return": "Return",
+      "approve": "Approve",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "editPublished": "Edit published navigation",
+      "restore": "Restore as new draft",
+      "returnComment": "Reason for return",
+      "unpublishReason": "Reason for unpublishing"
+    },
+    "publication": {
+      "NEVER_PUBLISHED": "Never published",
+      "PUBLISHED": "Published",
+      "UNPUBLISHED": "Unpublished"
+    },
+    "workflow": {
+      "EDITING": "Editing",
+      "PENDING_REVIEW": "Pending review",
+      "APPROVED": "Approved",
+      "RETURNED": "Returned"
+    },
+    "events": {
+      "SUBMIT": "Submitted for review",
+      "RETURN": "Returned",
+      "APPROVE": "Approved",
+      "RESTORE": "Restored as new draft",
+      "PUBLISH": "Published",
+      "UNPUBLISH": "Unpublished"
+    },
+    "results": {
+      "submitted": "Submitted for review.",
+      "returned": "Returned with a new editing revision.",
+      "approved": "Approved for publication.",
+      "published": "Published to the public shell.",
+      "unpublished": "Removed from the public shell.",
+      "editing": "New editing revision started.",
+      "restored": "Restored as a new editing revision."
+    },
+    "history": {
+      "title": "History",
+      "restoreHint": "Restore creates a new editing revision. It does not change live navigation until publish.",
+      "revisions": "Revisions",
+      "workflow": "Workflow",
+      "publication": "Publication"
+    },
+    "errors": {
+      "generic": "The operation could not be completed.",
+      "denied": "You do not have permission for this action.",
+      "NOT_FOUND": "Navigation was not found.",
+      "INVALID_WORKFLOW_STATE": "This action is not allowed in the current workflow state.",
+      "CONCURRENT_MODIFICATION": "Someone else saved changes. Reload and try again.",
+      "NO_ACTIVE_REVISION": "No active editorial revision.",
+      "ACTIVE_REVISION_EXISTS": "An active editorial revision already exists.",
+      "ACTIVE_EDITING_EXISTS": "Finish or submit the current draft first.",
+      "REVISION_NOT_FOUND": "Revision not found.",
+      "RETURN_COMMENT_REQUIRED": "A return comment is required.",
+      "UNPUBLISH_REASON_REQUIRED": "An unpublish reason is required.",
+      "SELF_APPROVAL_FORBIDDEN": "You cannot approve your own submission.",
+      "INVALID_HIERARCHY": "This item cannot be selected as the parent because it would create an invalid navigation hierarchy.",
+      "INVALID_PARENT": "This item cannot be selected as the parent because it would create an invalid navigation hierarchy.",
+      "MAX_DEPTH_EXCEEDED": "Navigation cannot exceed three levels.",
+      "MISSING_LABEL": "Arabic and English labels are required for this item type.",
+      "INVALID_SYSTEM_ROUTE": "Choose a valid system route.",
+      "INVALID_CONTENT_TARGET": "Choose a valid content target.",
+      "INVALID_EXTERNAL_URL": "External links must use safe HTTPS URLs.",
+      "UNAVAILABLE_TARGET": "One or more internal targets are not publicly available.",
+      "INVALID_ORDER": "Sibling order is invalid.",
+      "DUPLICATE_ITEM_KEY": "Navigation item identity is duplicated.",
+      "INVALID_ITEM_TYPE": "The navigation item is invalid."
     }
   }
 }

@@ -29,6 +29,10 @@ export {
   type ManagedPagePreview,
   type PublicManagedPage,
   type PublishedManagedPageResolution,
+  listManagedPageNavigationPickerTargets,
+  resolveManagedPageNavigationTarget,
+  type ManagedPageNavigationPickerItem,
+  type ManagedPageNavigationTarget,
 } from "./infrastructure/managed-page-service";
 export { ManagedPageActionBar } from "./presentation/managed-page-actions";
 export {

@@ -47,7 +47,7 @@ export default async function NewsPage({
 
   const chrome = await resolvePublicChrome(t, locale, {
     switchHref: `/${otherLocale}/news`,
-    active: "news",
+    currentPath: `/${locale}/news`,
   });
 
   return (

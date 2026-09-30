@@ -11,7 +11,14 @@ const navigation = {
   label: "Main",
   openMenuLabel: "Menu",
   closeMenuLabel: "Close",
-  items: [{ href: "/ar/news", label: "الأخبار", current: true }],
+  items: [
+    {
+      kind: "link" as const,
+      href: "/ar/news",
+      label: "الأخبار",
+      current: true,
+    },
+  ],
 };
 
 const footer = {
@@ -19,7 +26,7 @@ const footer = {
   groups: [
     {
       heading: "روابط مهمة",
-      links: [{ href: "/ar/news", label: "الأخبار" }],
+      links: [{ kind: "link" as const, href: "/ar/news", label: "الأخبار" }],
     },
     { heading: "سياسات", links: [] },
   ],
