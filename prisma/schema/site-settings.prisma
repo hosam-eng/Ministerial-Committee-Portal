@@ -69,11 +69,11 @@ model SiteSettingsRevision {
   createdAt         DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  siteSettings      SiteSettings                       @relation("SiteSettingsRevisions", fields: [siteSettingsId], references: [id])
-  basedOn           SiteSettingsRevision?              @relation("SiteSettingsRevisionLineage", fields: [basedOnRevisionId], references: [id])
-  derivedRevisions  SiteSettingsRevision[]             @relation("SiteSettingsRevisionLineage")
-  liveFor           SiteSettings[]                     @relation("SiteSettingsLiveRevision")
-  activeFor         SiteSettings[]                     @relation("SiteSettingsActiveRevision")
+  siteSettings      SiteSettings                      @relation("SiteSettingsRevisions", fields: [siteSettingsId], references: [id])
+  basedOn           SiteSettingsRevision?             @relation("SiteSettingsRevisionLineage", fields: [basedOnRevisionId], references: [id])
+  derivedRevisions  SiteSettingsRevision[]            @relation("SiteSettingsRevisionLineage")
+  liveFor           SiteSettings[]                    @relation("SiteSettingsLiveRevision")
+  activeFor         SiteSettings[]                    @relation("SiteSettingsActiveRevision")
   translations      SiteSettingsRevisionTranslation[]
   socialLinks       SiteSettingsSocialLink[]
   workflowEvents    SiteSettingsWorkflowEvent[]
@@ -86,15 +86,15 @@ model SiteSettingsRevision {
 }
 
 model SiteSettingsRevisionTranslation {
-  id                   String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
-  revisionId           String   @map("revision_id") @db.Uuid
-  locale               String
-  officialName         String   @map("official_name")
-  address              String?
-  defaultSeoTitle      String?  @map("default_seo_title")
-  defaultSeoDescription String? @map("default_seo_description")
-  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                    String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  revisionId            String   @map("revision_id") @db.Uuid
+  locale                String
+  officialName          String   @map("official_name")
+  address               String?
+  defaultSeoTitle       String?  @map("default_seo_title")
+  defaultSeoDescription String?  @map("default_seo_description")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   revision SiteSettingsRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
 
@@ -133,7 +133,7 @@ model SiteSettingsWorkflowEvent {
   actorId        String?                    @map("actor_id") @db.Uuid
   createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  siteSettings SiteSettings       @relation(fields: [siteSettingsId], references: [id])
+  siteSettings SiteSettings         @relation(fields: [siteSettingsId], references: [id])
   revision     SiteSettingsRevision @relation(fields: [revisionId], references: [id])
 
   @@index([siteSettingsId])
@@ -150,7 +150,7 @@ model SiteSettingsPublicationEvent {
   actorId        String?                       @map("actor_id") @db.Uuid
   createdAt      DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  siteSettings SiteSettings       @relation(fields: [siteSettingsId], references: [id])
+  siteSettings SiteSettings         @relation(fields: [siteSettingsId], references: [id])
   revision     SiteSettingsRevision @relation(fields: [revisionId], references: [id])
 
   @@index([siteSettingsId])

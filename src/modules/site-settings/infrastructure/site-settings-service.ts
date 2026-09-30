@@ -6,6 +6,7 @@ import {
   Prisma,
   type PrismaClient,
 } from "@/platform/database/generated/client";
+import { getServerConfig } from "@/platform/config/server";
 import { getRuntimeDatabase } from "@/platform/runtime";
 
 import {
@@ -666,23 +667,31 @@ export async function unpublishSiteSettings(
   });
 }
 
+function runtimeDatabaseOrNull(database?: Database): Database | null {
+  if (database) return database;
+  if (!getServerConfig().databaseUrl) return null;
+  return getRuntimeDatabase();
+}
+
 export async function resolveLivePublicSiteSettings(
   locale: SiteSettingsLocale,
-  database: Database = getRuntimeDatabase(),
+  database?: Database,
 ): Promise<PublicSiteSettingsShell | null> {
-  const root = await database.prisma.siteSettings.findUnique({
+  const db = runtimeDatabaseOrNull(database);
+  if (!db) return null;
+  const root = await db.prisma.siteSettings.findUnique({
     where: { singletonKey: SITE_SETTINGS_SINGLETON_KEY },
   });
   if (!root || root.publicationStatus !== "PUBLISHED" || !root.liveRevisionId) {
     return null;
   }
-  const liveRevision = await loadSnapshot(database.prisma, root.liveRevisionId);
+  const liveRevision = await loadSnapshot(db.prisma, root.liveRevisionId);
   return shellFromSnapshot(liveRevision, locale);
 }
 
 export async function resolveLiveDefaultSeo(
   locale: SiteSettingsLocale,
-  database: Database = getRuntimeDatabase(),
+  database?: Database,
 ): Promise<{ title: string | null; description: string | null } | null> {
   const live = await resolveLivePublicSiteSettings(locale, database);
   if (!live) return null;
