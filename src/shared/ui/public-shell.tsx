@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import {
   PublicFooterGroups,
+  PublicMainNavList,
   PublicShellMenu,
 } from "./public-shell-interactions";
 
@@ -24,16 +25,34 @@ export interface PublicNavItem {
   current?: boolean;
 }
 
+export type PublicNavTreeLink = {
+  kind: "link";
+  href: string;
+  label: string;
+  current?: boolean;
+  external?: boolean;
+};
+
+export type PublicNavTreeGroup = {
+  kind: "group";
+  label: string;
+  current?: boolean;
+  children: readonly PublicNavTreeNode[];
+};
+
+export type PublicNavTreeNode = PublicNavTreeLink | PublicNavTreeGroup;
+
 export interface PublicNavRegion {
   label: string;
   openMenuLabel: string;
   closeMenuLabel: string;
-  items: readonly PublicNavItem[];
+  items: readonly PublicNavTreeNode[];
+  utilityLinks?: readonly PublicNavTreeLink[];
 }
 
 export interface PublicLinkGroup {
   heading: string;
-  links: readonly PublicNavItem[];
+  links: readonly PublicNavTreeLink[];
 }
 
 export interface PublicFooterContact {
@@ -86,6 +105,7 @@ export function PublicShell({
   children: ReactNode;
 }) {
   const items = navigation?.items ?? [];
+  const utilityLinks = navigation?.utilityLinks ?? [];
   const groups = footer.groups.filter((group) => group.links.length > 0);
   return (
     <div className="public-shell">
@@ -110,19 +130,7 @@ export function PublicShell({
               className="shell-header-zone shell-header-zone-nav shell-main-nav"
               aria-label={navigation.label}
             >
-              <ul className="shell-nav-list">
-                {items.map((item) => (
-                  <li key={item.href}>
-                    <a
-                      className="shell-nav-link"
-                      href={item.href}
-                      aria-current={item.current ? "page" : undefined}
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <PublicMainNavList items={items} />
             </nav>
           ) : null}
           <div className="shell-header-zone shell-header-zone-utilities shell-utilities">
@@ -135,6 +143,26 @@ export function PublicShell({
               <a className="shell-contact" href={contact.href}>
                 {contact.label}
               </a>
+            ) : null}
+            {utilityLinks.length > 0 ? (
+              <nav className="shell-utility-nav" aria-label={navigation?.label}>
+                <ul className="shell-utility-list">
+                  {utilityLinks.map((link) => (
+                    <li key={link.href}>
+                      <a
+                        className="shell-utility-link"
+                        href={link.href}
+                        aria-current={link.current ? "page" : undefined}
+                        {...(link.external
+                          ? { rel: "noopener noreferrer", target: "_blank" }
+                          : {})}
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
             ) : null}
             {switchTo ? (
               <nav className="shell-lang-nav" aria-label={switchTo.ariaLabel}>

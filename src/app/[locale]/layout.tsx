@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from "next-intl/server";
 
-import { getDirection, routing } from "@/i18n/routing";
+import { getDirection, routing, type Locale } from "@/i18n/routing";
 import {
   composePublicSeoDescription,
   composePublicSeoTitle,
@@ -61,16 +65,20 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
-  if (!hasLocale(routing.locales, locale)) {
+  const { locale: localeParam } = await params;
+  if (!hasLocale(routing.locales, localeParam)) {
     notFound();
   }
+  const locale = localeParam as Locale;
   setRequestLocale(locale);
+  const messages = await getMessages();
 
   return (
-    <html lang={locale} dir={getDirection(locale)}>
+    <html lang={locale} dir={getDirection(locale)} key={locale}>
       <body>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={messages}>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

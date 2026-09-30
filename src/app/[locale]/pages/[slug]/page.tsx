@@ -103,6 +103,7 @@ export default async function ManagedPagePublicPage({ params }: PageParams) {
     switchHref: page.counterpartSlug
       ? `/${otherLocale}/pages/${encodeURIComponent(page.counterpartSlug)}`
       : null,
+    currentPath: `/${locale}/pages/${encodeURIComponent(page.slug)}`,
   });
 
   return (

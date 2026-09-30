@@ -50,5 +50,11 @@ export function buildAdminNav(
       label: t("siteSettings.nav"),
     });
   }
+  if (permissions.has(PERMISSIONS.NAVIGATION_READ)) {
+    items.push({
+      href: `/${locale}/admin/navigation`,
+      label: t("navigation.nav"),
+    });
+  }
   return items;
 }

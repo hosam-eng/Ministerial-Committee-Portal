@@ -1,18 +1,87 @@
 import type { getTranslations } from "next-intl/server";
 
 import {
+  resolveLiveNavigationDraft,
+  resolvePublicNavigation,
+  type NavigationDraft,
+} from "@/modules/public-navigation";
+import {
   resolveLivePublicSiteSettings,
   type PublicSiteSettingsShell,
 } from "@/modules/site-settings";
-import type { PublicFooter, PublicNavRegion } from "@/shared/ui/public-shell";
+import type {
+  PublicFooter,
+  PublicLinkGroup,
+  PublicNavRegion,
+  PublicNavTreeLink,
+  PublicNavTreeNode,
+} from "@/shared/ui/public-shell";
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>;
 
 export type PublicChromeOptions = {
   switchHref: string | null;
-  active?: "news";
+  currentPath?: string | null;
+  previewNavigationDraft?: NavigationDraft | null;
   previewShell?: PublicSiteSettingsShell | null;
 };
+
+function staticFallbackNavigation(
+  t: Translator,
+  locale: string,
+  currentPath?: string | null,
+): PublicNavRegion {
+  const newsHref = `/${locale}/news`;
+  const newsCurrent =
+    currentPath === newsHref ||
+    Boolean(currentPath?.startsWith(`${newsHref}/`));
+  const items: PublicNavTreeNode[] = [
+    {
+      kind: "link",
+      href: newsHref,
+      label: t("publicNews.title"),
+      current: newsCurrent,
+    },
+  ];
+  return {
+    label: t("shell.mainNavigation"),
+    openMenuLabel: t("shell.openMenu"),
+    closeMenuLabel: t("shell.closeMenu"),
+    items,
+    utilityLinks: [],
+  };
+}
+
+function staticFallbackFooter(t: Translator, locale: string): PublicFooter {
+  return {
+    identity: t("app.name"),
+    groups: [
+      {
+        heading: t("shell.footerImportant"),
+        links: [
+          {
+            kind: "link",
+            href: `/${locale}/news`,
+            label: t("publicNews.title"),
+          },
+        ],
+      },
+      {
+        heading: t("shell.footerPortal"),
+        links: [
+          {
+            kind: "link",
+            href: `/${locale}`,
+            label: t("shell.home"),
+          },
+        ],
+      },
+    ],
+    copyright: t("shell.copyright", {
+      year: new Date().getFullYear(),
+    }),
+  };
+}
 
 function mergeFooter(
   base: PublicFooter,
@@ -35,7 +104,18 @@ function mergeFooter(
   };
 }
 
-/** Interim public navigation plus LIVE Site Settings shell binding (IMP-15). */
+function footerFromResolved(
+  t: Translator,
+  locale: string,
+  groups: PublicLinkGroup[],
+  live: PublicSiteSettingsShell | null,
+): PublicFooter {
+  const base = staticFallbackFooter(t, locale);
+  base.groups = groups.length ? groups : base.groups;
+  return mergeFooter(base, live);
+}
+
+/** LIVE CMS navigation when published; otherwise safe static shell baseline (IMP-16). */
 export async function resolvePublicChrome(
   t: Translator,
   locale: string,
@@ -43,34 +123,37 @@ export async function resolvePublicChrome(
 ) {
   const other = locale === "ar" ? "en" : "ar";
   const contentLocale = locale === "en" ? "en" : "ar";
-  const navigation: PublicNavRegion = {
-    label: t("shell.mainNavigation"),
-    openMenuLabel: t("shell.openMenu"),
-    closeMenuLabel: t("shell.closeMenu"),
-    items: [
-      {
-        href: `/${locale}/news`,
-        label: t("publicNews.title"),
-        current: options.active === "news",
-      },
-    ],
-  };
-  const baseFooter: PublicFooter = {
-    identity: t("app.name"),
-    groups: [
-      {
-        heading: t("shell.footerImportant"),
-        links: [{ href: `/${locale}/news`, label: t("publicNews.title") }],
-      },
-      {
-        heading: t("shell.footerPortal"),
-        links: [{ href: `/${locale}`, label: t("shell.home") }],
-      },
-    ],
-    copyright: t("shell.copyright", {
-      year: new Date().getFullYear(),
-    }),
-  };
+  const currentPath = options.currentPath ?? null;
+
+  const liveDraft =
+    options.previewNavigationDraft !== undefined
+      ? options.previewNavigationDraft
+      : await resolveLiveNavigationDraft();
+
+  let navigation: PublicNavRegion;
+  let footerGroups: PublicLinkGroup[] = [];
+
+  if (liveDraft) {
+    const resolved = await resolvePublicNavigation(liveDraft, {
+      locale: contentLocale,
+      currentPath,
+    });
+    navigation = {
+      label: t("shell.mainNavigation"),
+      openMenuLabel: t("shell.openMenu"),
+      closeMenuLabel: t("shell.closeMenu"),
+      items: resolved.main,
+      utilityLinks: resolved.utility,
+    };
+    footerGroups = resolved.footer
+      .filter((group) => group.children.length > 0)
+      .map((group) => ({
+        heading: group.label,
+        links: flattenFooterLinks(group.children),
+      }));
+  } else {
+    navigation = staticFallbackNavigation(t, locale, currentPath);
+  }
 
   const live =
     options.previewShell !== undefined
@@ -89,6 +172,17 @@ export async function resolvePublicChrome(
       : null,
     skipLabel: t("shell.skipToContent"),
     navigation,
-    footer: mergeFooter(baseFooter, live),
+    footer: footerFromResolved(t, locale, footerGroups, live),
   };
+}
+
+function flattenFooterLinks(
+  nodes: readonly PublicNavTreeNode[],
+): PublicNavTreeLink[] {
+  const links: PublicNavTreeLink[] = [];
+  for (const node of nodes) {
+    if (node.kind === "link") links.push(node);
+    if (node.kind === "group") links.push(...flattenFooterLinks(node.children));
+  }
+  return links;
 }

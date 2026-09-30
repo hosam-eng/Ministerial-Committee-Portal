@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { LocalePreservingSwitchLink } from "./locale-preserving-switch-link";
 import type { LocaleSwitch } from "./public-shell";
 
 /**
@@ -25,14 +26,10 @@ export function AuthShell({
           </a>
           {switchTo ? (
             <nav className="auth-shell-lang" aria-label={switchTo.ariaLabel}>
-              <a
+              <LocalePreservingSwitchLink
                 className="auth-shell-lang-link"
-                href={switchTo.href}
-                hrefLang={switchTo.lang}
-                lang={switchTo.lang}
-              >
-                {switchTo.label}
-              </a>
+                switchTo={switchTo}
+              />
             </nav>
           ) : null}
         </div>

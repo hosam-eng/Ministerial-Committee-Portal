@@ -30,6 +30,10 @@ export const PERMISSIONS = {
   SITE_SETTINGS_EDIT: "site_settings.edit",
   SITE_SETTINGS_REVIEW: "site_settings.review",
   SITE_SETTINGS_PUBLISH: "site_settings.publish",
+  NAVIGATION_READ: "navigation.read",
+  NAVIGATION_EDIT: "navigation.edit",
+  NAVIGATION_REVIEW: "navigation.review",
+  NAVIGATION_PUBLISH: "navigation.publish",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

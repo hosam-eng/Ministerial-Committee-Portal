@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import type { ReactNode } from "react";
 
 import { DgaRegistrar } from "./dga/registrar.client";
+import { LocalePreservingSwitchLink } from "./locale-preserving-switch-link";
 import type { LocaleSwitch } from "./public-shell";
 
 export interface AdminNavItem {
@@ -115,14 +116,10 @@ export function AdminShell({
             {title}
           </a>
           <div className="admin-shell-account">
-            <a
+            <LocalePreservingSwitchLink
               className="admin-shell-lang"
-              href={switchTo.href}
-              hrefLang={switchTo.lang}
-              lang={switchTo.lang}
-            >
-              {switchTo.label}
-            </a>
+              switchTo={switchTo}
+            />
             <span className="admin-shell-email">{email}</span>
             {actions}
           </div>

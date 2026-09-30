@@ -1148,3 +1148,161 @@ export async function listEditorialManagedPages(
     workflowStatus: row.activeRevision?.workflowStatus ?? null,
   }));
 }
+
+export type ManagedPageNavigationTarget = {
+  pageId: string;
+  titleAr: string;
+  titleEn: string;
+  hrefAr: string | null;
+  hrefEn: string | null;
+  isPubliclyAvailable: boolean;
+};
+
+function liveTitleAndPath(
+  row: {
+    publicationStatus: string;
+    liveRevisionId: string | null;
+    liveRevision: {
+      translations: { locale: string; slug: string; title: string }[];
+    } | null;
+  } | null,
+  locale: ManagedPageLocale,
+) {
+  if (
+    !row ||
+    !isPublishedAggregate(row.publicationStatus, row.liveRevisionId) ||
+    !row.liveRevision
+  ) {
+    return { title: "", href: null as string | null };
+  }
+  const translation = row.liveRevision.translations.find(
+    (item) => item.locale === locale,
+  );
+  if (!translation?.slug || !translation.title.trim()) {
+    return { title: "", href: null };
+  }
+  return {
+    title: translation.title.trim(),
+    href: `/${locale}/pages/${encodeURIComponent(translation.slug)}`,
+  };
+}
+
+/** Public navigation content-route contract (stable page ID). */
+export async function resolveManagedPageNavigationTarget(
+  pageId: string,
+  database: Database = getRuntimeDatabase(),
+): Promise<ManagedPageNavigationTarget | null> {
+  const row = await database.prisma.managedPage.findUnique({
+    where: { id: pageId },
+    select: {
+      id: true,
+      publicationStatus: true,
+      liveRevisionId: true,
+      liveRevision: {
+        select: {
+          translations: {
+            select: { locale: true, slug: true, title: true },
+          },
+        },
+      },
+      activeRevision: {
+        select: {
+          translations: {
+            select: { locale: true, slug: true, title: true },
+          },
+        },
+      },
+      revisions: {
+        take: 1,
+        orderBy: { revisionNumber: "desc" },
+        select: {
+          translations: {
+            select: { locale: true, slug: true, title: true },
+          },
+        },
+      },
+    },
+  });
+  if (!row) return null;
+  const liveAr = liveTitleAndPath(row, "ar");
+  const liveEn = liveTitleAndPath(row, "en");
+  const draftAr =
+    row.activeRevision?.translations.find((item) => item.locale === "ar")
+      ?.title ??
+    row.revisions[0]?.translations.find((item) => item.locale === "ar")
+      ?.title ??
+    "";
+  const draftEn =
+    row.activeRevision?.translations.find((item) => item.locale === "en")
+      ?.title ??
+    row.revisions[0]?.translations.find((item) => item.locale === "en")
+      ?.title ??
+    "";
+  return {
+    pageId: row.id,
+    titleAr: liveAr.title || draftAr.trim(),
+    titleEn: liveEn.title || draftEn.trim(),
+    hrefAr: liveAr.href,
+    hrefEn: liveEn.href,
+    isPubliclyAvailable: Boolean(liveAr.href && liveEn.href),
+  };
+}
+
+export type ManagedPageNavigationPickerItem = {
+  id: string;
+  title: string;
+  isPubliclyAvailable: boolean;
+};
+
+export async function listManagedPageNavigationPickerTargets(
+  actorId: string,
+  locale: ManagedPageLocale,
+  database: Database = getRuntimeDatabase(),
+): Promise<ManagedPageNavigationPickerItem[]> {
+  await requireActorPermission(actorId, PERMISSIONS.MANAGED_PAGES_READ);
+  const rows = await database.prisma.managedPage.findMany({
+    select: {
+      id: true,
+      publicationStatus: true,
+      liveRevisionId: true,
+      liveRevision: {
+        select: {
+          translations: {
+            select: { locale: true, slug: true, title: true },
+          },
+        },
+      },
+      activeRevision: {
+        select: {
+          translations: {
+            select: { locale: true, title: true },
+          },
+        },
+      },
+      revisions: {
+        take: 1,
+        orderBy: { revisionNumber: "desc" },
+        select: {
+          translations: {
+            select: { locale: true, title: true },
+          },
+        },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+  return rows.map((row) => {
+    const live = liveTitleAndPath(row, locale);
+    const draftTitle =
+      row.activeRevision?.translations.find((item) => item.locale === locale)
+        ?.title ??
+      row.revisions[0]?.translations.find((item) => item.locale === locale)
+        ?.title ??
+      "";
+    return {
+      id: row.id,
+      title: live.title || draftTitle.trim() || row.id,
+      isPubliclyAvailable: Boolean(live.href),
+    };
+  });
+}

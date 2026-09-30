@@ -1,0 +1,167 @@
+enum PublicNavigationPublicationStatus {
+  NEVER_PUBLISHED
+  PUBLISHED
+  UNPUBLISHED
+
+  @@schema("public_navigation")
+}
+
+enum PublicNavigationWorkflowStatus {
+  EDITING
+  PENDING_REVIEW
+  APPROVED
+  RETURNED
+
+  @@schema("public_navigation")
+}
+
+enum PublicNavigationWorkflowAction {
+  SUBMIT
+  RETURN
+  APPROVE
+  RESTORE
+
+  @@schema("public_navigation")
+}
+
+enum PublicNavigationPublicationAction {
+  PUBLISH
+  UNPUBLISH
+
+  @@schema("public_navigation")
+}
+
+enum PublicNavigationLocation {
+  MAIN
+  UTILITY
+  FOOTER
+
+  @@schema("public_navigation")
+}
+
+enum PublicNavigationItemType {
+  GROUP
+  SYSTEM_ROUTE
+  CONTENT_ROUTE
+  EXTERNAL_LINK
+
+  @@schema("public_navigation")
+}
+
+enum PublicNavigationContentTargetKind {
+  MANAGED_PAGE
+
+  @@schema("public_navigation")
+}
+
+model PublicNavigation {
+  id                String                            @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  singletonKey      String                            @unique @map("singleton_key")
+  publicationStatus PublicNavigationPublicationStatus @default(NEVER_PUBLISHED) @map("publication_status")
+  liveRevisionId    String?                           @map("live_revision_id") @db.Uuid
+  activeRevisionId  String?                           @unique @map("active_revision_id") @db.Uuid
+  publishedAt       DateTime?                         @map("published_at") @db.Timestamptz(6)
+  unpublishedAt     DateTime?                         @map("unpublished_at") @db.Timestamptz(6)
+  createdAt         DateTime                          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  liveRevision      PublicNavigationRevision?          @relation("PublicNavigationLiveRevision", fields: [liveRevisionId], references: [id])
+  activeRevision    PublicNavigationRevision?          @relation("PublicNavigationActiveRevision", fields: [activeRevisionId], references: [id])
+  revisions         PublicNavigationRevision[]         @relation("PublicNavigationRevisions")
+  workflowEvents    PublicNavigationWorkflowEvent[]
+  publicationEvents PublicNavigationPublicationEvent[]
+
+  @@map("public_navigation")
+  @@schema("public_navigation")
+}
+
+model PublicNavigationRevision {
+  id                 String                         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  publicNavigationId String                         @map("public_navigation_id") @db.Uuid
+  revisionNumber     Int                            @map("revision_number")
+  workflowStatus     PublicNavigationWorkflowStatus @default(EDITING) @map("workflow_status")
+  editVersion        Int                            @default(0) @map("edit_version")
+  basedOnRevisionId  String?                        @map("based_on_revision_id") @db.Uuid
+  createdById        String?                        @map("created_by_id") @db.Uuid
+  submittedById      String?                        @map("submitted_by_id") @db.Uuid
+  reviewedById       String?                        @map("reviewed_by_id") @db.Uuid
+  submittedAt        DateTime?                      @map("submitted_at") @db.Timestamptz(6)
+  reviewedAt         DateTime?                      @map("reviewed_at") @db.Timestamptz(6)
+  createdAt          DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  publicNavigation  PublicNavigation                   @relation("PublicNavigationRevisions", fields: [publicNavigationId], references: [id])
+  basedOn           PublicNavigationRevision?          @relation("PublicNavigationRevisionLineage", fields: [basedOnRevisionId], references: [id])
+  derivedRevisions  PublicNavigationRevision[]         @relation("PublicNavigationRevisionLineage")
+  liveFor           PublicNavigation[]                 @relation("PublicNavigationLiveRevision")
+  activeFor         PublicNavigation[]                 @relation("PublicNavigationActiveRevision")
+  items             PublicNavigationItem[]
+  workflowEvents    PublicNavigationWorkflowEvent[]
+  publicationEvents PublicNavigationPublicationEvent[]
+
+  @@unique([publicNavigationId, revisionNumber])
+  @@index([publicNavigationId])
+  @@map("public_navigation_revision")
+  @@schema("public_navigation")
+}
+
+model PublicNavigationItem {
+  id                String                             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  revisionId        String                             @map("revision_id") @db.Uuid
+  itemKey           String                             @map("item_key") @db.Uuid
+  location          PublicNavigationLocation
+  itemType          PublicNavigationItemType           @map("item_type")
+  parentItemKey     String?                            @map("parent_item_key") @db.Uuid
+  siblingOrder      Int                                @map("sibling_order")
+  labelAr           String                             @default("") @map("label_ar")
+  labelEn           String                             @default("") @map("label_en")
+  systemRouteKey    String?                            @map("system_route_key")
+  contentTargetKind PublicNavigationContentTargetKind? @map("content_target_kind")
+  contentTargetId   String?                            @map("content_target_id") @db.Uuid
+  externalUrl       String?                            @map("external_url")
+  createdAt         DateTime                           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  revision PublicNavigationRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+
+  @@unique([revisionId, itemKey])
+  @@index([revisionId])
+  @@index([revisionId, location])
+  @@map("public_navigation_item")
+  @@schema("public_navigation")
+}
+
+model PublicNavigationWorkflowEvent {
+  id                 String                         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  publicNavigationId String                         @map("public_navigation_id") @db.Uuid
+  revisionId         String                         @map("revision_id") @db.Uuid
+  action             PublicNavigationWorkflowAction
+  fromStatus         PublicNavigationWorkflowStatus @map("from_status")
+  toStatus           PublicNavigationWorkflowStatus @map("to_status")
+  comment            String?
+  actorId            String?                        @map("actor_id") @db.Uuid
+  createdAt          DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  publicNavigation PublicNavigation         @relation(fields: [publicNavigationId], references: [id])
+  revision         PublicNavigationRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([publicNavigationId])
+  @@map("public_navigation_workflow_event")
+  @@schema("public_navigation")
+}
+
+model PublicNavigationPublicationEvent {
+  id                 String                            @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  publicNavigationId String                            @map("public_navigation_id") @db.Uuid
+  revisionId         String                            @map("revision_id") @db.Uuid
+  action             PublicNavigationPublicationAction
+  reason             String?
+  actorId            String?                           @map("actor_id") @db.Uuid
+  createdAt          DateTime                          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  publicNavigation PublicNavigation         @relation(fields: [publicNavigationId], references: [id])
+  revision         PublicNavigationRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([publicNavigationId])
+  @@map("public_navigation_publication_event")
+  @@schema("public_navigation")
+}

@@ -16,12 +16,9 @@ export function adminShellProps(
   const otherLocale = routing.locales.find(
     (candidate) => candidate !== locale,
   ) as Locale;
-  const switchLang =
-    (options.switchHref.match(/^\/(ar|en)(\/|$)/)?.[1] as Locale | undefined) ??
-    otherLocale;
   const switchTo: LocaleSwitch = {
     href: options.switchHref,
-    lang: switchLang,
+    lang: otherLocale,
     label: t("shell.language"),
     ariaLabel: t("shell.languageSwitch"),
   };

@@ -1,8 +1,10 @@
 /**
  * Global not-found surface for requests outside the localized segment.
- * The document root lives in app/[locale]/layout.tsx, so this catch-all
- * renders its own minimal html/body — interface text stays English here
- * since no locale context exists.
+ * Localized routes use app/[locale]/layout.tsx for `<html lang>` / `dir`.
+ * This global surface renders its own minimal html/body for requests
+ * outside the locale segment — interface text stays English since no
+ * locale context exists. `app/layout.tsx` is a passthrough required
+ * by Next.js when this file is present.
  */
 export default function RootNotFound() {
   return (
