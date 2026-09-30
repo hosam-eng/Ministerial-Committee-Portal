@@ -38,5 +38,11 @@ export function buildAdminNav(
       label: t("access.links.users"),
     });
   }
+  if (permissions.has(PERMISSIONS.REFERENCE_DATA_READ)) {
+    items.push({
+      href: `/${locale}/admin/reference-data`,
+      label: t("referenceData.nav"),
+    });
+  }
   return items;
 }

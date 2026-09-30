@@ -24,8 +24,13 @@ export interface NewsEditorMessages {
   save: string;
   unsaved: string;
   submit: string;
-  sections: { content: string; metadata: string };
+  sections: { content: string; metadata: string; categories: string };
   languages: { ar: string; en: string };
+  categories: {
+    hint: string;
+    inactiveAssigned: string;
+    noneAvailable: string;
+  };
   fields: {
     title: string;
     summary: string;
@@ -159,9 +164,16 @@ export function NewsEditor({
   messages,
   saveAction,
   submitAction,
+  categoryOptions,
 }: {
   locale: string;
   newsId: string;
+  categoryOptions: readonly {
+    id: string;
+    nameAr: string;
+    nameEn: string;
+    isActive: boolean;
+  }[];
   revision: {
     editVersion: number;
     categoryIds: string[];
@@ -191,6 +203,12 @@ export function NewsEditor({
     attemptedVersion: revision.editVersion,
   });
   const [dirtyVersion, setDirtyVersion] = useState<number | null>(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    () => [...revision.categoryIds],
+  );
+  const selectable = categoryOptions.filter(
+    (option) => option.isActive || revision.categoryIds.includes(option.id),
+  );
   const [formValues, setFormValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       Object.entries(revision.translations).flatMap(([language, fields]) =>
@@ -238,9 +256,70 @@ export function NewsEditor({
                 name="editVersion"
                 value={state.editVersion}
               />
-              {revision.categoryIds.map((id) => (
+              {selectedCategoryIds.map((id) => (
                 <input key={id} type="hidden" name="categoryId" value={id} />
               ))}
+              <div className="admin-form-section">
+                <h3 className="admin-form-section-title">
+                  {messages.sections.categories}
+                </h3>
+                <p className="news-muted">{messages.categories.hint}</p>
+                {selectable.length === 0 ? (
+                  <p className="news-muted">
+                    {messages.categories.noneAvailable}
+                  </p>
+                ) : (
+                  <ul className="news-category-list">
+                    {selectable.map((option) => {
+                      const checked = selectedCategoryIds.includes(option.id);
+                      const inactiveAssigned =
+                        !option.isActive &&
+                        revision.categoryIds.includes(option.id);
+                      const label =
+                        locale === "ar" ? option.nameAr : option.nameEn;
+                      return (
+                        <li key={option.id}>
+                          <label
+                            className={`news-category-row${checked ? " news-category-row--selected" : ""}${!option.isActive && !revision.categoryIds.includes(option.id) ? " news-category-row--disabled" : ""}`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="news-category-checkbox"
+                              name={`category_toggle_${option.id}`}
+                              checked={checked}
+                              disabled={
+                                !option.isActive &&
+                                !revision.categoryIds.includes(option.id)
+                              }
+                              onChange={(event) => {
+                                setSelectedCategoryIds((current) => {
+                                  if (event.target.checked) {
+                                    return [
+                                      ...new Set([...current, option.id]),
+                                    ];
+                                  }
+                                  return current.filter(
+                                    (id) => id !== option.id,
+                                  );
+                                });
+                                setDirtyVersion(state.editVersion);
+                              }}
+                            />
+                            <span className="news-category-row-label">
+                              {label}
+                            </span>
+                            {inactiveAssigned && checked && (
+                              <span className="ui-badge ui-badge-neutral">
+                                {messages.categories.inactiveAssigned}
+                              </span>
+                            )}
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
               <div className="news-language-grid">
                 {(["ar", "en"] as const).map((language) => (
                   <LanguageFields

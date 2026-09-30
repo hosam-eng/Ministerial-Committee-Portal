@@ -9,6 +9,7 @@ import {
 } from "@/modules/identity";
 import {
   getEditorialNews,
+  listNewsCategoryOptions,
   newsBodyText,
   NewsEditor,
 } from "@/modules/publishing";
@@ -54,10 +55,11 @@ export default async function NewsDetailPage({
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
     notFound();
-  const [news, t, query] = await Promise.all([
+  const [news, t, query, categoryOptions] = await Promise.all([
     getEditorialNews(gate.user.id, id),
     getTranslations({ locale, namespace: "news" }),
     searchParams,
+    listNewsCategoryOptions(gate.user.id),
   ]);
   if (!news) notFound();
   const editorial = news.activeRevision;
@@ -173,6 +175,12 @@ export default async function NewsDetailPage({
               sections: {
                 content: t("editorSections.content"),
                 metadata: t("editorSections.metadata"),
+                categories: t("editorSections.categories"),
+              },
+              categories: {
+                hint: t("categories.hint"),
+                inactiveAssigned: t("categories.inactiveAssigned"),
+                noneAvailable: t("categories.noneAvailable"),
               },
               languages: { ar: t("languages.ar"), en: t("languages.en") },
               fields: {
@@ -189,6 +197,7 @@ export default async function NewsDetailPage({
                 generic: t("errors.generic"),
               },
             }}
+            categoryOptions={categoryOptions}
             saveAction={saveNewsAction}
             submitAction={submitNewsAction}
           />
