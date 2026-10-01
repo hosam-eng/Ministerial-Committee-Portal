@@ -592,6 +592,101 @@ function toPublicNews(
   };
 }
 
+export async function listLatestPublishedNews(
+  locale: NewsLocale,
+  limit = 3,
+  database: Database = getRuntimeDatabase(),
+): Promise<PublicNews[]> {
+  const rows = await database.prisma.news.findMany({
+    where: {
+      publicationStatus: "PUBLISHED",
+      liveRevisionId: { not: null },
+      liveRevision: { translations: { some: { locale } } },
+    },
+    select: publicNewsSelection,
+    orderBy: { publishedAt: "desc" },
+    take: limit,
+  });
+  return rows.flatMap((row) => {
+    const item = toPublicNews(row, locale);
+    return item ? [item] : [];
+  });
+}
+
+export async function resolvePublishedNewsByIds(
+  locale: NewsLocale,
+  ids: string[],
+  database: Database = getRuntimeDatabase(),
+): Promise<PublicNews[]> {
+  if (!ids.length) return [];
+  const rows = await database.prisma.news.findMany({
+    where: {
+      id: { in: ids },
+      publicationStatus: "PUBLISHED",
+      liveRevisionId: { not: null },
+    },
+    select: publicNewsSelection,
+  });
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return ids.flatMap((id) => {
+    const row = byId.get(id);
+    if (!row) return [];
+    const item = toPublicNews(row, locale);
+    return item ? [item] : [];
+  });
+}
+
+export type NewsHomepagePickerItem = {
+  id: string;
+  title: string;
+  isPubliclyAvailable: boolean;
+  publishedAt: Date | null;
+};
+
+export async function listNewsHomepagePickerTargets(
+  actorId: string,
+  locale: NewsLocale,
+  database: Database = getRuntimeDatabase(),
+): Promise<NewsHomepagePickerItem[]> {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_READ);
+  const rows = await database.prisma.news.findMany({
+    select: {
+      ...publicNewsSelection,
+      activeRevision: {
+        select: {
+          translations: { select: { locale: true, title: true } },
+        },
+      },
+      revisions: {
+        take: 1,
+        orderBy: { revisionNumber: "desc" },
+        select: {
+          translations: { select: { locale: true, title: true } },
+        },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+  return rows.map((row) => {
+    const liveTitle =
+      row.liveRevision?.translations.find((item) => item.locale === locale)
+        ?.title ?? "";
+    const draftTitle =
+      row.activeRevision?.translations.find((item) => item.locale === locale)
+        ?.title ??
+      row.revisions[0]?.translations.find((item) => item.locale === locale)
+        ?.title ??
+      "";
+    const published = Boolean(toPublicNews(row, locale));
+    return {
+      id: row.id,
+      title: liveTitle.trim() || draftTitle.trim() || row.id,
+      isPubliclyAvailable: published,
+      publishedAt: published ? row.publishedAt : null,
+    };
+  });
+}
+
 export async function listPublishedNews(
   locale: NewsLocale,
   database: Database = getRuntimeDatabase(),

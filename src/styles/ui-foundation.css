@@ -1577,3 +1577,93 @@ body {
 .admin-pages-list {
   max-inline-size: 76rem;
 }
+
+.public-homepage-hero {
+  max-inline-size: var(--container-reading);
+  margin-inline: auto;
+  padding-block: var(--spacing-6);
+}
+.public-homepage-hero h1 {
+  margin-block-end: var(--spacing-3);
+}
+.public-homepage-news {
+  max-inline-size: var(--container-wide, 76rem);
+  margin-inline: auto;
+  padding-block: var(--spacing-6);
+}
+.public-homepage-news-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  margin-block-end: var(--spacing-5);
+}
+.public-homepage-news-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-4);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+@media (min-width: 40rem) {
+  .public-homepage-news-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .public-homepage-news-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.public-homepage-news-card {
+  height: 100%;
+  padding: var(--spacing-4);
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-md, 0.375rem);
+}
+.public-homepage-news-card h3 {
+  font-size: 1.125rem;
+  margin-block: var(--spacing-2) var(--spacing-2);
+}
+.admin-homepage-section-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+.admin-homepage-section-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+.admin-homepage-panel {
+  margin-block-start: var(--spacing-5);
+}
+.admin-homepage-manual-news {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  margin-block-start: var(--spacing-3);
+}
+.admin-homepage-manual-news-selected,
+.admin-homepage-manual-news-add {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+.admin-homepage-manual-news-selected > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2) var(--spacing-3);
+}
+.admin-homepage-manual-news-title {
+  font-weight: 600;
+}

@@ -38,6 +38,7 @@ export const PRISMA_SCHEMA_OWNERS: Readonly<Record<string, string>> = {
   "reference-data.prisma": "reference-data",
   "site-settings.prisma": "site-settings",
   "public-navigation.prisma": "public-navigation",
+  "homepage.prisma": "homepage",
 };
 
 const SCHEMA_DIR = fileURLToPath(

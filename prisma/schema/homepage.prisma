@@ -1,0 +1,246 @@
+enum HomepagePublicationStatus {
+  NEVER_PUBLISHED
+  PUBLISHED
+  UNPUBLISHED
+
+  @@schema("homepage")
+}
+
+enum HomepageWorkflowStatus {
+  EDITING
+  PENDING_REVIEW
+  APPROVED
+  RETURNED
+
+  @@schema("homepage")
+}
+
+enum HomepageWorkflowAction {
+  SUBMIT
+  RETURN
+  APPROVE
+  RESTORE
+
+  @@schema("homepage")
+}
+
+enum HomepagePublicationAction {
+  PUBLISH
+  UNPUBLISH
+
+  @@schema("homepage")
+}
+
+enum HomepageSectionType {
+  HERO
+  NEWS
+
+  @@schema("homepage")
+}
+
+enum HomepageNewsMode {
+  AUTOMATIC
+  MANUAL
+
+  @@schema("homepage")
+}
+
+enum HomepageCtaTargetType {
+  SYSTEM_ROUTE
+  CONTENT_ROUTE
+  EXTERNAL_LINK
+
+  @@schema("homepage")
+}
+
+enum HomepageContentTargetKind {
+  MANAGED_PAGE
+
+  @@schema("homepage")
+}
+
+model Homepage {
+  id                String                    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  singletonKey      String                    @unique @map("singleton_key")
+  publicationStatus HomepagePublicationStatus @default(NEVER_PUBLISHED) @map("publication_status")
+  liveRevisionId    String?                   @map("live_revision_id") @db.Uuid
+  activeRevisionId  String?                   @unique @map("active_revision_id") @db.Uuid
+  publishedAt       DateTime?                 @map("published_at") @db.Timestamptz(6)
+  unpublishedAt     DateTime?                 @map("unpublished_at") @db.Timestamptz(6)
+  createdAt         DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  liveRevision      HomepageRevision?          @relation("HomepageLiveRevision", fields: [liveRevisionId], references: [id])
+  activeRevision    HomepageRevision?          @relation("HomepageActiveRevision", fields: [activeRevisionId], references: [id])
+  revisions         HomepageRevision[]         @relation("HomepageRevisions")
+  workflowEvents    HomepageWorkflowEvent[]
+  publicationEvents HomepagePublicationEvent[]
+
+  @@map("homepage")
+  @@schema("homepage")
+}
+
+model HomepageRevision {
+  id                String                 @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  homepageId        String                 @map("homepage_id") @db.Uuid
+  revisionNumber    Int                    @map("revision_number")
+  workflowStatus    HomepageWorkflowStatus @default(EDITING) @map("workflow_status")
+  editVersion       Int                    @default(0) @map("edit_version")
+  basedOnRevisionId String?                @map("based_on_revision_id") @db.Uuid
+  createdById       String?                @map("created_by_id") @db.Uuid
+  submittedById     String?                @map("submitted_by_id") @db.Uuid
+  reviewedById      String?                @map("reviewed_by_id") @db.Uuid
+  submittedAt       DateTime?              @map("submitted_at") @db.Timestamptz(6)
+  reviewedAt        DateTime?              @map("reviewed_at") @db.Timestamptz(6)
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  homepage          Homepage                   @relation("HomepageRevisions", fields: [homepageId], references: [id])
+  basedOn           HomepageRevision?          @relation("HomepageRevisionLineage", fields: [basedOnRevisionId], references: [id])
+  derivedRevisions  HomepageRevision[]         @relation("HomepageRevisionLineage")
+  liveFor           Homepage[]                 @relation("HomepageLiveRevision")
+  activeFor         Homepage[]                 @relation("HomepageActiveRevision")
+  sections          HomepageSection[]
+  workflowEvents    HomepageWorkflowEvent[]
+  publicationEvents HomepagePublicationEvent[]
+
+  @@unique([homepageId, revisionNumber])
+  @@index([homepageId])
+  @@map("homepage_revision")
+  @@schema("homepage")
+}
+
+model HomepageSection {
+  id          String              @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  revisionId  String              @map("revision_id") @db.Uuid
+  sectionType HomepageSectionType @map("section_type")
+  position    Int
+  enabled     Boolean             @default(true)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  revision HomepageRevision     @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  hero     HomepageHeroSection?
+  news     HomepageNewsSection?
+
+  @@unique([revisionId, sectionType])
+  @@unique([revisionId, position])
+  @@index([revisionId])
+  @@map("homepage_section")
+  @@schema("homepage")
+}
+
+model HomepageHeroSection {
+  id                String                     @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  sectionId         String                     @unique @map("section_id") @db.Uuid
+  ctaEnabled        Boolean                    @default(false) @map("cta_enabled")
+  ctaTargetType     HomepageCtaTargetType?     @map("cta_target_type")
+  systemRouteKey    String?                    @map("system_route_key")
+  contentTargetKind HomepageContentTargetKind? @map("content_target_kind")
+  contentTargetId   String?                    @map("content_target_id") @db.Uuid
+  externalUrl       String?                    @map("external_url")
+  createdAt         DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  section      HomepageSection           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  translations HomepageHeroTranslation[]
+
+  @@map("homepage_hero_section")
+  @@schema("homepage")
+}
+
+model HomepageHeroTranslation {
+  id             String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  heroSectionId  String   @map("hero_section_id") @db.Uuid
+  locale         String
+  title          String   @default("")
+  supportingText String   @default("") @map("supporting_text")
+  ctaLabel       String   @default("") @map("cta_label")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  heroSection HomepageHeroSection @relation(fields: [heroSectionId], references: [id], onDelete: Cascade)
+
+  @@unique([heroSectionId, locale])
+  @@map("homepage_hero_translation")
+  @@schema("homepage")
+}
+
+model HomepageNewsSection {
+  id        String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  sectionId String           @unique @map("section_id") @db.Uuid
+  mode      HomepageNewsMode @default(AUTOMATIC)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  section      HomepageSection           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  translations HomepageNewsTranslation[]
+  manualItems  HomepageNewsManualItem[]
+
+  @@map("homepage_news_section")
+  @@schema("homepage")
+}
+
+model HomepageNewsTranslation {
+  id             String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  newsSectionId  String   @map("news_section_id") @db.Uuid
+  locale         String
+  sectionHeading String   @default("") @map("section_heading")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  newsSection HomepageNewsSection @relation(fields: [newsSectionId], references: [id], onDelete: Cascade)
+
+  @@unique([newsSectionId, locale])
+  @@map("homepage_news_translation")
+  @@schema("homepage")
+}
+
+model HomepageNewsManualItem {
+  id            String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  newsSectionId String   @map("news_section_id") @db.Uuid
+  newsId        String   @map("news_id") @db.Uuid
+  position      Int
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  newsSection HomepageNewsSection @relation(fields: [newsSectionId], references: [id], onDelete: Cascade)
+
+  @@unique([newsSectionId, newsId])
+  @@unique([newsSectionId, position])
+  @@index([newsId])
+  @@map("homepage_news_manual_item")
+  @@schema("homepage")
+}
+
+model HomepageWorkflowEvent {
+  id         String                 @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  homepageId String                 @map("homepage_id") @db.Uuid
+  revisionId String                 @map("revision_id") @db.Uuid
+  action     HomepageWorkflowAction
+  fromStatus HomepageWorkflowStatus @map("from_status")
+  toStatus   HomepageWorkflowStatus @map("to_status")
+  comment    String?
+  actorId    String?                @map("actor_id") @db.Uuid
+  createdAt  DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  homepage Homepage         @relation(fields: [homepageId], references: [id])
+  revision HomepageRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([homepageId])
+  @@map("homepage_workflow_event")
+  @@schema("homepage")
+}
+
+model HomepagePublicationEvent {
+  id         String                    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  homepageId String                    @map("homepage_id") @db.Uuid
+  revisionId String                    @map("revision_id") @db.Uuid
+  action     HomepagePublicationAction
+  reason     String?
+  actorId    String?                   @map("actor_id") @db.Uuid
+  createdAt  DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  homepage Homepage         @relation(fields: [homepageId], references: [id])
+  revision HomepageRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([homepageId])
+  @@map("homepage_publication_event")
+  @@schema("homepage")
+}
