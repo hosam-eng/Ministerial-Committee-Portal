@@ -6,6 +6,11 @@ import en from "../../messages/en.json";
 import { getFormattingLocale, resolveRequestConfig } from "@/i18n/config";
 import { getDirection, routing } from "@/i18n/routing";
 import { PERMISSION_KEYS } from "@/modules/identity/domain/permissions";
+import type { HomepageCompletenessIssueKey } from "@/modules/homepage";
+import {
+  collectHomepageCompletenessIssues,
+  emptyHomepageDraft,
+} from "@/modules/homepage";
 
 function permissionLabel(catalog: typeof en, key: string): string | undefined {
   const labels = catalog.access.permissions;
@@ -20,6 +25,43 @@ function permissionLabel(catalog: typeof en, key: string): string | undefined {
     return undefined;
   }, labels);
   return typeof node === "string" ? node : undefined;
+}
+
+const HOMEPAGE_COMPLETENESS_CODES = [
+  "hero.title.bilingual",
+  "hero.cta.labels.bilingual",
+  "hero.cta.target",
+  "news.heading.bilingual",
+  "news.manual.required",
+  "news.targets.unavailable",
+] as const satisfies readonly HomepageCompletenessIssueKey[];
+
+function nestedMessage(
+  catalog: typeof en,
+  root: "homepage",
+  dottedKey: string,
+): string | undefined {
+  const node = dottedKey.split(".").reduce<unknown>((current, segment) => {
+    if (
+      current !== null &&
+      typeof current === "object" &&
+      !Array.isArray(current)
+    ) {
+      return (current as Record<string, unknown>)[segment];
+    }
+    return undefined;
+  }, catalog[root].completeness);
+  return typeof node === "string" ? node : undefined;
+}
+
+function assertNoDottedJsonKeys(value: unknown, path: string) {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return;
+  }
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    expect(key, `${path}.${key}`).not.toMatch(/\./);
+    assertNoDottedJsonKeys(child, `${path}.${key}`);
+  }
 }
 
 function permissionGroupLabel(
@@ -122,6 +164,35 @@ describe("message catalog alignment", () => {
   it("language-switch labels point at the other language", () => {
     expect(ar.home.switchToLanguage).toBe("English");
     expect(en.home.switchToLanguage).toBe("العربية");
+  });
+
+  it("homepage completeness messages use nested keys (no literal dots)", () => {
+    assertNoDottedJsonKeys(en.homepage.completeness, "homepage.completeness");
+    assertNoDottedJsonKeys(ar.homepage.completeness, "homepage.completeness");
+  });
+
+  it("resolves every homepage completeness code in ar and en", () => {
+    for (const code of HOMEPAGE_COMPLETENESS_CODES) {
+      for (const catalog of [ar, en]) {
+        const label = nestedMessage(catalog, "homepage", code);
+        expect(label, code).toBeDefined();
+        expect(label!.trim().length).toBeGreaterThan(0);
+        expect(label).not.toBe(code);
+      }
+    }
+  });
+
+  it("maps incomplete homepage drafts to localized completeness messages", () => {
+    const draft = emptyHomepageDraft();
+    draft.sections[0]!.hero!.translations.ar.title = "ع";
+    draft.sections[0]!.hero!.translations.en.title = "E";
+    const issues = collectHomepageCompletenessIssues(draft);
+    expect(issues).toContain("news.heading.bilingual");
+    const enLabel = nestedMessage(en, "homepage", "news.heading.bilingual");
+    expect(enLabel).toMatch(/News section heading/i);
+    expect(collectHomepageCompletenessIssues(emptyHomepageDraft())).toContain(
+      "hero.title.bilingual",
+    );
   });
 
   it("localizes every seeded permission key for the roles admin UI", () => {

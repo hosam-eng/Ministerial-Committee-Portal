@@ -21,9 +21,13 @@ export {
   getEditorialNews,
   listEditorialNews,
   listPublishedNews,
+  listLatestPublishedNews,
+  resolvePublishedNewsByIds,
+  listNewsHomepagePickerTargets,
   resolvePublishedNewsBySlug,
   type PublicNews,
   type PublishedNewsResolution,
+  type NewsHomepagePickerItem,
 } from "./news-service";
 export {
   NewsEditor,

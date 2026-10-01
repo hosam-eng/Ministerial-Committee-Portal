@@ -421,7 +421,8 @@
       "publishing": "الأخبار والنشر",
       "reference_data": "البيانات المرجعية",
       "site_settings": "إعدادات الموقع",
-      "navigation": "إدارة التنقل"
+      "navigation": "إدارة التنقل",
+      "homepage": "الصفحة الرئيسية"
     },
     "links": {
       "home": "لوحة الإدارة",
@@ -527,6 +528,12 @@
         "edit": "تعديل إدارة التنقل",
         "review": "مراجعة إدارة التنقل",
         "publish": "نشر إدارة التنقل"
+      },
+      "homepage": {
+        "read": "عرض الصفحة الرئيسية",
+        "edit": "تحرير الصفحة الرئيسية",
+        "review": "مراجعة الصفحة الرئيسية",
+        "publish": "نشر الصفحة الرئيسية"
       }
     },
     "errors": {
@@ -899,6 +906,173 @@
       "INVALID_ORDER": "ترتيب العناصر غير صالح.",
       "DUPLICATE_ITEM_KEY": "هوية عنصر التنقل مكررة.",
       "INVALID_ITEM_TYPE": "عنصر التنقل غير صالح."
+    }
+  },
+  "homepage": {
+    "nav": "الصفحة الرئيسية",
+    "section": "الحوكمة",
+    "title": "الصفحة الرئيسية",
+    "intro": "إدارة قسم البطل وقسم الأخبار على الصفحة العامة.",
+    "statusTitle": "حالة الصفحة الرئيسية",
+    "publicationLabel": "النشر",
+    "editorialLabel": "المراجعة التحريرية",
+    "liveRevision": "المراجعة المنشورة",
+    "revisionNumber": "المراجعة {number}",
+    "notLive": "غير منشورة",
+    "noActive": "لا توجد مراجعة تحريرية نشطة.",
+    "liveUnchanged": "تبقى الصفحة المنشورة دون تغيير حتى نشر هذه المراجعة.",
+    "save": "حفظ المسودة",
+    "saving": "جارٍ الحفظ…",
+    "saved": "تم حفظ المسودة.",
+    "previewAr": "معاينة العربية",
+    "previewEn": "معاينة الإنجليزية",
+    "previewBanner": "معاينة. هذه المراجعة غير منشورة.",
+    "previewBack": "العودة إلى المحرر",
+    "previewIncomplete": "لا يمكن إرسال هذه المراجعة أو نشرها حتى تُعالَج النقاط أدناه.",
+    "completeness": {
+      "intro": "أكمل ما يلي قبل الإرسال أو النشر:",
+      "hero": {
+        "title": {
+          "bilingual": "يجب إدخال عنوان البطل بالعربية والإنجليزية."
+        },
+        "cta": {
+          "labels": {
+            "bilingual": "يجب إدخال تسمية زر الإجراء بالعربية والإنجليزية."
+          },
+          "target": "يجب تحديد هدف صالح لزر الإجراء."
+        }
+      },
+      "news": {
+        "heading": {
+          "bilingual": "يجب إدخال عنوان قسم الأخبار بالعربية والإنجليزية."
+        },
+        "manual": {
+          "required": "يجب اختيار خبر واحد على الأقل عند استخدام الوضع اليدوي."
+        },
+        "targets": {
+          "unavailable": "يتضمن قسم الأخبار عناصر غير متاحة للنشر."
+        }
+      }
+    },
+    "rail": {
+      "preview": "معاينة",
+      "workflow": "سير العمل التحريري",
+      "unpublish": "إلغاء النشر"
+    },
+    "sections": {
+      "HERO": "البطل",
+      "NEWS": "الأخبار"
+    },
+    "newsMode": {
+      "AUTOMATIC": "أحدث الأخبار المنشورة (تلقائي)",
+      "MANUAL": "اختيار يدوي (حتى 3)"
+    },
+    "fields": {
+      "language_ar": "العربية",
+      "language_en": "English",
+      "heroTitle": "عنوان البطل",
+      "heroSupportingText": "النص الداعم",
+      "heroCtaLabel": "تسمية زر الإجراء",
+      "ctaEnabled": "تفعيل زر الإجراء",
+      "ctaTargetType": "نوع هدف الإجراء",
+      "targetSystemRoute": "مسار نظام",
+      "targetContentRoute": "صفحة مُدارة",
+      "targetExternalLink": "رابط HTTPS خارجي",
+      "systemRouteKey": "مسار النظام",
+      "managedPage": "صفحة مُدارة",
+      "externalUrl": "رابط HTTPS",
+      "newsMode": "وضع اختيار الأخبار",
+      "newsHeading": "عنوان القسم"
+    },
+    "ui": {
+      "sectionList": "أقسام الصفحة الرئيسية",
+      "moveUp": "تحريك لأعلى",
+      "moveDown": "تحريك لأسفل",
+      "enabled": "مفعّل",
+      "disabled": "معطّل",
+      "draftRail": "المسودة",
+      "selectPage": "اختر صفحة",
+      "unavailable": "غير متاح للعامة",
+      "notPubliclyAvailable": "غير متاح للعامة",
+      "selectedManualNews": "الأخبار المختارة",
+      "addManualNews": "إضافة خبر",
+      "removeManualNews": "إزالة",
+      "addNewsItem": "إضافة «{title}»",
+      "noSelectedManualNews": "لم يُختَر أي خبر بعد. يمكنك إضافة حتى ثلاثة عناصر منشورة أدناه.",
+      "noAvailableManualNews": "لا توجد أخبار منشورة إضافية متاحة للإضافة.",
+      "manualNewsMaxReached": "تم اختيار ثلاثة أخبار. أزل واحداً لإضافة خبر آخر.",
+      "automaticNewsHint": "ستظهر ثلاثة أحدث الأخبار المنشورة في هذا اللغة عند نشر الصفحة."
+    },
+    "public": {
+      "viewAllNews": "عرض كل الأخبار"
+    },
+    "actions": {
+      "submit": "إرسال للمراجعة",
+      "return": "إرجاع",
+      "approve": "اعتماد",
+      "publish": "نشر",
+      "unpublish": "إلغاء النشر",
+      "editPublished": "تحرير الصفحة المنشورة",
+      "restore": "استعادة كمسودة جديدة",
+      "returnComment": "سبب الإرجاع",
+      "unpublishReason": "سبب إلغاء النشر"
+    },
+    "publication": {
+      "NEVER_PUBLISHED": "لم تُنشر",
+      "PUBLISHED": "منشورة",
+      "UNPUBLISHED": "غير منشورة"
+    },
+    "workflow": {
+      "EDITING": "تحرير",
+      "PENDING_REVIEW": "بانتظار المراجعة",
+      "APPROVED": "معتمدة",
+      "RETURNED": "مُرجعة"
+    },
+    "events": {
+      "SUBMIT": "أُرسلت للمراجعة",
+      "RETURN": "أُرجعت",
+      "APPROVE": "اعتُمدت",
+      "RESTORE": "استُعيدت كمسودة",
+      "PUBLISH": "نُشرت",
+      "UNPUBLISH": "أُلغي نشرها"
+    },
+    "results": {
+      "submitted": "أُرسلت للمراجعة.",
+      "returned": "أُرجعت مع مراجعة تحرير جديدة.",
+      "approved": "اعتُمدت للنشر.",
+      "published": "نُشرت على الموقع العام.",
+      "unpublished": "أُزيلت من الموقع العام.",
+      "editing": "بدأت مراجعة تحرير جديدة.",
+      "restored": "استُعيدت كمسودة تحرير."
+    },
+    "history": {
+      "title": "السجل",
+      "revisions": "المراجعات",
+      "workflow": "سير العمل",
+      "publication": "النشر"
+    },
+    "errors": {
+      "generic": "تعذّر إكمال العملية.",
+      "denied": "ليست لديك صلاحية لهذا الإجراء.",
+      "NOT_FOUND": "الصفحة الرئيسية غير موجودة.",
+      "INVALID_WORKFLOW_STATE": "هذا الإجراء غير مسموح في حالة سير العمل الحالية.",
+      "CONCURRENT_MODIFICATION": "قام شخص آخر بحفظ تغييرات. أعد التحميل وحاول مجدداً.",
+      "NO_ACTIVE_REVISION": "لا توجد مراجعة تحريرية نشطة.",
+      "ACTIVE_REVISION_EXISTS": "توجد مراجعة تحريرية نشطة بالفعل.",
+      "ACTIVE_EDITING_EXISTS": "أكمل أو أرسل المسودة الحالية أولاً.",
+      "REVISION_NOT_FOUND": "المراجعة غير موجودة.",
+      "RETURN_COMMENT_REQUIRED": "سبب الإرجاع مطلوب.",
+      "UNPUBLISH_REASON_REQUIRED": "سبب إلغاء النشر مطلوب.",
+      "SELF_APPROVAL_FORBIDDEN": "لا يمكنك اعتماد إرسالك الخاص.",
+      "INVALID_DRAFT": "مسودة الصفحة الرئيسية غير صالحة.",
+      "INVALID_SECTION": "قسم الصفحة الرئيسية غير صالح.",
+      "INVALID_SYSTEM_ROUTE": "اختر مسار نظام صالحاً (الرئيسية أو الأخبار).",
+      "INVALID_CONTENT_TARGET": "اختر صفحة مُدارة صالحة.",
+      "INVALID_EXTERNAL_URL": "يجب أن تستخدم الروابط الخارجية عناوين HTTPS آمنة.",
+      "INVALID_CTA": "زر الإجراء في البطل غير صالح.",
+      "INVALID_NEWS_SELECTION": "اختيار الأخبار اليدوي غير صالح (من 1 إلى 3 عناصر منشورة).",
+      "UNAVAILABLE_TARGET": "هدف واحد أو أكثر غير متاح للعامة.",
+      "BILINGUAL_REQUIRED": "المحتوى العربي والإنجليزي مطلوب."
     }
   }
 }

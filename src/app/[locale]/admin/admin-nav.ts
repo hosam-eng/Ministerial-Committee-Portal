@@ -56,5 +56,11 @@ export function buildAdminNav(
       label: t("navigation.nav"),
     });
   }
+  if (permissions.has(PERMISSIONS.HOMEPAGE_READ)) {
+    items.push({
+      href: `/${locale}/admin/homepage`,
+      label: t("homepage.nav"),
+    });
+  }
   return items;
 }

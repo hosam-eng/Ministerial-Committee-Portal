@@ -421,7 +421,8 @@
       "publishing": "News & Publishing",
       "reference_data": "Reference Data",
       "site_settings": "Site Settings",
-      "navigation": "Public Navigation"
+      "navigation": "Public Navigation",
+      "homepage": "Homepage"
     },
     "links": {
       "home": "Admin console",
@@ -527,6 +528,12 @@
         "edit": "Edit Public Navigation",
         "review": "Review Public Navigation",
         "publish": "Publish Public Navigation"
+      },
+      "homepage": {
+        "read": "View Homepage",
+        "edit": "Edit Homepage",
+        "review": "Review Homepage",
+        "publish": "Publish Homepage"
       }
     },
     "errors": {
@@ -899,6 +906,173 @@
       "INVALID_ORDER": "Sibling order is invalid.",
       "DUPLICATE_ITEM_KEY": "Navigation item identity is duplicated.",
       "INVALID_ITEM_TYPE": "The navigation item is invalid."
+    }
+  },
+  "homepage": {
+    "nav": "Homepage",
+    "section": "Governance",
+    "title": "Homepage",
+    "intro": "Manage the public landing hero and news highlight sections.",
+    "statusTitle": "Homepage status",
+    "publicationLabel": "Publication",
+    "editorialLabel": "Editorial revision",
+    "liveRevision": "Live revision",
+    "revisionNumber": "Revision {number}",
+    "notLive": "Not live",
+    "noActive": "No active editorial revision.",
+    "liveUnchanged": "The live homepage stays unchanged until this editorial revision is published.",
+    "save": "Save draft",
+    "saving": "Saving…",
+    "saved": "Draft saved.",
+    "previewAr": "Preview Arabic",
+    "previewEn": "Preview English",
+    "previewBanner": "Preview. This homepage revision is not live.",
+    "previewBack": "Back to the editor",
+    "previewIncomplete": "This revision is not ready for submit or publish until the items below are resolved.",
+    "completeness": {
+      "intro": "Complete the following before submit or publish:",
+      "hero": {
+        "title": {
+          "bilingual": "Hero title is required in both Arabic and English."
+        },
+        "cta": {
+          "labels": {
+            "bilingual": "Call-to-action label is required in both Arabic and English."
+          },
+          "target": "A valid call-to-action target is required."
+        }
+      },
+      "news": {
+        "heading": {
+          "bilingual": "News section heading is required in both Arabic and English."
+        },
+        "manual": {
+          "required": "At least one News item is required in Manual mode."
+        },
+        "targets": {
+          "unavailable": "The News section contains items that are not currently publishable."
+        }
+      }
+    },
+    "rail": {
+      "preview": "Preview",
+      "workflow": "Editorial workflow",
+      "unpublish": "Unpublish"
+    },
+    "sections": {
+      "HERO": "Hero",
+      "NEWS": "News highlight"
+    },
+    "newsMode": {
+      "AUTOMATIC": "Latest published news (automatic)",
+      "MANUAL": "Manual selection (up to 3)"
+    },
+    "fields": {
+      "language_ar": "Arabic",
+      "language_en": "English",
+      "heroTitle": "Hero title",
+      "heroSupportingText": "Supporting text",
+      "heroCtaLabel": "Call-to-action label",
+      "ctaEnabled": "Enable call-to-action button",
+      "ctaTargetType": "Call-to-action target type",
+      "targetSystemRoute": "System route",
+      "targetContentRoute": "Managed page",
+      "targetExternalLink": "External HTTPS link",
+      "systemRouteKey": "System route",
+      "managedPage": "Managed page",
+      "externalUrl": "HTTPS URL",
+      "newsMode": "News selection mode",
+      "newsHeading": "Section heading"
+    },
+    "ui": {
+      "sectionList": "Homepage sections",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "draftRail": "Draft",
+      "selectPage": "Select a page",
+      "unavailable": "not publicly available",
+      "notPubliclyAvailable": "Not publicly available",
+      "selectedManualNews": "Selected news",
+      "addManualNews": "Add news",
+      "removeManualNews": "Remove",
+      "addNewsItem": "Add “{title}”",
+      "noSelectedManualNews": "No news selected yet. Add up to three published items below.",
+      "noAvailableManualNews": "No additional published news is available to add.",
+      "manualNewsMaxReached": "Three news items are already selected. Remove one to add another.",
+      "automaticNewsHint": "The three most recently published news items in this locale will appear when the homepage is live."
+    },
+    "public": {
+      "viewAllNews": "View all news"
+    },
+    "actions": {
+      "submit": "Submit for review",
+      "return": "Return",
+      "approve": "Approve",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "editPublished": "Edit published homepage",
+      "restore": "Restore as new draft",
+      "returnComment": "Reason for return",
+      "unpublishReason": "Reason for unpublishing"
+    },
+    "publication": {
+      "NEVER_PUBLISHED": "Never published",
+      "PUBLISHED": "Published",
+      "UNPUBLISHED": "Unpublished"
+    },
+    "workflow": {
+      "EDITING": "Editing",
+      "PENDING_REVIEW": "Pending review",
+      "APPROVED": "Approved",
+      "RETURNED": "Returned"
+    },
+    "events": {
+      "SUBMIT": "Submitted for review",
+      "RETURN": "Returned",
+      "APPROVE": "Approved",
+      "RESTORE": "Restored as new draft",
+      "PUBLISH": "Published",
+      "UNPUBLISH": "Unpublished"
+    },
+    "results": {
+      "submitted": "Submitted for review.",
+      "returned": "Returned with a new editing revision.",
+      "approved": "Approved for publication.",
+      "published": "Published to the public site.",
+      "unpublished": "Removed from the public site.",
+      "editing": "New editing revision started.",
+      "restored": "Restored as a new editing revision."
+    },
+    "history": {
+      "title": "History",
+      "revisions": "Revisions",
+      "workflow": "Workflow",
+      "publication": "Publication"
+    },
+    "errors": {
+      "generic": "The operation could not be completed.",
+      "denied": "You do not have permission for this action.",
+      "NOT_FOUND": "Homepage was not found.",
+      "INVALID_WORKFLOW_STATE": "This action is not allowed in the current workflow state.",
+      "CONCURRENT_MODIFICATION": "Someone else saved changes. Reload and try again.",
+      "NO_ACTIVE_REVISION": "No active editorial revision.",
+      "ACTIVE_REVISION_EXISTS": "An active editorial revision already exists.",
+      "ACTIVE_EDITING_EXISTS": "Finish or submit the current draft first.",
+      "REVISION_NOT_FOUND": "Revision not found.",
+      "RETURN_COMMENT_REQUIRED": "A return comment is required.",
+      "UNPUBLISH_REASON_REQUIRED": "An unpublish reason is required.",
+      "SELF_APPROVAL_FORBIDDEN": "You cannot approve your own submission.",
+      "INVALID_DRAFT": "The homepage draft is invalid.",
+      "INVALID_SECTION": "A homepage section is invalid.",
+      "INVALID_SYSTEM_ROUTE": "Choose a valid system route (Home or News).",
+      "INVALID_CONTENT_TARGET": "Choose a valid managed page.",
+      "INVALID_EXTERNAL_URL": "External links must use safe HTTPS URLs.",
+      "INVALID_CTA": "The hero call-to-action is invalid.",
+      "INVALID_NEWS_SELECTION": "Manual news selection is invalid (choose one to three published items).",
+      "UNAVAILABLE_TARGET": "One or more targets are not publicly available.",
+      "BILINGUAL_REQUIRED": "Arabic and English content is required."
     }
   }
 }
