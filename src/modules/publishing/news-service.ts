@@ -7,6 +7,11 @@ import { getRuntimeDatabase } from "@/platform/runtime";
 import { PERMISSIONS, requireActorPermission } from "@/modules/identity";
 
 import {
+  formatCalendarDateInput,
+  parseCalendarDateInput,
+  todayCalendarDate,
+} from "./display-date";
+import {
   NewsError,
   newsBodyText,
   readNewsBody,
@@ -36,6 +41,7 @@ async function active(tx: Transaction, newsId: string) {
 }
 
 function contentOf(revision: {
+  displayDate: Date | null;
   translations: {
     locale: string;
     title: string;
@@ -48,6 +54,9 @@ function contentOf(revision: {
   categories: { categoryId: string }[];
 }): NewsDraftInput {
   return {
+    displayDate: revision.displayDate
+      ? formatCalendarDateInput(revision.displayDate)
+      : null,
     translations: Object.fromEntries(
       revision.translations.map((t) => [
         t.locale,
@@ -118,6 +127,7 @@ async function clone(
       revisionNumber: (last?.revisionNumber ?? 0) + 1,
       basedOnRevisionId: source.id,
       createdById: actorId,
+      displayDate: source.displayDate,
       translations: { create: translationRows(contentOf(source)) },
       categories: {
         create: source.categories.map(({ categoryId }) => ({ categoryId })),
@@ -151,7 +161,12 @@ export async function createNewsDraft(
   return database.prisma.$transaction(async (tx) => {
     const news = await tx.news.create({ data: { createdById: actorId } });
     const revision = await tx.newsRevision.create({
-      data: { newsId: news.id, revisionNumber: 1, createdById: actorId },
+      data: {
+        newsId: news.id,
+        revisionNumber: 1,
+        createdById: actorId,
+        displayDate: todayCalendarDate(),
+      },
     });
     await tx.news.update({
       where: { id: news.id },
@@ -180,13 +195,19 @@ export async function saveNewsDraft(
     if (revision.editVersion !== expectedVersion)
       throw new NewsError("CONCURRENT_MODIFICATION");
     await checkCategories(tx, revision.id, draft.categoryIds);
+    const displayDate = draft.displayDate
+      ? parseCalendarDateInput(draft.displayDate)
+      : null;
     const changed = await tx.newsRevision.updateMany({
       where: {
         id: revision.id,
         workflowStatus: "EDITING",
         editVersion: expectedVersion,
       },
-      data: { editVersion: { increment: 1 } },
+      data: {
+        editVersion: { increment: 1 },
+        displayDate,
+      },
     });
     if (!changed.count) throw new NewsError("CONCURRENT_MODIFICATION");
     await tx.newsRevisionTranslation.deleteMany({
@@ -516,9 +537,15 @@ export interface PublicNews {
   slug: string;
   seoTitle: string | null;
   seoDescription: string | null;
-  publishedAt: Date;
+  displayDate: Date;
   counterpartSlug: string | null;
 }
+
+const publicNewsOrder = [
+  { liveRevision: { displayDate: "desc" as const } },
+  { publishedAt: "desc" as const },
+  { id: "desc" as const },
+];
 
 const publicNewsSelection = {
   id: true,
@@ -526,6 +553,7 @@ const publicNewsSelection = {
   liveRevision: {
     select: {
       id: true,
+      displayDate: true,
       translations: {
         select: {
           locale: true,
@@ -567,7 +595,7 @@ function toPublicNews(
   locale: NewsLocale,
 ): PublicNews | null {
   const revision = row.liveRevision;
-  if (!revision || !row.publishedAt) return null;
+  if (!revision || !row.publishedAt || !revision.displayDate) return null;
   const translation = publicTranslation(
     revision.translations.find((item) => item.locale === locale),
   );
@@ -587,7 +615,7 @@ function toPublicNews(
     slug: translation.slug,
     seoTitle: translation.seoTitle,
     seoDescription: translation.seoDescription,
-    publishedAt: row.publishedAt,
+    displayDate: revision.displayDate,
     counterpartSlug: counterpart?.slug ?? null,
   };
 }
@@ -604,7 +632,7 @@ export async function listLatestPublishedNews(
       liveRevision: { translations: { some: { locale } } },
     },
     select: publicNewsSelection,
-    orderBy: { publishedAt: "desc" },
+    orderBy: publicNewsOrder,
     take: limit,
   });
   return rows.flatMap((row) => {
@@ -640,7 +668,7 @@ export type NewsHomepagePickerItem = {
   id: string;
   title: string;
   isPubliclyAvailable: boolean;
-  publishedAt: Date | null;
+  displayDate: Date | null;
 };
 
 export async function listNewsHomepagePickerTargets(
@@ -682,7 +710,7 @@ export async function listNewsHomepagePickerTargets(
       id: row.id,
       title: liveTitle.trim() || draftTitle.trim() || row.id,
       isPubliclyAvailable: published,
-      publishedAt: published ? row.publishedAt : null,
+      displayDate: published ? (row.liveRevision?.displayDate ?? null) : null,
     };
   });
 }
@@ -698,7 +726,7 @@ export async function listPublishedNews(
       liveRevision: { translations: { some: { locale } } },
     },
     select: publicNewsSelection,
-    orderBy: { publishedAt: "desc" },
+    orderBy: publicNewsOrder,
   });
   return rows.flatMap((row) => {
     const item = toPublicNews(row, locale);

@@ -34,7 +34,7 @@ export type HomepagePickerTarget = {
   id: string;
   title: string;
   isPubliclyAvailable: boolean;
-  publishedAt?: Date | string | null;
+  displayDate?: Date | string | null;
 };
 
 export type HomepageEditorMessages = {
@@ -492,10 +492,11 @@ export function HomepageEditor({
                       {manualSelectedRows.map((row, index) => {
                         const disableReorder = manualSelectedRows.length <= 1;
                         const publishedLabel =
-                          row.publishedAt && row.isPubliclyAvailable
+                          row.displayDate && row.isPubliclyAvailable
                             ? new Intl.DateTimeFormat(locale, {
                                 dateStyle: "medium",
-                              }).format(new Date(row.publishedAt))
+                                timeZone: "UTC",
+                              }).format(new Date(row.displayDate))
                             : null;
                         return (
                           <li key={row.id}>

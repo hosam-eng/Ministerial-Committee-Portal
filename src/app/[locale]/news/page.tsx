@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing, type Locale } from "@/i18n/routing";
-import { listPublishedNews } from "@/modules/publishing";
+import {
+  calendarDateTimeAttribute,
+  formatPublicCalendarDate,
+  listPublishedNews,
+} from "@/modules/publishing";
 import { PublicShell } from "@/shared/ui/public-shell";
 
 import { resolvePublicChrome } from "../public-chrome";
@@ -40,11 +44,6 @@ export default async function NewsPage({
   const otherLocale = routing.locales.find(
     (candidate) => candidate !== locale,
   ) as Locale;
-  const date = new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-SA", {
-    dateStyle: "long",
-    timeZone: "Asia/Riyadh",
-  });
-
   const chrome = await resolvePublicChrome(t, locale, {
     switchHref: `/${otherLocale}/news`,
     currentPath: `/${locale}/news`,
@@ -67,8 +66,10 @@ export default async function NewsPage({
                 <article className="public-news-entry">
                   <p className="public-news-date">
                     {t("publicNews.publishedOn")}:{" "}
-                    <time dateTime={item.publishedAt.toISOString()}>
-                      {date.format(item.publishedAt)}
+                    <time
+                      dateTime={calendarDateTimeAttribute(item.displayDate)}
+                    >
+                      {formatPublicCalendarDate(item.displayDate, locale)}
                     </time>
                   </p>
                   <h2>

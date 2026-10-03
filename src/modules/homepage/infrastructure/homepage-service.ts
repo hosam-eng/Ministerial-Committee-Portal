@@ -545,7 +545,7 @@ function toPublicNewsItem(
     title: item.title,
     summary: item.summary,
     slug: item.slug,
-    publishedAt: item.publishedAt,
+    displayDate: item.displayDate,
     href: `/${locale}/news/${encodeURIComponent(item.slug)}`,
   };
 }

@@ -1,3 +1,5 @@
+import { parseCalendarDateInput } from "./display-date";
+
 export type NewsLocale = "ar" | "en";
 
 export type NewsBodyV1 = {
@@ -18,6 +20,8 @@ export type NewsTranslationInput = {
 export type NewsDraftInput = {
   translations: Partial<Record<NewsLocale, NewsTranslationInput>>;
   categoryIds: string[];
+  /** ISO calendar date YYYY-MM-DD; shared across locales. */
+  displayDate?: string | null;
 };
 
 export class NewsError extends Error {
@@ -78,6 +82,24 @@ export function validateDraft(
   ) {
     throw new NewsError("INVALID_REFERENCE");
   }
+  const displayDateRaw =
+    input.displayDate == null
+      ? null
+      : typeof input.displayDate === "string"
+        ? input.displayDate.trim()
+        : null;
+  if (complete) {
+    if (!displayDateRaw) throw new NewsError("DISPLAY_DATE_REQUIRED");
+    if (!parseCalendarDateInput(displayDateRaw))
+      throw new NewsError("INVALID_DISPLAY_DATE");
+  } else if (
+    input.displayDate != null &&
+    typeof input.displayDate === "string" &&
+    input.displayDate.trim() &&
+    !parseCalendarDateInput(input.displayDate)
+  ) {
+    throw new NewsError("INVALID_DISPLAY_DATE");
+  }
   const translations: NewsDraftInput["translations"] = {};
   for (const locale of ["ar", "en"] as const) {
     const row = input.translations[locale];
@@ -110,5 +132,9 @@ export function validateDraft(
     if (complete && !translations[locale]?.slug)
       throw new NewsError("TRANSLATION_INCOMPLETE");
   }
-  return { translations, categoryIds: [...new Set(input.categoryIds)] };
+  return {
+    translations,
+    categoryIds: [...new Set(input.categoryIds)],
+    displayDate: displayDateRaw || null,
+  };
 }
