@@ -141,6 +141,7 @@
     "unpublishTitle": "Remove from public view",
     "languages": { "ar": "Arabic content", "en": "English content" },
     "fields": {
+      "displayDate": "News date",
       "title": "Title",
       "summary": "Summary",
       "body": "News body",
@@ -209,6 +210,8 @@
       "ACTIVE_REVISION_EXISTS": "There is already an active editorial revision. Refresh the page.",
       "CONCURRENT_MODIFICATION": "Someone else changed this draft. Refresh the page before continuing; your changes were not saved.",
       "TRANSLATION_INCOMPLETE": "Complete the required Arabic and English title, summary, body and slug before submitting.",
+      "DISPLAY_DATE_REQUIRED": "Enter the News date before submitting.",
+      "INVALID_DISPLAY_DATE": "Enter a valid calendar date for the News date.",
       "INVALID_BODY": "Enter plain article text without HTML or other markup.",
       "INVALID_SLUG": "Use a slug made of letters or numbers separated by hyphens.",
       "SLUG_ALREADY_IN_USE": "A published or reserved URL already uses this slug. Restore to editing to correct it, then submit for review again.",

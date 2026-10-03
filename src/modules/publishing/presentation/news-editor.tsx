@@ -32,6 +32,7 @@ export interface NewsEditorMessages {
     noneAvailable: string;
   };
   fields: {
+    displayDate: string;
     title: string;
     summary: string;
     body: string;
@@ -177,6 +178,7 @@ export function NewsEditor({
   revision: {
     editVersion: number;
     categoryIds: string[];
+    displayDate: string;
     translations: Record<
       string,
       {
@@ -209,8 +211,9 @@ export function NewsEditor({
   const selectable = categoryOptions.filter(
     (option) => option.isActive || revision.categoryIds.includes(option.id),
   );
-  const [formValues, setFormValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
+  const [formValues, setFormValues] = useState<Record<string, string>>(() => ({
+    displayDate: revision.displayDate,
+    ...Object.fromEntries(
       Object.entries(revision.translations).flatMap(([language, fields]) =>
         Object.entries(fields).map(([name, value]) => [
           `${name}_${language}`,
@@ -218,7 +221,7 @@ export function NewsEditor({
         ]),
       ),
     ),
-  );
+  }));
   const fieldValue = (name: string, language: string) => ({
     value: formValues[`${name}_${language}`] ?? "",
     onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -259,6 +262,30 @@ export function NewsEditor({
               {selectedCategoryIds.map((id) => (
                 <input key={id} type="hidden" name="categoryId" value={id} />
               ))}
+              <div className="admin-form-section">
+                <h3 className="admin-form-section-title">
+                  {messages.sections.metadata}
+                </h3>
+                <div className="ui-field">
+                  <label htmlFor="displayDate">
+                    {messages.fields.displayDate}
+                  </label>
+                  <input
+                    id="displayDate"
+                    className="ui-input"
+                    type="date"
+                    name="displayDate"
+                    value={formValues.displayDate ?? ""}
+                    onChange={(event) => {
+                      setFormValues((current) => ({
+                        ...current,
+                        displayDate: event.target.value,
+                      }));
+                      setDirtyVersion(state.editVersion);
+                    }}
+                  />
+                </div>
+              </div>
               <div className="admin-form-section">
                 <h3 className="admin-form-section-title">
                   {messages.sections.categories}
@@ -356,6 +383,11 @@ export function NewsEditor({
             <input type="hidden" name="locale" value={locale} />
             <input type="hidden" name="newsId" value={newsId} />
             <input type="hidden" name="editVersion" value={state.editVersion} />
+            <input
+              type="hidden"
+              name="displayDate"
+              value={formValues.displayDate ?? ""}
+            />
             <div className="ui-action-group ui-action-group--stack">
               <button
                 className="ui-button ui-button-secondary"

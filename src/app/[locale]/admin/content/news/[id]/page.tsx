@@ -8,6 +8,7 @@ import {
   requireBackoffice,
 } from "@/modules/identity";
 import {
+  formatCalendarDateInput,
   getEditorialNews,
   listNewsCategoryOptions,
   newsBodyText,
@@ -150,6 +151,9 @@ export default async function NewsDetailPage({
             revision={{
               editVersion: editorial.editVersion,
               categoryIds: editorial.categories.map((row) => row.categoryId),
+              displayDate: editorial.displayDate
+                ? formatCalendarDateInput(editorial.displayDate)
+                : "",
               translations: Object.fromEntries(
                 editorial.translations.map((row) => [
                   row.locale,
@@ -184,6 +188,7 @@ export default async function NewsDetailPage({
               },
               languages: { ar: t("languages.ar"), en: t("languages.en") },
               fields: {
+                displayDate: t("fields.displayDate"),
                 title: t("fields.title"),
                 summary: t("fields.summary"),
                 body: t("fields.body"),

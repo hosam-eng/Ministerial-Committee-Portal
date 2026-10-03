@@ -11,7 +11,7 @@ export type PublicHomepageNewsItem = {
   title: string;
   summary: string;
   slug: string;
-  publishedAt: Date;
+  displayDate: Date;
   href: string;
 };
 

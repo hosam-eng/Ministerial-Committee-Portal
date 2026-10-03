@@ -1,3 +1,8 @@
+import {
+  calendarDateTimeAttribute,
+  formatPublicCalendarDate,
+} from "@/modules/publishing";
+
 import type { PublicHomepage } from "../domain/public-view";
 
 export type HomepagePublicMessages = {
@@ -14,11 +19,6 @@ export function HomepagePublicContent({
   homepage: PublicHomepage;
   messages: HomepagePublicMessages;
 }) {
-  const date = new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-SA", {
-    dateStyle: "long",
-    timeZone: "Asia/Riyadh",
-  });
-
   return (
     <div className="public-homepage">
       {homepage.sections.map((section, index) => {
@@ -72,8 +72,10 @@ export function HomepagePublicContent({
                     <article className="public-homepage-news-card">
                       <p className="public-news-date">
                         {messages.publishedOn}:{" "}
-                        <time dateTime={item.publishedAt.toISOString()}>
-                          {date.format(item.publishedAt)}
+                        <time
+                          dateTime={calendarDateTimeAttribute(item.displayDate)}
+                        >
+                          {formatPublicCalendarDate(item.displayDate, locale)}
                         </time>
                       </p>
                       <h3>

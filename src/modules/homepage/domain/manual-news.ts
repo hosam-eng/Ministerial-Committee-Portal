@@ -4,14 +4,14 @@ export type ManualNewsPickerTarget = {
   id: string;
   title: string;
   isPubliclyAvailable: boolean;
-  publishedAt?: Date | string | null;
+  displayDate?: Date | string | null;
 };
 
 export type SelectedManualNewsRow = {
   id: string;
   title: string;
   isPubliclyAvailable: boolean;
-  publishedAt?: Date | string | null;
+  displayDate?: Date | string | null;
 };
 
 export function addManualNewsId(
@@ -65,7 +65,7 @@ export function resolveSelectedManualNewsRows(
       id,
       title: target?.title?.trim() ? target.title : id,
       isPubliclyAvailable: target?.isPubliclyAvailable ?? false,
-      publishedAt: target?.publishedAt ?? null,
+      displayDate: target?.displayDate ?? null,
     };
   });
 }

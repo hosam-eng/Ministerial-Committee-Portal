@@ -3,7 +3,11 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing, type Locale } from "@/i18n/routing";
-import { resolvePublishedNewsBySlug } from "@/modules/publishing";
+import {
+  calendarDateTimeAttribute,
+  formatPublicCalendarDate,
+  resolvePublishedNewsBySlug,
+} from "@/modules/publishing";
 import {
   composePublicSeoDescription,
   composePublicSeoTitle,
@@ -74,10 +78,6 @@ export default async function NewsDetailPage({ params }: DetailParams) {
   const otherLocale = routing.locales.find(
     (candidate) => candidate !== locale,
   ) as Locale;
-  const date = new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-SA", {
-    dateStyle: "long",
-    timeZone: "Asia/Riyadh",
-  });
   const chrome = await resolvePublicChrome(t, locale, {
     switchHref: news.counterpartSlug
       ? `/${otherLocale}/news/${encodeURIComponent(news.counterpartSlug)}`
@@ -101,8 +101,8 @@ export default async function NewsDetailPage({ params }: DetailParams) {
             <h1>{news.title}</h1>
             <p className="public-news-date">
               {t("publicNews.publishedOn")}:{" "}
-              <time dateTime={news.publishedAt.toISOString()}>
-                {date.format(news.publishedAt)}
+              <time dateTime={calendarDateTimeAttribute(news.displayDate)}>
+                {formatPublicCalendarDate(news.displayDate, locale)}
               </time>
             </p>
             <p className="public-news-summary">{news.summary}</p>

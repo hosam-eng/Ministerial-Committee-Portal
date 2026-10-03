@@ -44,7 +44,7 @@ function publicNews(newsId: string, title: string) {
     title,
     summary: "",
     slug: title.toLowerCase(),
-    publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+    displayDate: new Date("2026-01-01T00:00:00.000Z"),
   };
 }
 

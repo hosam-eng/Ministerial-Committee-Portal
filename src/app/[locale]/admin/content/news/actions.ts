@@ -81,9 +81,11 @@ function draft(formData: FormData): NewsDraftInput {
       };
     }
   }
+  const displayDate = field(formData, "displayDate");
   return {
     translations,
     categoryIds: formData.getAll("categoryId").map(String),
+    displayDate: displayDate || null,
   };
 }
 
