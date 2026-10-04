@@ -15,6 +15,7 @@ import {
   resolveSelectedManualNewsRows,
 } from "../domain/manual-news";
 import type { HomepageSectionType } from "../domain/sections";
+import { patchHomepageHeroCtaForTargetTypeChange } from "../domain/hero-cta";
 import { HOMEPAGE_CTA_SYSTEM_ROUTE_KEYS } from "../domain/system-routes";
 
 import { HomepageActionBar } from "./homepage-action-bar";
@@ -366,12 +367,17 @@ export function HomepageEditor({
                     className="ui-input"
                     disabled={readOnly}
                     value={activeSection.hero.ctaTargetType || "SYSTEM_ROUTE"}
-                    onChange={(event) =>
-                      patchHero({
-                        ctaTargetType: event.target.value as
-                          "SYSTEM_ROUTE" | "CONTENT_ROUTE" | "EXTERNAL_LINK",
-                      })
-                    }
+                    onChange={(event) => {
+                      if (!activeSection.hero) return;
+                      const ctaTargetType = event.target.value as
+                        "SYSTEM_ROUTE" | "CONTENT_ROUTE" | "EXTERNAL_LINK";
+                      patchHero(
+                        patchHomepageHeroCtaForTargetTypeChange(
+                          activeSection.hero,
+                          ctaTargetType,
+                        ),
+                      );
+                    }}
                   >
                     <option value="SYSTEM_ROUTE">
                       {messages.fields.targetSystemRoute}

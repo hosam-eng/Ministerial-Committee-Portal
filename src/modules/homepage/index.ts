@@ -26,6 +26,7 @@ export {
 } from "./domain/manual-news";
 export {
   coalesceHomepageHeroCtaDraft,
+  patchHomepageHeroCtaForTargetTypeChange,
   validateHomepageHeroCta,
 } from "./domain/hero-cta";
 export {

@@ -22,6 +22,39 @@ export type HomepageHeroCtaDraft = {
 };
 
 /** UI may enable CTA before persisting target type; default to SYSTEM_ROUTE/HOME. */
+/** Clears fields incompatible with the new target type (editor draft boundary). */
+export function patchHomepageHeroCtaForTargetTypeChange(
+  cta: HomepageHeroCtaDraft,
+  ctaTargetType: HomepageCtaTargetType,
+): Partial<HomepageHeroCtaDraft> {
+  switch (ctaTargetType) {
+    case "SYSTEM_ROUTE":
+      return {
+        ctaTargetType,
+        systemRouteKey: cta.systemRouteKey,
+        contentTargetKind: "",
+        contentTargetId: "",
+        externalUrl: "",
+      };
+    case "CONTENT_ROUTE":
+      return {
+        ctaTargetType,
+        systemRouteKey: "",
+        contentTargetKind: cta.contentTargetKind,
+        contentTargetId: cta.contentTargetId,
+        externalUrl: "",
+      };
+    case "EXTERNAL_LINK":
+      return {
+        ctaTargetType,
+        systemRouteKey: "",
+        contentTargetKind: "",
+        contentTargetId: "",
+        externalUrl: cta.externalUrl,
+      };
+  }
+}
+
 export function coalesceHomepageHeroCtaDraft(
   cta: HomepageHeroCtaDraft,
 ): HomepageHeroCtaDraft {
