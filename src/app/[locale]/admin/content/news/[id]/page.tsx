@@ -142,6 +142,22 @@ export default async function NewsDetailPage({
         </div>
       </section>
       {live && editorial && <p className="news-notice">{t("liveUnchanged")}</p>}
+      {editorial && (
+        <div className="news-actions">
+          <a
+            className="ui-button ui-button-secondary"
+            href={`/ar/admin/preview/news/${editorial.id}`}
+          >
+            {t("previewAr")}
+          </a>
+          <a
+            className="ui-button ui-button-secondary"
+            href={`/en/admin/preview/news/${editorial.id}`}
+          >
+            {t("previewEn")}
+          </a>
+        </div>
+      )}
       <AdminWorkflowStack>
         {editorial?.workflowStatus === "EDITING" && canEdit ? (
           <NewsEditor
@@ -364,6 +380,22 @@ export default async function NewsDetailPage({
                 }
                 dateTime={revision.createdAt.toISOString()}
                 dateLabel={date(revision.createdAt)}
+                actions={
+                  <>
+                    <a
+                      className="ui-button ui-button-secondary ui-button-compact"
+                      href={`/ar/admin/preview/news/${revision.id}`}
+                    >
+                      {t("previewAr")}
+                    </a>
+                    <a
+                      className="ui-button ui-button-secondary ui-button-compact"
+                      href={`/en/admin/preview/news/${revision.id}`}
+                    >
+                      {t("previewEn")}
+                    </a>
+                  </>
+                }
               />
             ))}
           </AdminRevisionList>

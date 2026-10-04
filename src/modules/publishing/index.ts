@@ -30,7 +30,10 @@ export {
   listLatestPublishedNews,
   resolvePublishedNewsByIds,
   listNewsHomepagePickerTargets,
+  resolveNewsPreview,
   resolvePublishedNewsBySlug,
+  type NewsPreview,
+  type NewsPreviewArticle,
   type PublicNews,
   type PublishedNewsResolution,
   type NewsHomepagePickerItem,
@@ -41,6 +44,10 @@ export {
   type NewsEditorState,
   type NewsSubmitAction,
 } from "./presentation/news-editor";
+export {
+  PublicNewsArticle,
+  type PublicNewsArticleLabels,
+} from "./presentation/public-news-article";
 export {
   createNewsCategory,
   deleteNewsCategory,

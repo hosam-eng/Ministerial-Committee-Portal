@@ -4,8 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing, type Locale } from "@/i18n/routing";
 import {
-  calendarDateTimeAttribute,
-  formatPublicCalendarDate,
+  PublicNewsArticle,
   resolvePublishedNewsBySlug,
 } from "@/modules/publishing";
 import {
@@ -87,32 +86,19 @@ export default async function NewsDetailPage({ params }: DetailParams) {
 
   return (
     <PublicShell locale={locale} {...chrome}>
-      <div className="public-news public-news-detail">
-        <nav
-          aria-label={t("publicNews.breadcrumb")}
-          className="public-news-breadcrumb"
-        >
-          <a href={`/${locale}/news`}>{t("publicNews.title")}</a>
-          <span aria-hidden="true"> / </span>
-          <span aria-current="page">{news.title}</span>
-        </nav>
-        <article>
-          <header className="public-news-header">
-            <h1>{news.title}</h1>
-            <p className="public-news-date">
-              {t("publicNews.publishedOn")}:{" "}
-              <time dateTime={calendarDateTimeAttribute(news.displayDate)}>
-                {formatPublicCalendarDate(news.displayDate, locale)}
-              </time>
-            </p>
-            <p className="public-news-summary">{news.summary}</p>
-          </header>
-          <p className="public-news-body">{news.bodyText}</p>
-        </article>
-        <a className="public-news-back" href={`/${locale}/news`}>
-          {t("publicNews.back")}
-        </a>
-      </div>
+      <PublicNewsArticle
+        locale={locale}
+        title={news.title}
+        summary={news.summary}
+        bodyText={news.bodyText}
+        displayDate={news.displayDate}
+        labels={{
+          breadcrumb: t("publicNews.breadcrumb"),
+          listLabel: t("publicNews.title"),
+          publishedOn: t("publicNews.publishedOn"),
+          back: t("publicNews.back"),
+        }}
+      />
     </PublicShell>
   );
 }

@@ -20,6 +20,8 @@ describe("preview safety seam", () => {
     expect(previewRobots.index).toBe(false);
     expect(previewRobots.follow).toBe(false);
     expect(isPreviewPath("/ar/admin/preview/managed-pages/abc")).toBe(true);
+    expect(isPreviewPath("/en/admin/preview/news/abc")).toBe(true);
+    expect(isPreviewPath("/ar/news/story")).toBe(false);
     expect(isPreviewPath("/ar/pages/about")).toBe(false);
   });
 
@@ -43,5 +45,30 @@ describe("preview safety seam", () => {
     expect(live).not.toContain("@tiptap/react");
     expect(preview).not.toContain("dangerouslySetInnerHTML");
     expect(live).not.toContain("dangerouslySetInnerHTML");
+  });
+
+  it("uses the shared News article for preview and the live public page", () => {
+    const preview = readFileSync(
+      path.join(
+        root,
+        "src/app/[locale]/admin/preview/news/[revisionId]/page.tsx",
+      ),
+      "utf8",
+    );
+    const live = readFileSync(
+      path.join(root, "src/app/[locale]/news/[slug]/page.tsx"),
+      "utf8",
+    );
+    const headers = readFileSync(path.join(root, "next.config.ts"), "utf8");
+    expect(preview).toContain("PublicNewsArticle");
+    expect(live).toContain("PublicNewsArticle");
+    expect(preview).toContain("previewRobots");
+    expect(preview).toContain("requireBackoffice");
+    expect(preview).toContain("PreviewFrame");
+    expect(preview).toContain('dynamic = "force-dynamic"');
+    expect(live).not.toContain("admin/preview");
+    expect(headers).toContain("PREVIEW_CACHE_CONTROL");
+    expect(headers).toContain("PREVIEW_ROBOTS_TAG");
+    expect(headers).toContain("/:locale/admin/preview/:path*");
   });
 });

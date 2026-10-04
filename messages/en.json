@@ -109,6 +109,11 @@
     "notLive": "Not live",
     "noActive": "No active revision",
     "liveUnchanged": "The current live revision remains unchanged until this editorial revision is approved and published.",
+    "previewAr": "Preview Arabic",
+    "previewEn": "Preview English",
+    "previewBanner": "Preview. This revision is not the public page.",
+    "previewBack": "Back to the editor",
+    "previewIncomplete": "This language is incomplete. Empty fields are not filled from the other language.",
     "editorTitle": "Edit bilingual draft",
     "editorSections": {
       "content": "Content",
