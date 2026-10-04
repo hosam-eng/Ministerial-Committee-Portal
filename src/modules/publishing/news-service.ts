@@ -779,3 +779,64 @@ export async function resolvePublishedNewsBySlug(
     ? { kind: "redirect", slug: news.slug }
     : null;
 }
+
+export interface NewsPreviewArticle {
+  title: string;
+  summary: string;
+  bodyText: string;
+  displayDate: Date | null;
+}
+
+export interface NewsPreview {
+  newsId: string;
+  revisionId: string;
+  locale: NewsLocale;
+  incomplete: boolean;
+  article: NewsPreviewArticle;
+}
+
+export async function resolveNewsPreview(
+  actorId: string,
+  revisionId: string,
+  locale: NewsLocale,
+  database: Database = getRuntimeDatabase(),
+): Promise<NewsPreview | null> {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_READ);
+  const revision = await database.prisma.newsRevision.findUnique({
+    where: { id: revisionId },
+    include: { translations: true },
+  });
+  if (!revision) return null;
+  const translation = revision.translations.find(
+    (row) => row.locale === locale,
+  );
+  if (!translation) return null;
+  let bodyText = "";
+  let bodyValid = true;
+  try {
+    bodyText = newsBodyText(translation.body);
+  } catch (error) {
+    if (!(error instanceof NewsError) || error.code !== "INVALID_BODY") {
+      throw error;
+    }
+    bodyValid = false;
+  }
+  const summary = translation.summary ?? "";
+  return {
+    newsId: revision.newsId,
+    revisionId: revision.id,
+    locale,
+    incomplete:
+      !translation.title.trim() ||
+      !summary.trim() ||
+      !bodyValid ||
+      !bodyText.trim() ||
+      revision.displayDate == null,
+    article: {
+      title: translation.title,
+      summary,
+      bodyText,
+      displayDate: revision.displayDate,
+    },
+  };
+}
