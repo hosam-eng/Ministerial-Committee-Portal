@@ -8,7 +8,10 @@ import {
 } from "@testcontainers/postgresql";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { AccessDeniedError, bootstrapFirstAdministrator } from "@/modules/identity";
+import {
+  AccessDeniedError,
+  bootstrapFirstAdministrator,
+} from "@/modules/identity";
 import {
   approveNews,
   createNewsDraft,
@@ -60,7 +63,11 @@ function uriFor(user: string, password: string): string {
 
 const db = () => runtimeDatabase;
 
-function draft(slug: string, title: string, displayDate = "2024-06-01"): NewsDraftInput {
+function draft(
+  slug: string,
+  title: string,
+  displayDate = "2024-06-01",
+): NewsDraftInput {
   slugCounter += 1;
   const unique = `${slug}-${slugCounter}`;
   return {
@@ -207,7 +214,13 @@ describe("news historical restore", () => {
 
   it("restores a RETURNED revision", async () => {
     const { newsId, editVersion } = await createNewsDraft(adminId, db());
-    await saveNewsDraft(adminId, newsId, editVersion, draft("returned", "Returned"), db());
+    await saveNewsDraft(
+      adminId,
+      newsId,
+      editVersion,
+      draft("returned", "Returned"),
+      db(),
+    );
     await submitNews(adminId, newsId, 1, db());
     const returned = await returnNews(adminId, newsId, "fix copy", db());
     const returnedRevision = await db().prisma.newsRevision.findFirstOrThrow({
@@ -218,33 +231,48 @@ describe("news historical restore", () => {
     await restoreNewsRevision(adminId, newsId, returnedRevision.id, db());
     const editorial = await getEditorialNews(adminId, newsId, db());
     expect(editorial?.activeRevision?.workflowStatus).toBe("EDITING");
-    expect(editorial?.activeRevision?.basedOnRevisionId).toBe(returnedRevision.id);
+    expect(editorial?.activeRevision?.basedOnRevisionId).toBe(
+      returnedRevision.id,
+    );
   });
 
   it.each(["EDITING", "PENDING_REVIEW", "ABANDONED", "READY"] as const)(
     "rejects restore from %s source",
     async (status) => {
-    const { newsId, editVersion } = await createNewsDraft(adminId, db());
-    await saveNewsDraft(adminId, newsId, editVersion, draft("bad-src", status), db());
-    const source = await db().prisma.newsRevision.findFirstOrThrow({
-      where: { newsId },
-    });
-    await db().prisma.newsRevision.update({
-      where: { id: source.id },
-      data: { workflowStatus: status },
-    });
-    await db().prisma.news.update({
-      where: { id: newsId },
-      data: { activeRevisionId: null },
-    });
-    await expect(
-      restoreNewsRevision(adminId, newsId, source.id, db()),
-    ).rejects.toMatchObject({ code: "SOURCE_NOT_RESTORABLE" });
-  });
+      const { newsId, editVersion } = await createNewsDraft(adminId, db());
+      await saveNewsDraft(
+        adminId,
+        newsId,
+        editVersion,
+        draft("bad-src", status),
+        db(),
+      );
+      const source = await db().prisma.newsRevision.findFirstOrThrow({
+        where: { newsId },
+      });
+      await db().prisma.newsRevision.update({
+        where: { id: source.id },
+        data: { workflowStatus: status },
+      });
+      await db().prisma.news.update({
+        where: { id: newsId },
+        data: { activeRevisionId: null },
+      });
+      await expect(
+        restoreNewsRevision(adminId, newsId, source.id, db()),
+      ).rejects.toMatchObject({ code: "SOURCE_NOT_RESTORABLE" });
+    },
+  );
 
   it("rejects restore while another EDITING revision is active", async () => {
     const { newsId, editVersion } = await createNewsDraft(adminId, db());
-    await saveNewsDraft(adminId, newsId, editVersion, draft("open-edit", "Open"), db());
+    await saveNewsDraft(
+      adminId,
+      newsId,
+      editVersion,
+      draft("open-edit", "Open"),
+      db(),
+    );
     const approved = await db().prisma.newsRevision.create({
       data: {
         newsId,
@@ -260,7 +288,13 @@ describe("news historical restore", () => {
 
   it("rejects restore while PENDING_REVIEW is active", async () => {
     const { newsId, editVersion } = await createNewsDraft(adminId, db());
-    await saveNewsDraft(adminId, newsId, editVersion, draft("pending", "Pending"), db());
+    await saveNewsDraft(
+      adminId,
+      newsId,
+      editVersion,
+      draft("pending", "Pending"),
+      db(),
+    );
     await submitNews(adminId, newsId, 1, db());
     const approved = await db().prisma.newsRevision.create({
       data: {
@@ -290,16 +324,23 @@ describe("news historical restore", () => {
       translations: source.translations,
       categories: source.categories,
     });
-    const restored = await restoreNewsRevision(adminId, newsId, source.id, db());
+    const restored = await restoreNewsRevision(
+      adminId,
+      newsId,
+      source.id,
+      db(),
+    );
     const sourceAfter = await db().prisma.newsRevision.findFirstOrThrow({
       where: { id: source.id },
       include: { translations: true, categories: true },
     });
-    expect(JSON.stringify({
-      displayDate: sourceAfter.displayDate,
-      translations: sourceAfter.translations,
-      categories: sourceAfter.categories,
-    })).toBe(beforeSource);
+    expect(
+      JSON.stringify({
+        displayDate: sourceAfter.displayDate,
+        translations: sourceAfter.translations,
+        categories: sourceAfter.categories,
+      }),
+    ).toBe(beforeSource);
     expect(restored.basedOnRevisionId).toBe(source.id);
     expect(formatCalendarDateInput(restored.displayDate!)).toBe(
       formatCalendarDateInput(source.displayDate!),
@@ -320,7 +361,13 @@ describe("news historical restore", () => {
 
   it("routes active-approved restore through restoreNewsRevision", async () => {
     const { newsId, editVersion } = await createNewsDraft(adminId, db());
-    await saveNewsDraft(adminId, newsId, editVersion, draft("active-restore", "Active"), db());
+    await saveNewsDraft(
+      adminId,
+      newsId,
+      editVersion,
+      draft("active-restore", "Active"),
+      db(),
+    );
     await submitNews(adminId, newsId, 1, db());
     await approveActive(newsId);
     const liveBefore = (await pointer(newsId)).liveRevisionId;
@@ -352,7 +399,9 @@ describe("news unchanged republish", () => {
     });
     const liveId = (await pointer(newsId)).liveRevisionId!;
     const displayDate = (
-      await db().prisma.newsRevision.findUniqueOrThrow({ where: { id: liveId } })
+      await db().prisma.newsRevision.findUniqueOrThrow({
+        where: { id: liveId },
+      })
     ).displayDate;
     await unpublishNews(adminId, newsId, "review republish", db());
     const mid = await pointer(newsId);
@@ -380,9 +429,9 @@ describe("news unchanged republish", () => {
       orderBy: { createdAt: "desc" },
     });
     expect(event?.revisionId).toBe(liveId);
-    expect((await listPublishedNews("en", db())).some((n) => n.newsId === newsId)).toBe(
-      true,
-    );
+    expect(
+      (await listPublishedNews("en", db())).some((n) => n.newsId === newsId),
+    ).toBe(true);
   });
 
   it("selects the latest PUBLISH event revision", async () => {
@@ -409,11 +458,14 @@ describe("news unchanged republish", () => {
 
   it.each([
     ["NEVER_PUBLISHED", async (id: string) => id],
-    ["PUBLISHED", async (id: string) => {
-      await unpublishNews(adminId, id, "temp", db());
-      await republishNews(adminId, id, db());
-      return id;
-    }],
+    [
+      "PUBLISHED",
+      async (id: string) => {
+        await unpublishNews(adminId, id, "temp", db());
+        await republishNews(adminId, id, db());
+        return id;
+      },
+    ],
   ])("rejects republish when status is %s", async (label, setup) => {
     let newsId: string;
     if (label === "NEVER_PUBLISHED") {
@@ -423,7 +475,10 @@ describe("news unchanged republish", () => {
       newsId = await setup(newsId);
     }
     await expect(republishNews(adminId, newsId, db())).rejects.toMatchObject({
-      code: label === "NEVER_PUBLISHED" ? "NEVER_PUBLISHED" : "REPUBLISH_NOT_ELIGIBLE",
+      code:
+        label === "NEVER_PUBLISHED"
+          ? "NEVER_PUBLISHED"
+          : "REPUBLISH_NOT_ELIGIBLE",
     });
   });
 
@@ -446,7 +501,10 @@ describe("news unchanged republish", () => {
       (t) => t.locale === "en",
     )!.slug;
     await unpublishNews(adminId, first, "collision setup", db());
-    const { newsId: second, editVersion } = await createNewsDraft(adminId, db());
+    const { newsId: second, editVersion } = await createNewsDraft(
+      adminId,
+      db(),
+    );
     await saveNewsDraft(
       adminId,
       second,
@@ -474,9 +532,9 @@ describe("news unchanged republish", () => {
   it("denies republish without NEWS_PUBLISH", async () => {
     const newsId = await seedPublished("auth-republish");
     await unpublishNews(adminId, newsId, "auth", db());
-    await expect(republishNews(OUTSIDER_ID, newsId, db())).rejects.toBeInstanceOf(
-      AccessDeniedError,
-    );
+    await expect(
+      republishNews(OUTSIDER_ID, newsId, db()),
+    ).rejects.toBeInstanceOf(AccessDeniedError);
   });
 });
 

@@ -337,7 +337,9 @@ export default async function NewsDetailPage({
         {news.publicationStatus === "UNPUBLISHED" &&
           !editorial &&
           canPublish &&
-          news.publicationEvents.some((event) => event.action === "PUBLISH") && (
+          news.publicationEvents.some(
+            (event) => event.action === "PUBLISH",
+          ) && (
             <section className="admin-workflow-panel">
               <h2>{t("republishTitle")}</h2>
               <p>{t("republishIntro")}</p>
