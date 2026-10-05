@@ -3,14 +3,18 @@ import type { Database } from "@/platform/database";
 
 import type { NewsLocale } from "./news-rules";
 
-function alternatesFor(
-  translations: { locale: string }[],
+function alternatePathnamesFor(
+  translations: { locale: string; slug: string }[],
   locale: NewsLocale,
-): NewsLocale[] {
-  const others = translations
-    .map((t) => t.locale)
-    .filter((value): value is NewsLocale => value === "ar" || value === "en");
-  return others.filter((value) => value !== locale);
+): Partial<Record<NewsLocale, string>> {
+  const alternates: Partial<Record<NewsLocale, string>> = {};
+  for (const row of translations) {
+    if (row.locale !== "ar" && row.locale !== "en") continue;
+    const other = row.locale as NewsLocale;
+    if (other === locale) continue;
+    alternates[other] = `/${other}/news/${row.slug}`;
+  }
+  return alternates;
 }
 
 /** Live published News detail routes only (no redirects, no drafts). */
@@ -42,7 +46,10 @@ export async function listNewsPublicRoutePaths(
         locale,
         pathname: `/${locale}/news/${translation.slug}`,
         lastModified: row.publishedAt,
-        alternateLocales: alternatesFor(revision.translations, locale),
+        alternatePathnames: alternatePathnamesFor(
+          revision.translations,
+          locale,
+        ),
       });
     }
   }

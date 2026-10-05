@@ -13,7 +13,10 @@ import {
   approveNews,
   createNewsDraft,
   getEditorialNews,
+  publishNews,
+  resolvePublishedNewsBySlug,
   saveNewsDraft,
+  startEditingNews,
   submitNews,
   type NewsDraftInput,
 } from "@/modules/publishing";
@@ -30,6 +33,7 @@ const BOOTSTRAP_SH = path.join(
   "docker/postgres/init/00-bootstrap.sh",
 );
 const execFileAsync = promisify(execFile);
+const REVIEWER_ID = "00000000-0000-4000-8000-000000000099";
 
 let container: StartedPostgreSqlContainer;
 let runtimeDatabase: Database;
@@ -44,6 +48,15 @@ function uriFor(user: string, password: string): string {
 }
 
 const db = () => runtimeDatabase;
+
+async function approveActive(newsId: string) {
+  const editorial = await getEditorialNews(adminId, newsId, db());
+  await db().prisma.newsRevision.update({
+    where: { id: editorial!.activeRevision!.id },
+    data: { submittedById: REVIEWER_ID },
+  });
+  await approveNews(adminId, newsId, db());
+}
 
 beforeAll(async () => {
   container = await new PostgreSqlContainer(IMAGE)
@@ -125,6 +138,71 @@ describe("Track B News regression gaps", () => {
     });
     await expect(approveNews(adminId, newsId, db())).rejects.toMatchObject({
       code: "SELF_APPROVAL_FORBIDDEN",
+    });
+  });
+
+  it("redirects a historical slug to the current live slug after replacement publish", async () => {
+    const initialAr = "redirect-gate-ar-v1";
+    const initialEn = "redirect-gate-en-v1";
+    const nextAr = "redirect-gate-ar-v2";
+    const nextEn = "redirect-gate-en-v2";
+    const draft: NewsDraftInput = {
+      displayDate: "2024-06-01",
+      categoryIds: [],
+      translations: {
+        ar: {
+          title: "عنوان",
+          slug: initialAr,
+          summary: "ملخص",
+          body: { version: 1, type: "plainText", text: "نص" },
+        },
+        en: {
+          title: "Title",
+          slug: initialEn,
+          summary: "Summary",
+          body: { version: 1, type: "plainText", text: "Body" },
+        },
+      },
+    };
+    const { newsId, editVersion } = await createNewsDraft(adminId, db());
+    const saved = await saveNewsDraft(
+      adminId,
+      newsId,
+      editVersion,
+      draft,
+      db(),
+    );
+    await submitNews(adminId, newsId, saved.editVersion, db());
+    await approveActive(newsId);
+    await publishNews(adminId, newsId, db());
+
+    await startEditingNews(adminId, newsId, db());
+    const editorial = await getEditorialNews(adminId, newsId, db());
+    const replacement = await saveNewsDraft(
+      adminId,
+      newsId,
+      editorial!.activeRevision!.editVersion,
+      {
+        ...draft,
+        translations: {
+          ar: { ...draft.translations.ar!, slug: nextAr },
+          en: { ...draft.translations.en!, slug: nextEn },
+        },
+      },
+      db(),
+    );
+    await submitNews(adminId, newsId, replacement.editVersion, db());
+    await approveActive(newsId);
+    await publishNews(adminId, newsId, db());
+
+    expect(
+      await resolvePublishedNewsBySlug("ar", initialAr, db()),
+    ).toMatchObject({ kind: "redirect", slug: nextAr });
+    expect(
+      await resolvePublishedNewsBySlug("en", initialEn, db()),
+    ).toMatchObject({ kind: "redirect", slug: nextEn });
+    expect(await resolvePublishedNewsBySlug("ar", nextAr, db())).toMatchObject({
+      kind: "news",
     });
   });
 });

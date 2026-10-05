@@ -3,14 +3,18 @@ import type { PublicRoutePath } from "@/platform/public-routes/types";
 
 type Locale = "ar" | "en";
 
-function alternatesFor(
-  translations: { locale: string }[],
+function alternatePathnamesFor(
+  translations: { locale: string; slug: string }[],
   locale: Locale,
-): Locale[] {
-  const others = translations
-    .map((t) => t.locale)
-    .filter((value): value is Locale => value === "ar" || value === "en");
-  return others.filter((value) => value !== locale);
+): Partial<Record<Locale, string>> {
+  const alternates: Partial<Record<Locale, string>> = {};
+  for (const row of translations) {
+    if (row.locale !== "ar" && row.locale !== "en") continue;
+    const other = row.locale as Locale;
+    if (other === locale) continue;
+    alternates[other] = `/${other}/pages/${row.slug}`;
+  }
+  return alternates;
 }
 
 /** Live published Managed Page routes only. */
@@ -42,7 +46,10 @@ export async function listManagedPagePublicRoutePaths(
         locale,
         pathname: `/${locale}/pages/${translation.slug}`,
         lastModified: row.publishedAt,
-        alternateLocales: alternatesFor(revision.translations, locale),
+        alternatePathnames: alternatePathnamesFor(
+          revision.translations,
+          locale,
+        ),
       });
     }
   }

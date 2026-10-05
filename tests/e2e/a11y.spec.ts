@@ -1,15 +1,22 @@
+import { createOTP } from "@better-auth/utils/otp";
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
 import {
   A11Y_DENIED_USER,
+  A11Y_NEWS_USER,
   A11Y_USER,
   completeMfaEnrollment,
   hasDatabase,
   seedE2eUser,
   submitMfaEnable,
+  submitMfaVerify,
   submitSignIn,
 } from "./support/auth";
+import {
+  A11Y_NEWS_SLUGS,
+  ensureA11yNewsFixture,
+} from "./support/news-a11y-fixture";
 
 /**
  * Automated accessibility checks for the IMP-04 localized bootstrap pages.
@@ -173,13 +180,111 @@ test("@a11y /en/admin access-denied has no serious or critical axe violations", 
   await expectNoSeriousViolations(page);
 });
 
-/** TB-IMP-05: public News list surfaces (empty list is valid). */
-for (const locale of ["ar", "en"] as const) {
-  test(`@a11y /${locale}/news list has no serious or critical axe violations`, async ({
-    page,
-  }) => {
-    await page.goto(`/${locale}/news`);
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expectNoSeriousViolations(page);
-  });
+const SIGN_IN_LABELS = {
+  ar: {
+    email: "البريد الإلكتروني",
+    password: "كلمة المرور",
+    submit: "تسجيل الدخول",
+  },
+  en: {
+    email: "Email address",
+    password: "Password",
+    submit: "Sign in",
+  },
+} as const;
+
+const MFA_LABELS = {
+  ar: {
+    password: "كلمة المرور",
+    continue: "متابعة",
+    code: "رمز تطبيق المصادقة",
+    submit: "تحقق",
+  },
+  en: {
+    password: "Password",
+    continue: "Continue",
+    code: "Authenticator app code",
+    submit: "Verify",
+  },
+} as const;
+
+let a11yNewsMfaSecret: string | undefined;
+
+async function ensureA11yNewsAdminSession(
+  page: Page,
+  locale: "ar" | "en",
+): Promise<void> {
+  await page.goto(`/${locale}/admin/login`);
+  await submitSignIn(page, SIGN_IN_LABELS[locale], A11Y_NEWS_USER);
+  if (page.url().includes("/mfa/setup")) {
+    a11yNewsMfaSecret = await completeMfaEnrollment(
+      page,
+      MFA_LABELS[locale],
+      A11Y_NEWS_USER.password,
+    );
+    await expect(page).toHaveURL(new RegExp(`\\/${locale}\\/admin`));
+    return;
+  }
+  if (page.url().includes("/mfa")) {
+    if (!a11yNewsMfaSecret) {
+      throw new Error(
+        "MFA secret missing — complete Arabic admin enrollment first in this serial suite.",
+      );
+    }
+    const code = await createOTP(a11yNewsMfaSecret).totp();
+    await submitMfaVerify(page, MFA_LABELS[locale], code);
+    await expect(page).toHaveURL(new RegExp(`\\/${locale}\\/admin`));
+  }
 }
+
+/** TB-IMP-05: four News surfaces × AR/EN (list uses empty or shared fixture). */
+test.describe("News surfaces a11y", () => {
+  test.describe.configure({ mode: "serial" });
+
+  test.beforeAll(async () => {
+    test.skip(!hasDatabase(), "News a11y requires DATABASE_URL");
+    await seedE2eUser(A11Y_NEWS_USER);
+    await ensureA11yNewsFixture();
+  });
+
+  for (const locale of ["ar", "en"] as const) {
+    test(`@a11y /${locale}/news list has no serious or critical axe violations`, async ({
+      page,
+    }) => {
+      await page.goto(`/${locale}/news`);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expectNoSeriousViolations(page);
+    });
+
+    test(`@a11y /${locale}/news detail has no serious or critical axe violations`, async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await page.goto(`/${locale}/news/${A11Y_NEWS_SLUGS[locale]}`);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expectNoSeriousViolations(page);
+    });
+
+    test(`@a11y /${locale}/admin/content/news editor has no serious or critical axe violations`, async ({
+      page,
+    }) => {
+      test.setTimeout(180_000);
+      const fixture = await ensureA11yNewsFixture();
+      await ensureA11yNewsAdminSession(page, locale);
+      await page.goto(`/${locale}/admin/content/news/${fixture.newsId}`);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expectNoSeriousViolations(page);
+    });
+
+    test(`@a11y /${locale}/admin/preview/news explicit revision has no serious or critical axe violations`, async ({
+      page,
+    }) => {
+      test.setTimeout(180_000);
+      const fixture = await ensureA11yNewsFixture();
+      await ensureA11yNewsAdminSession(page, locale);
+      await page.goto(`/${locale}/admin/preview/news/${fixture.revisionId}`);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expectNoSeriousViolations(page);
+    });
+  }
+});

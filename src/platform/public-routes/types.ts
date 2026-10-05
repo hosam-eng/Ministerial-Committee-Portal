@@ -5,6 +5,6 @@ export type PublicRoutePath = {
   locale: PublicRouteLocale;
   pathname: string;
   lastModified?: Date;
-  /** Other locales where the same live content is available at this route. */
-  alternateLocales: PublicRouteLocale[];
+  /** Live sibling locale paths for the same content entity (not inferred from slug). */
+  alternatePathnames: Partial<Record<PublicRouteLocale, string>>;
 };

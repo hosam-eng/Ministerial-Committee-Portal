@@ -7,6 +7,8 @@ import { staticPublicRoutePaths } from "@/platform/public-routes/static-contribu
 import { buildPublicSitemapEntries } from "@/platform/public-routes/sitemap";
 import { getRuntimeDatabase } from "@/platform/runtime";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const config = getServerConfig();
   const database = getRuntimeDatabase();

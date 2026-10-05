@@ -9,21 +9,16 @@ function toAbsoluteUrl(origin: string, pathname: string): string {
 function languagesFor(
   origin: string,
   entry: PublicRoutePath,
-  all: PublicRoutePath[],
 ): Record<string, string> | undefined {
-  const suffix = entry.pathname.replace(/^\/(ar|en)/, "");
-  const related = all.filter(
-    (row) =>
-      row.pathname.replace(/^\/(ar|en)/, "") === suffix &&
-      row.locale !== entry.locale &&
-      entry.alternateLocales.includes(row.locale),
-  );
-  if (!related.length) return undefined;
+  const alternates = entry.alternatePathnames;
+  const locales = Object.keys(alternates) as PublicRoutePath["locale"][];
+  if (!locales.length) return undefined;
   const languages: Record<string, string> = {
     [entry.locale]: toAbsoluteUrl(origin, entry.pathname),
   };
-  for (const row of related) {
-    languages[row.locale] = toAbsoluteUrl(origin, row.pathname);
+  for (const locale of locales) {
+    const pathname = alternates[locale];
+    if (pathname) languages[locale] = toAbsoluteUrl(origin, pathname);
   }
   return languages;
 }
@@ -35,7 +30,7 @@ export function buildPublicSitemapEntries(
 ): MetadataRoute.Sitemap {
   if (!publicSiteOrigin) return [];
   return paths.map((entry) => {
-    const languages = languagesFor(publicSiteOrigin, entry, paths);
+    const languages = languagesFor(publicSiteOrigin, entry);
     return {
       url: toAbsoluteUrl(publicSiteOrigin, entry.pathname),
       ...(entry.lastModified ? { lastModified: entry.lastModified } : {}),
