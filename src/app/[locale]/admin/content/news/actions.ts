@@ -16,8 +16,10 @@ import {
   submitNews,
   returnNews,
   restoreApprovedNews,
+  restoreNewsRevision,
   approveNews,
   publishNews,
+  republishNews,
   unpublishNews,
   startEditingNews,
   abandonNewsDraft,
@@ -153,7 +155,9 @@ export async function newsWorkflowAction(formData: FormData) {
   const permission: PermissionKey =
     operation === "return" || operation === "approve"
       ? PERMISSIONS.NEWS_REVIEW
-      : operation === "publish" || operation === "unpublish"
+      : operation === "publish" ||
+          operation === "unpublish" ||
+          operation === "republish"
         ? PERMISSIONS.NEWS_PUBLISH
         : PERMISSIONS.NEWS_EDIT;
   try {
@@ -174,8 +178,17 @@ export async function newsWorkflowAction(formData: FormData) {
       case "edit":
         await startEditingNews(userId, id);
         break;
-      case "restore":
-        await restoreApprovedNews(userId, id);
+      case "restore": {
+        const revisionId = field(formData, "revisionId");
+        if (revisionId) {
+          await restoreNewsRevision(userId, id, revisionId);
+        } else {
+          await restoreApprovedNews(userId, id);
+        }
+        break;
+      }
+      case "republish":
+        await republishNews(userId, id);
         break;
       case "abandon":
         await abandonNewsDraft(userId, id);

@@ -143,6 +143,8 @@
     "restoreIntro": "Need to correct this approved revision? Restore its content into a new editable draft, then submit it for review again.",
     "editPublishedTitle": "Start a new editorial revision",
     "editPublishedIntro": "The existing published revision will remain live while this new draft is edited.",
+    "republishTitle": "Republish unchanged",
+    "republishIntro": "Make the latest previously published revision live again without editing or creating a new revision.",
     "unpublishTitle": "Remove from public view",
     "languages": { "ar": "Arabic content", "en": "English content" },
     "fields": {
@@ -164,7 +166,8 @@
       "publish": "Publish now",
       "restore": "Restore to editing",
       "edit": "Edit as new revision",
-      "unpublish": "Unpublish"
+      "unpublish": "Unpublish",
+      "republish": "Republish"
     },
     "publication": {
       "NEVER_PUBLISHED": "Never published",
@@ -187,14 +190,16 @@
       "MARK_READY": "Marked ready",
       "ABANDON": "Abandoned",
       "PUBLISH": "Published",
-      "UNPUBLISH": "Unpublished"
+      "UNPUBLISH": "Unpublished",
+      "REPUBLISH": "Republished unchanged"
     },
     "history": {
       "title": "History",
       "revisions": "Revisions",
       "workflow": "Workflow activity",
       "publication": "Publication activity",
-      "none": "No activity yet."
+      "none": "No activity yet.",
+      "restoreHint": "Restore is available only for approved or returned historical revisions when no editing or review cycle is open."
     },
     "results": {
       "submit": "Submitted for review.",
@@ -202,6 +207,7 @@
       "approve": "Approved. It has not been published yet.",
       "publish": "Published. The approved revision is now live.",
       "unpublish": "Unpublished. Revisions and history are preserved.",
+      "republish": "Republished. The latest previously published revision is live again.",
       "edit": "New editorial revision created; the previous live revision is unchanged.",
       "restore": "A new editable revision was created from the approved content. The live revision is unchanged."
     },
@@ -213,6 +219,10 @@
       "NO_REVISION": "No revision is available to edit.",
       "INVALID_WORKFLOW_STATE": "The state changed. Refresh the page and try again.",
       "ACTIVE_REVISION_EXISTS": "There is already an active editorial revision. Refresh the page.",
+      "ACTIVE_EDITING_EXISTS": "An editable revision is already open. Finish or abandon it before restoring history.",
+      "SOURCE_NOT_RESTORABLE": "Only approved or returned revisions can be restored.",
+      "NEVER_PUBLISHED": "This News item has never been published.",
+      "REPUBLISH_NOT_ELIGIBLE": "Republish is not available in the current state.",
       "CONCURRENT_MODIFICATION": "Someone else changed this draft. Refresh the page before continuing; your changes were not saved.",
       "TRANSLATION_INCOMPLETE": "Complete the required Arabic and English title, summary, body and slug before submitting.",
       "DISPLAY_DATE_REQUIRED": "Enter the News date before submitting.",
