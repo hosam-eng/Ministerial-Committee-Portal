@@ -172,3 +172,14 @@ test("@a11y /en/admin access-denied has no serious or critical axe violations", 
   ).toBeVisible();
   await expectNoSeriousViolations(page);
 });
+
+/** TB-IMP-05: public News list surfaces (empty list is valid). */
+for (const locale of ["ar", "en"] as const) {
+  test(`@a11y /${locale}/news list has no serious or critical axe violations`, async ({
+    page,
+  }) => {
+    await page.goto(`/${locale}/news`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
