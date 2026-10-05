@@ -8,7 +8,10 @@ import {
 } from "@testcontainers/postgresql";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { AccessDeniedError, bootstrapFirstAdministrator } from "@/modules/identity";
+import {
+  AccessDeniedError,
+  bootstrapFirstAdministrator,
+} from "@/modules/identity";
 import {
   approveNews,
   cancelScheduledNewsPublication,
@@ -232,7 +235,9 @@ describe("News publication scheduling contract", () => {
       new Date(Date.now() + 86_400_000),
       db(),
     );
-    expect(await executeDueNewsPublication(instruction.id, db())).toBe("not_due");
+    expect(await executeDueNewsPublication(instruction.id, db())).toBe(
+      "not_due",
+    );
     expect(await listPublishedNews("en", db())).toHaveLength(0);
   });
 

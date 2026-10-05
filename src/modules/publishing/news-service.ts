@@ -1161,10 +1161,7 @@ export async function cancelScheduledNewsPublication(
 }
 
 export type DuePublicationExecution =
-  | "published"
-  | "already_live"
-  | "not_due"
-  | "terminal";
+  "published" | "already_live" | "not_due" | "terminal";
 
 /** Trusted internal Publishing boundary — instruction is the audit context. */
 export async function executeDueNewsPublication(

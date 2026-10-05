@@ -35,9 +35,7 @@ describe("public route enumeration", () => {
             {
               publishedAt: new Date("2024-01-02T00:00:00.000Z"),
               liveRevision: {
-                translations: [
-                  { locale: "ar", slug: "only-ar" },
-                ],
+                translations: [{ locale: "ar", slug: "only-ar" }],
               },
             },
           ],
@@ -75,7 +73,10 @@ describe("public route enumeration", () => {
   });
 
   it("returns no sitemap entries when PUBLIC_SITE_ORIGIN is absent", () => {
-    const entries = buildPublicSitemapEntries(staticPublicRoutePaths(), undefined);
+    const entries = buildPublicSitemapEntries(
+      staticPublicRoutePaths(),
+      undefined,
+    );
     expect(entries).toEqual([]);
   });
 
