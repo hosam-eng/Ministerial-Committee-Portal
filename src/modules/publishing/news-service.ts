@@ -395,7 +395,9 @@ export async function restoreNewsRevision(
     if (JSON.stringify(before) !== JSON.stringify(after)) {
       throw new NewsError("INVALID_WORKFLOW_STATE");
     }
-    const newsAfter = await tx.news.findUniqueOrThrow({ where: { id: newsId } });
+    const newsAfter = await tx.news.findUniqueOrThrow({
+      where: { id: newsId },
+    });
     if (
       newsAfter.liveRevisionId !== liveRevisionIdBefore ||
       newsAfter.publicationStatus !== publicationStatusBefore
