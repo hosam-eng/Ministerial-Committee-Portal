@@ -27,6 +27,8 @@ export interface ServerConfig {
     /** OTLP HTTP endpoint; absent = no exporter (local dev default). */
     readonly exporterEndpoint?: string;
   };
+  /** Absolute origin for public sitemap URLs; absent → sitemap emits no entries. */
+  readonly publicSiteOrigin?: string;
   readonly auth: {
     /**
      * Better Auth signing/encryption secret (min 32 chars). Server-only
