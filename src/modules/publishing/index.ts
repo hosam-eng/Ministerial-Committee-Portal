@@ -26,6 +26,11 @@ export {
   publishNews,
   republishNews,
   unpublishNews,
+  scheduleNewsPublication,
+  rescheduleNewsPublication,
+  cancelScheduledNewsPublication,
+  executeDueNewsPublication,
+  type DuePublicationExecution,
   getEditorialNews,
   listEditorialNews,
   listPublishedNews,
@@ -40,6 +45,7 @@ export {
   type PublishedNewsResolution,
   type NewsHomepagePickerItem,
 } from "./news-service";
+export { listNewsPublicRoutePaths } from "./public-route-paths";
 export {
   NewsEditor,
   type NewsEditorAction,

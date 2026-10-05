@@ -51,6 +51,13 @@ export const A11Y_DENIED_USER = {
   password: "e2e-a11y-denied-1234",
 } as const;
 
+/** Dedicated admin for News surface axe — avoids MFA state clashes with A11Y_USER. */
+export const A11Y_NEWS_USER = {
+  email: "e2e.a11y.news@example.test",
+  name: "E2E A11y News Admin",
+  password: "e2e-a11y-news-password-1234",
+} as const;
+
 function databaseUrl(): string {
   const url = process.env.DATABASE_URL;
   if (!url) {

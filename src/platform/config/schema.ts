@@ -22,6 +22,31 @@ const optionalUrl = z
   .transform((value) => (value === "" ? undefined : value))
   .pipe(z.url().optional());
 
+/** Absolute public site origin for sitemap URLs (no path). */
+const publicSiteOrigin = z
+  .string()
+  .optional()
+  .transform((value) => (value === "" ? undefined : value))
+  .pipe(
+    z
+      .string()
+      .url()
+      .refine((value) => {
+        try {
+          const parsed = new URL(value);
+          return (
+            (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+            parsed.pathname === "/" &&
+            !parsed.search &&
+            !parsed.hash
+          );
+        } catch {
+          return false;
+        }
+      }, "must be an absolute origin URL without path, query, or hash")
+      .optional(),
+  );
+
 /**
  * Better Auth base URL — always required so Better Auth never silently
  * infers its origin from request headers. Must be an absolute http(s)
@@ -59,6 +84,7 @@ export const serverEnvSchema = z
     // (paths only).
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: betterAuthUrl,
+    PUBLIC_SITE_ORIGIN: publicSiteOrigin,
   })
   .superRefine((env, ctx) => {
     if (env.APP_ENV === "production" && !env.DATABASE_URL) {

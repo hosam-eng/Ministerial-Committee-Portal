@@ -17,6 +17,7 @@ next-env.d.ts
 /coverage/
 /test-results/
 /playwright-report/
+/tests/e2e/.cache/
 /blob-report/
 
 # Environment and secrets — never commit

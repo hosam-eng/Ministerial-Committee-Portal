@@ -40,3 +40,4 @@ export {
   type ManagedPageContentLabels,
 } from "./presentation/managed-page-public-content";
 export { RichTextPublicView } from "./presentation/rich-text/rich-text-render-public";
+export { listManagedPagePublicRoutePaths } from "./public-route-paths";
