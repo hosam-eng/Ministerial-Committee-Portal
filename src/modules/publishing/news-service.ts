@@ -327,28 +327,113 @@ export async function returnNews(
   });
 }
 
-export async function restoreApprovedNews(
+function assertRestoreAggregateAllows(
+  current: { workflowStatus: string } | null,
+) {
+  if (!current) return;
+  if (current.workflowStatus === "EDITING") {
+    throw new NewsError("ACTIVE_EDITING_EXISTS");
+  }
+  if (current.workflowStatus === "PENDING_REVIEW") {
+    throw new NewsError("ACTIVE_REVISION_EXISTS");
+  }
+}
+
+function assertRestorableSource(status: string) {
+  if (status !== "APPROVED" && status !== "RETURNED") {
+    throw new NewsError("SOURCE_NOT_RESTORABLE");
+  }
+}
+
+async function assertPublishedSlugAvailable(
+  tx: Transaction,
+  newsId: string,
+  revision: Awaited<ReturnType<typeof loadSnapshot>>,
+) {
+  for (const t of revision.translations) {
+    const reserved = await tx.newsSlugRedirect.findUnique({
+      where: { locale_slug: { locale: t.locale, slug: t.slug } },
+    });
+    if (reserved && reserved.newsId !== newsId)
+      throw new NewsError("SLUG_ALREADY_IN_USE");
+    const collision = await tx.news.findFirst({
+      where: {
+        id: { not: newsId },
+        publicationStatus: "PUBLISHED",
+        liveRevision: {
+          translations: { some: { locale: t.locale, slug: t.slug } },
+        },
+      },
+    });
+    if (collision) throw new NewsError("SLUG_ALREADY_IN_USE");
+  }
+}
+
+export async function restoreNewsRevision(
   actorId: string,
   newsId: string,
+  sourceRevisionId: string,
   database: Database = getRuntimeDatabase(),
 ) {
   await requireActorPermission(actorId, PERMISSIONS.NEWS_EDIT);
   return database.prisma.$transaction(async (tx) => {
-    const { revision } = await active(tx, newsId);
-    requireState(revision.workflowStatus, "APPROVED");
-    const draft = await clone(tx, newsId, revision, actorId);
+    const news = await lockedNews(tx, newsId);
+    if (news.activeRevisionId) {
+      const current = await tx.newsRevision.findUnique({
+        where: { id: news.activeRevisionId },
+      });
+      assertRestoreAggregateAllows(current);
+    }
+    const source = await loadSnapshot(tx, sourceRevisionId);
+    if (source.newsId !== newsId) throw new NewsError("NEWS_NOT_FOUND");
+    assertRestorableSource(source.workflowStatus);
+    const before = contentOf(source);
+    const liveRevisionIdBefore = news.liveRevisionId;
+    const publicationStatusBefore = news.publicationStatus;
+    const draft = await clone(tx, newsId, source, actorId);
+    const after = contentOf(await loadSnapshot(tx, source.id));
+    if (JSON.stringify(before) !== JSON.stringify(after)) {
+      throw new NewsError("INVALID_WORKFLOW_STATE");
+    }
+    const newsAfter = await tx.news.findUniqueOrThrow({ where: { id: newsId } });
+    if (
+      newsAfter.liveRevisionId !== liveRevisionIdBefore ||
+      newsAfter.publicationStatus !== publicationStatusBefore
+    ) {
+      throw new NewsError("INVALID_WORKFLOW_STATE");
+    }
     await tx.newsWorkflowEvent.create({
       data: {
         newsId,
         revisionId: draft.id,
         action: "RESTORE",
-        fromStatus: "APPROVED",
+        fromStatus: source.workflowStatus,
         toStatus: "EDITING",
         actorId,
       },
     });
     return draft;
   });
+}
+
+export async function restoreApprovedNews(
+  actorId: string,
+  newsId: string,
+  database: Database = getRuntimeDatabase(),
+) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_EDIT);
+  const news = await database.prisma.news.findUnique({
+    where: { id: newsId },
+    select: { activeRevisionId: true },
+  });
+  if (!news?.activeRevisionId) throw new NewsError("NO_ACTIVE_REVISION");
+  const revision = await database.prisma.newsRevision.findUnique({
+    where: { id: news.activeRevisionId },
+  });
+  if (!revision || revision.workflowStatus !== "APPROVED") {
+    throw new NewsError("INVALID_WORKFLOW_STATE");
+  }
+  return restoreNewsRevision(actorId, newsId, revision.id, database);
 }
 
 export async function startEditingNews(
@@ -452,6 +537,77 @@ export async function publishNews(
       data: { newsId, revisionId: revision.id, action: "PUBLISH", actorId },
     });
     return revision.id;
+  });
+}
+
+export async function republishNews(
+  actorId: string,
+  newsId: string,
+  database: Database = getRuntimeDatabase(),
+) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_PUBLISH);
+  return database.prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(90909)::text`;
+    const news = await lockedNews(tx, newsId);
+    if (news.publicationStatus === "NEVER_PUBLISHED") {
+      throw new NewsError("NEVER_PUBLISHED");
+    }
+    if (news.publicationStatus === "PUBLISHED") {
+      throw new NewsError("REPUBLISH_NOT_ELIGIBLE");
+    }
+    if (news.publicationStatus !== "UNPUBLISHED") {
+      throw new NewsError("REPUBLISH_NOT_ELIGIBLE");
+    }
+    if (news.activeRevisionId) {
+      const current = await tx.newsRevision.findUnique({
+        where: { id: news.activeRevisionId },
+      });
+      if (
+        current &&
+        (current.workflowStatus === "EDITING" ||
+          current.workflowStatus === "PENDING_REVIEW" ||
+          current.workflowStatus === "APPROVED")
+      ) {
+        throw new NewsError("REPUBLISH_NOT_ELIGIBLE");
+      }
+    }
+    const lastPublish = await tx.newsPublicationEvent.findFirst({
+      where: { newsId, action: "PUBLISH" },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!lastPublish) throw new NewsError("REPUBLISH_NOT_ELIGIBLE");
+    const target = await loadSnapshot(tx, lastPublish.revisionId);
+    if (target.workflowStatus !== "APPROVED") {
+      throw new NewsError("REPUBLISH_NOT_ELIGIBLE");
+    }
+    const displayDateBefore = target.displayDate?.getTime() ?? null;
+    await assertPublishedSlugAvailable(tx, newsId, target);
+    const publishedAt = new Date();
+    await tx.news.update({
+      where: { id: newsId },
+      data: {
+        liveRevisionId: target.id,
+        publicationStatus: "PUBLISHED",
+        publishedAt,
+        unpublishedAt: null,
+      },
+    });
+    await tx.newsPublicationEvent.create({
+      data: {
+        newsId,
+        revisionId: target.id,
+        action: "REPUBLISH",
+        actorId,
+      },
+    });
+    const targetAfter = await tx.newsRevision.findUniqueOrThrow({
+      where: { id: target.id },
+    });
+    const displayDateAfter = targetAfter.displayDate?.getTime() ?? null;
+    if (displayDateBefore !== displayDateAfter) {
+      throw new NewsError("INVALID_WORKFLOW_STATE");
+    }
+    return { revisionId: target.id, publishedAt };
   });
 }
 

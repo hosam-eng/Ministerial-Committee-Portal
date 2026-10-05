@@ -73,6 +73,12 @@ export default async function NewsDetailPage({
   const canEdit = permissions.has(PERMISSIONS.NEWS_EDIT);
   const canReview = permissions.has(PERMISSIONS.NEWS_REVIEW);
   const canPublish = permissions.has(PERMISSIONS.NEWS_PUBLISH);
+  const openEditorialCycle =
+    editorial?.workflowStatus === "EDITING" ||
+    editorial?.workflowStatus === "PENDING_REVIEW";
+  const canRestoreRevision = (workflowStatus: string) =>
+    (workflowStatus === "APPROVED" || workflowStatus === "RETURNED") &&
+    !openEditorialCycle;
   const currentPath = `/${locale}/admin/content/news`;
   const date = (value: Date) =>
     new Intl.DateTimeFormat(locale, {
@@ -328,6 +334,26 @@ export default async function NewsDetailPage({
             </form>
           </section>
         )}
+        {news.publicationStatus === "UNPUBLISHED" &&
+          !editorial &&
+          canPublish &&
+          news.publicationEvents.some((event) => event.action === "PUBLISH") && (
+            <section className="admin-workflow-panel">
+              <h2>{t("republishTitle")}</h2>
+              <p>{t("republishIntro")}</p>
+              <form action={newsWorkflowAction}>
+                <input type="hidden" name="locale" value={locale} />
+                <input type="hidden" name="newsId" value={id} />
+                <button
+                  className="ui-button ui-button-primary"
+                  name="operation"
+                  value="republish"
+                >
+                  {t("actions.republish")}
+                </button>
+              </form>
+            </section>
+          )}
         {news.publicationStatus === "PUBLISHED" && canPublish && (
           <section className="admin-workflow-panel">
             <h2>{t("unpublishTitle")}</h2>
@@ -359,6 +385,7 @@ export default async function NewsDetailPage({
       </AdminWorkflowStack>
       <AdminHistory title={t("history.title")}>
         <AdminHistorySubsection title={t("history.revisions")}>
+          <p className="news-hint">{t("history.restoreHint")}</p>
           <AdminRevisionList>
             {news.revisions.map((revision) => (
               <AdminRevisionItem
@@ -382,6 +409,24 @@ export default async function NewsDetailPage({
                 dateLabel={date(revision.createdAt)}
                 actions={
                   <>
+                    {canEdit && canRestoreRevision(revision.workflowStatus) ? (
+                      <form action={newsWorkflowAction}>
+                        <input type="hidden" name="locale" value={locale} />
+                        <input type="hidden" name="newsId" value={id} />
+                        <input type="hidden" name="operation" value="restore" />
+                        <input
+                          type="hidden"
+                          name="revisionId"
+                          value={revision.id}
+                        />
+                        <button
+                          className="ui-button ui-button-secondary ui-button-compact"
+                          type="submit"
+                        >
+                          {t("actions.restore")}
+                        </button>
+                      </form>
+                    ) : null}
                     <a
                       className="ui-button ui-button-secondary ui-button-compact"
                       href={`/ar/admin/preview/news/${revision.id}`}
