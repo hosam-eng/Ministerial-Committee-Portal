@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
-import { listManagedPagePublicRoutePaths } from "@/modules/managed-pages/public-route-paths";
-import { listNewsPublicRoutePaths } from "@/modules/publishing/public-route-paths";
+import { listManagedPagePublicRoutePaths } from "@/modules/managed-pages";
+import { listNewsPublicRoutePaths } from "@/modules/publishing";
 import { getServerConfig } from "@/platform/config";
 import { staticPublicRoutePaths } from "@/platform/public-routes/static-contributor";
 import { buildPublicSitemapEntries } from "@/platform/public-routes/sitemap";

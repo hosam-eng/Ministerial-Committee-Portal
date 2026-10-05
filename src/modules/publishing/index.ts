@@ -45,6 +45,7 @@ export {
   type PublishedNewsResolution,
   type NewsHomepagePickerItem,
 } from "./news-service";
+export { listNewsPublicRoutePaths } from "./public-route-paths";
 export {
   NewsEditor,
   type NewsEditorAction,

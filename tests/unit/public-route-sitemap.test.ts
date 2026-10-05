@@ -6,13 +6,6 @@ import { staticPublicRoutePaths } from "@/platform/public-routes/static-contribu
 import { buildPublicSitemapEntries } from "@/platform/public-routes/sitemap";
 import type { Database } from "@/platform/database";
 
-const emptyDb = {
-  prisma: {
-    news: { findMany: async () => [] },
-    managedPage: { findMany: async () => [] },
-  },
-} as unknown as Database;
-
 describe("public route enumeration", () => {
   it("includes AR and EN static home and news list paths", () => {
     const paths = staticPublicRoutePaths();
