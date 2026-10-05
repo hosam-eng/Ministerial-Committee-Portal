@@ -10,7 +10,10 @@ const ARTIFACT = path.resolve(
   "../.cache/a11y-news-fixture.json",
 );
 const VITEST_CLI = path.join(REPO_ROOT, "node_modules/vitest/vitest.mjs");
-const SEED_TEST = path.join(REPO_ROOT, "tests/db/a11y-news-fixture-seed.test.ts");
+const SEED_TEST = path.join(
+  REPO_ROOT,
+  "tests/db/a11y-news-fixture-seed.test.ts",
+);
 
 export const A11Y_NEWS_SLUGS = {
   ar: "a11y-news-live-ar",
@@ -27,15 +30,11 @@ let cachedFixture: A11yNewsFixture | null = null;
 /** Idempotent published News fixture for TB-IMP-05 axe (fixed bilingual slugs). */
 export async function ensureA11yNewsFixture(): Promise<A11yNewsFixture> {
   if (cachedFixture) return cachedFixture;
-  await execFileAsync(
-    process.execPath,
-    [VITEST_CLI, "run", SEED_TEST],
-    {
-      cwd: REPO_ROOT,
-      env: process.env,
-      timeout: 120_000,
-    },
-  );
+  await execFileAsync(process.execPath, [VITEST_CLI, "run", SEED_TEST], {
+    cwd: REPO_ROOT,
+    env: process.env,
+    timeout: 120_000,
+  });
   cachedFixture = JSON.parse(readFileSync(ARTIFACT, "utf8")) as A11yNewsFixture;
   return cachedFixture;
 }
