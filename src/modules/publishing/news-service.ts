@@ -476,6 +476,97 @@ export async function abandonNewsDraft(
   });
 }
 
+async function applyPublishApprovedRevision(
+  tx: Transaction,
+  news: Awaited<ReturnType<typeof lockedNews>>,
+  revision: Awaited<ReturnType<typeof loadSnapshot>>,
+  actorId: string | null,
+) {
+  requireState(revision.workflowStatus, "APPROVED");
+  await complete(revision);
+  await assertPublishedSlugAvailable(tx, news.id, revision);
+  if (news.liveRevisionId && news.publicationStatus === "PUBLISHED") {
+    const old = await loadSnapshot(tx, news.liveRevisionId);
+    for (const t of old.translations) {
+      if (
+        revision.translations.some(
+          (next) => next.locale === t.locale && next.slug === t.slug,
+        )
+      )
+        continue;
+      await tx.newsSlugRedirect.upsert({
+        where: { locale_slug: { locale: t.locale, slug: t.slug } },
+        create: { newsId: news.id, locale: t.locale, slug: t.slug },
+        update: {},
+      });
+    }
+  }
+  for (const t of revision.translations) {
+    await tx.newsSlugRedirect.deleteMany({
+      where: { newsId: news.id, locale: t.locale, slug: t.slug },
+    });
+  }
+  await tx.news.update({
+    where: { id: news.id },
+    data: {
+      liveRevisionId: revision.id,
+      activeRevisionId: null,
+      publicationStatus: "PUBLISHED",
+      publishedAt: new Date(),
+      unpublishedAt: null,
+    },
+  });
+  await tx.newsPublicationEvent.create({
+    data: {
+      newsId: news.id,
+      revisionId: revision.id,
+      action: "PUBLISH",
+      actorId,
+    },
+  });
+}
+
+async function finalizeScheduleAfterManualPublish(
+  tx: Transaction,
+  newsId: string,
+  publishedRevisionId: string,
+) {
+  const scheduled = await tx.newsPublicationInstruction.findFirst({
+    where: { newsId, status: "SCHEDULED" },
+  });
+  if (!scheduled) return;
+  if (scheduled.revisionId === publishedRevisionId) {
+    await tx.newsPublicationInstruction.update({
+      where: { id: scheduled.id },
+      data: { status: "EXECUTED", executedAt: new Date() },
+    });
+    return;
+  }
+  await tx.newsPublicationInstruction.update({
+    where: { id: scheduled.id },
+    data: {
+      status: "INELIGIBLE",
+      ineligibleAt: new Date(),
+      ineligibleReason: "MANUAL_PUBLISH_SUPERSEDED",
+    },
+  });
+}
+
+function editorialCycleBlocks(
+  news: { activeRevisionId: string | null },
+  tx: Transaction,
+): Promise<boolean> {
+  if (!news.activeRevisionId) return Promise.resolve(false);
+  return tx.newsRevision
+    .findUnique({ where: { id: news.activeRevisionId } })
+    .then(
+      (current) =>
+        !!current &&
+        (current.workflowStatus === "EDITING" ||
+          current.workflowStatus === "PENDING_REVIEW"),
+    );
+}
+
 export async function publishNews(
   actorId: string,
   newsId: string,
@@ -485,59 +576,8 @@ export async function publishNews(
   return database.prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(90909)::text`;
     const { news, revision } = await active(tx, newsId);
-    requireState(revision.workflowStatus, "APPROVED");
-    await complete(revision);
-    for (const t of revision.translations) {
-      const reserved = await tx.newsSlugRedirect.findUnique({
-        where: { locale_slug: { locale: t.locale, slug: t.slug } },
-      });
-      if (reserved && reserved.newsId !== newsId)
-        throw new NewsError("SLUG_ALREADY_IN_USE");
-      const collision = await tx.news.findFirst({
-        where: {
-          id: { not: newsId },
-          publicationStatus: "PUBLISHED",
-          liveRevision: {
-            translations: { some: { locale: t.locale, slug: t.slug } },
-          },
-        },
-      });
-      if (collision) throw new NewsError("SLUG_ALREADY_IN_USE");
-    }
-    if (news.liveRevisionId && news.publicationStatus === "PUBLISHED") {
-      const old = await loadSnapshot(tx, news.liveRevisionId);
-      for (const t of old.translations) {
-        if (
-          revision.translations.some(
-            (next) => next.locale === t.locale && next.slug === t.slug,
-          )
-        )
-          continue;
-        await tx.newsSlugRedirect.upsert({
-          where: { locale_slug: { locale: t.locale, slug: t.slug } },
-          create: { newsId, locale: t.locale, slug: t.slug },
-          update: {},
-        });
-      }
-    }
-    for (const t of revision.translations) {
-      await tx.newsSlugRedirect.deleteMany({
-        where: { newsId, locale: t.locale, slug: t.slug },
-      });
-    }
-    await tx.news.update({
-      where: { id: newsId },
-      data: {
-        liveRevisionId: revision.id,
-        activeRevisionId: null,
-        publicationStatus: "PUBLISHED",
-        publishedAt: new Date(),
-        unpublishedAt: null,
-      },
-    });
-    await tx.newsPublicationEvent.create({
-      data: { newsId, revisionId: revision.id, action: "PUBLISH", actorId },
-    });
+    await applyPublishApprovedRevision(tx, news, revision, actorId);
+    await finalizeScheduleAfterManualPublish(tx, newsId, revision.id);
     return revision.id;
   });
 }
@@ -997,4 +1037,230 @@ export async function resolveNewsPreview(
       displayDate: revision.displayDate,
     },
   };
+}
+
+async function lockedInstruction(tx: Transaction, instructionId: string) {
+  await tx.$queryRaw`
+    SELECT id FROM "publishing"."news_publication_instruction"
+    WHERE id = ${instructionId}::uuid FOR UPDATE`;
+  const row = await tx.newsPublicationInstruction.findUnique({
+    where: { id: instructionId },
+  });
+  if (!row) throw new NewsError("SCHEDULE_NOT_FOUND");
+  return row;
+}
+
+async function assertScheduleCreateAllowed(
+  tx: Transaction,
+  newsId: string,
+  revisionId: string,
+  publishAt: Date,
+) {
+  if (publishAt.getTime() <= Date.now()) {
+    throw new NewsError("SCHEDULE_PUBLISH_AT_MUST_BE_FUTURE");
+  }
+  const news = await lockedNews(tx, newsId);
+  if (await editorialCycleBlocks(news, tx)) {
+    throw new NewsError("ACTIVE_EDITING_EXISTS");
+  }
+  const existingScheduled = await tx.newsPublicationInstruction.findFirst({
+    where: { newsId, status: "SCHEDULED" },
+  });
+  if (existingScheduled) throw new NewsError("SCHEDULE_ALREADY_EXISTS");
+  const revision = await loadSnapshot(tx, revisionId);
+  if (revision.newsId !== newsId) throw new NewsError("NEWS_NOT_FOUND");
+  if (revision.workflowStatus !== "APPROVED") {
+    throw new NewsError("SCHEDULE_REVISION_NOT_APPROVED");
+  }
+}
+
+export async function scheduleNewsPublication(
+  actorId: string,
+  newsId: string,
+  revisionId: string,
+  publishAt: Date,
+  database: Database = getRuntimeDatabase(),
+) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_PUBLISH);
+  return database.prisma.$transaction(async (tx) => {
+    await assertScheduleCreateAllowed(tx, newsId, revisionId, publishAt);
+    return tx.newsPublicationInstruction.create({
+      data: {
+        newsId,
+        revisionId,
+        publishAt,
+        status: "SCHEDULED",
+        createdById: actorId,
+      },
+    });
+  });
+}
+
+export async function rescheduleNewsPublication(
+  actorId: string,
+  instructionId: string,
+  publishAt: Date,
+  database: Database = getRuntimeDatabase(),
+) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_PUBLISH);
+  if (publishAt.getTime() <= Date.now()) {
+    throw new NewsError("SCHEDULE_PUBLISH_AT_MUST_BE_FUTURE");
+  }
+  return database.prisma.$transaction(async (tx) => {
+    const existing = await lockedInstruction(tx, instructionId);
+    if (existing.status !== "SCHEDULED") {
+      throw new NewsError("SCHEDULE_NOT_MUTABLE");
+    }
+    await tx.newsPublicationInstruction.update({
+      where: { id: instructionId },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelledById: actorId,
+      },
+    });
+    await assertScheduleCreateAllowed(
+      tx,
+      existing.newsId,
+      existing.revisionId,
+      publishAt,
+    );
+    return tx.newsPublicationInstruction.create({
+      data: {
+        newsId: existing.newsId,
+        revisionId: existing.revisionId,
+        publishAt,
+        status: "SCHEDULED",
+        createdById: actorId,
+        version: existing.version + 1,
+      },
+    });
+  });
+}
+
+export async function cancelScheduledNewsPublication(
+  actorId: string,
+  instructionId: string,
+  database: Database = getRuntimeDatabase(),
+) {
+  await requireActorPermission(actorId, PERMISSIONS.NEWS_PUBLISH);
+  return database.prisma.$transaction(async (tx) => {
+    const existing = await lockedInstruction(tx, instructionId);
+    if (existing.status !== "SCHEDULED") {
+      throw new NewsError("SCHEDULE_NOT_MUTABLE");
+    }
+    return tx.newsPublicationInstruction.update({
+      where: { id: instructionId },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelledById: actorId,
+      },
+    });
+  });
+}
+
+export type DuePublicationExecution =
+  | "published"
+  | "already_live"
+  | "not_due"
+  | "terminal";
+
+/** Trusted internal Publishing boundary — instruction is the audit context. */
+export async function executeDueNewsPublication(
+  instructionId: string,
+  database: Database = getRuntimeDatabase(),
+  now: Date = new Date(),
+): Promise<DuePublicationExecution> {
+  return database.prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(90909)::text`;
+    const instruction = await lockedInstruction(tx, instructionId);
+    if (instruction.status !== "SCHEDULED") return "terminal";
+    if (instruction.publishAt.getTime() > now.getTime()) return "not_due";
+
+    const news = await lockedNews(tx, instruction.newsId);
+    if (await editorialCycleBlocks(news, tx)) {
+      await tx.newsPublicationInstruction.update({
+        where: { id: instructionId },
+        data: {
+          status: "INELIGIBLE",
+          ineligibleAt: new Date(),
+          ineligibleReason: "ACTIVE_EDITORIAL_CYCLE",
+        },
+      });
+      return "terminal";
+    }
+
+    const revision = await loadSnapshot(tx, instruction.revisionId);
+    if (revision.newsId !== instruction.newsId) {
+      await tx.newsPublicationInstruction.update({
+        where: { id: instructionId },
+        data: {
+          status: "INELIGIBLE",
+          ineligibleAt: new Date(),
+          ineligibleReason: "REVISION_NOT_FOUND",
+        },
+      });
+      return "terminal";
+    }
+    if (revision.workflowStatus !== "APPROVED") {
+      await tx.newsPublicationInstruction.update({
+        where: { id: instructionId },
+        data: {
+          status: "INELIGIBLE",
+          ineligibleAt: new Date(),
+          ineligibleReason: "REVISION_NOT_APPROVED",
+        },
+      });
+      return "terminal";
+    }
+
+    if (
+      news.publicationStatus === "PUBLISHED" &&
+      news.liveRevisionId === revision.id
+    ) {
+      await tx.newsPublicationInstruction.update({
+        where: { id: instructionId },
+        data: { status: "EXECUTED", executedAt: new Date() },
+      });
+      return "already_live";
+    }
+    if (
+      news.publicationStatus === "PUBLISHED" &&
+      news.liveRevisionId &&
+      news.liveRevisionId !== revision.id
+    ) {
+      await tx.newsPublicationInstruction.update({
+        where: { id: instructionId },
+        data: {
+          status: "INELIGIBLE",
+          ineligibleAt: new Date(),
+          ineligibleReason: "DIFFERENT_REVISION_LIVE",
+        },
+      });
+      return "terminal";
+    }
+
+    try {
+      await applyPublishApprovedRevision(tx, news, revision, null);
+      await tx.newsPublicationInstruction.update({
+        where: { id: instructionId },
+        data: { status: "EXECUTED", executedAt: new Date() },
+      });
+      return "published";
+    } catch (error) {
+      if (error instanceof NewsError && error.code === "SLUG_ALREADY_IN_USE") {
+        await tx.newsPublicationInstruction.update({
+          where: { id: instructionId },
+          data: {
+            status: "INELIGIBLE",
+            ineligibleAt: new Date(),
+            ineligibleReason: error.code,
+          },
+        });
+        return "terminal";
+      }
+      throw error;
+    }
+  });
 }

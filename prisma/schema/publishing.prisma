@@ -36,6 +36,15 @@ enum NewsPublicationAction {
   @@schema("publishing")
 }
 
+enum NewsPublicationInstructionStatus {
+  SCHEDULED
+  CANCELLED
+  EXECUTED
+  INELIGIBLE
+
+  @@schema("publishing")
+}
+
 model News {
   id                String                @id @default(dbgenerated("uuidv7()")) @db.Uuid
   publicationStatus NewsPublicationStatus @default(NEVER_PUBLISHED) @map("publication_status")
@@ -50,9 +59,10 @@ model News {
   liveRevision      NewsRevision?          @relation("NewsLiveRevision", fields: [liveRevisionId], references: [id])
   activeRevision    NewsRevision?          @relation("NewsActiveRevision", fields: [activeRevisionId], references: [id])
   revisions         NewsRevision[]         @relation("NewsRevisions")
-  workflowEvents    NewsWorkflowEvent[]
-  publicationEvents NewsPublicationEvent[]
-  slugRedirects     NewsSlugRedirect[]
+  workflowEvents           NewsWorkflowEvent[]
+  publicationEvents        NewsPublicationEvent[]
+  slugRedirects            NewsSlugRedirect[]
+  publicationInstructions  NewsPublicationInstruction[]
 
   @@map("news")
   @@schema("publishing")
@@ -81,8 +91,9 @@ model NewsRevision {
   activeFor         News[]                    @relation("NewsActiveRevision")
   translations      NewsRevisionTranslation[]
   categories        NewsRevisionCategory[]
-  workflowEvents    NewsWorkflowEvent[]
-  publicationEvents NewsPublicationEvent[]
+  workflowEvents           NewsWorkflowEvent[]
+  publicationEvents        NewsPublicationEvent[]
+  publicationInstructions  NewsPublicationInstruction[]
 
   @@unique([newsId, revisionNumber])
   @@index([newsId])
@@ -185,5 +196,29 @@ model NewsPublicationEvent {
 
   @@index([newsId])
   @@map("news_publication_event")
+  @@schema("publishing")
+}
+
+model NewsPublicationInstruction {
+  id               String                           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  newsId           String                           @map("news_id") @db.Uuid
+  revisionId       String                           @map("revision_id") @db.Uuid
+  publishAt        DateTime                         @map("publish_at") @db.Timestamptz(6)
+  status           NewsPublicationInstructionStatus
+  version          Int                              @default(0) @map("version")
+  createdById      String                           @map("created_by_id") @db.Uuid
+  createdAt        DateTime                         @default(now()) @map("created_at") @db.Timestamptz(6)
+  cancelledAt      DateTime?                        @map("cancelled_at") @db.Timestamptz(6)
+  cancelledById    String?                          @map("cancelled_by_id") @db.Uuid
+  executedAt       DateTime?                        @map("executed_at") @db.Timestamptz(6)
+  ineligibleAt     DateTime?                        @map("ineligible_at") @db.Timestamptz(6)
+  ineligibleReason String?                          @map("ineligible_reason")
+
+  news     News         @relation(fields: [newsId], references: [id])
+  revision NewsRevision @relation(fields: [revisionId], references: [id])
+
+  @@index([newsId])
+  @@index([status, publishAt])
+  @@map("news_publication_instruction")
   @@schema("publishing")
 }
