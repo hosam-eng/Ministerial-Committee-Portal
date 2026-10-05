@@ -56,13 +56,13 @@ model News {
   createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  liveRevision      NewsRevision?          @relation("NewsLiveRevision", fields: [liveRevisionId], references: [id])
-  activeRevision    NewsRevision?          @relation("NewsActiveRevision", fields: [activeRevisionId], references: [id])
-  revisions         NewsRevision[]         @relation("NewsRevisions")
-  workflowEvents           NewsWorkflowEvent[]
-  publicationEvents        NewsPublicationEvent[]
-  slugRedirects            NewsSlugRedirect[]
-  publicationInstructions  NewsPublicationInstruction[]
+  liveRevision            NewsRevision?                @relation("NewsLiveRevision", fields: [liveRevisionId], references: [id])
+  activeRevision          NewsRevision?                @relation("NewsActiveRevision", fields: [activeRevisionId], references: [id])
+  revisions               NewsRevision[]               @relation("NewsRevisions")
+  workflowEvents          NewsWorkflowEvent[]
+  publicationEvents       NewsPublicationEvent[]
+  slugRedirects           NewsSlugRedirect[]
+  publicationInstructions NewsPublicationInstruction[]
 
   @@map("news")
   @@schema("publishing")
@@ -84,16 +84,16 @@ model NewsRevision {
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  news              News                      @relation("NewsRevisions", fields: [newsId], references: [id])
-  basedOn           NewsRevision?             @relation("NewsRevisionLineage", fields: [basedOnRevisionId], references: [id])
-  derivedRevisions  NewsRevision[]            @relation("NewsRevisionLineage")
-  liveFor           News[]                    @relation("NewsLiveRevision")
-  activeFor         News[]                    @relation("NewsActiveRevision")
-  translations      NewsRevisionTranslation[]
-  categories        NewsRevisionCategory[]
-  workflowEvents           NewsWorkflowEvent[]
-  publicationEvents        NewsPublicationEvent[]
-  publicationInstructions  NewsPublicationInstruction[]
+  news                    News                         @relation("NewsRevisions", fields: [newsId], references: [id])
+  basedOn                 NewsRevision?                @relation("NewsRevisionLineage", fields: [basedOnRevisionId], references: [id])
+  derivedRevisions        NewsRevision[]               @relation("NewsRevisionLineage")
+  liveFor                 News[]                       @relation("NewsLiveRevision")
+  activeFor               News[]                       @relation("NewsActiveRevision")
+  translations            NewsRevisionTranslation[]
+  categories              NewsRevisionCategory[]
+  workflowEvents          NewsWorkflowEvent[]
+  publicationEvents       NewsPublicationEvent[]
+  publicationInstructions NewsPublicationInstruction[]
 
   @@unique([newsId, revisionNumber])
   @@index([newsId])
